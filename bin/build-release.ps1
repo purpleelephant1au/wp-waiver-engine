@@ -73,7 +73,7 @@ $ExcludeRelative = @(
     'bin',
     'composer.json',
     'composer.lock',
-    'vendor/autoload.php',   # included via vendor/ folder below — this line intentionally blank
+    'vendor/autoload.php'    # included via vendor/ folder below
     '*.zip'
 )
 # Patterns applied with -like against the relative path
@@ -134,6 +134,6 @@ Write-Host "   Staged $($AllFiles.Count) files."
 Compress-Archive -Path (Join-Path $TempDir 'wp-waiver-engine') -DestinationPath $ZipPath
 Remove-Item $TempDir -Recurse -Force
 
-Write-Host "`n✓ Release ZIP created: $ZipName"
+Write-Host "`n[OK] Release ZIP created: $ZipName"
 Write-Host "  Path: $ZipPath"
-Write-Host "`nUpload this ZIP via WordPress Admin → Plugins → Add New → Upload Plugin."
+Write-Host "`nUpload this ZIP via: WordPress Admin -> Plugins -> Add New -> Upload Plugin"
