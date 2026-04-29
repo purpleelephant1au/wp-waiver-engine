@@ -1,0 +1,19 @@
+{
+    "name": "wp-waiver-engine/wp-waiver-engine",
+    "description": "WordPress Waiver Engine – PDF overlay generation",
+    "type": "wordpress-plugin",
+    "require": {
+        "php": ">=8.0",
+        "setasign/fpdi": "^2.5",
+        "setasign/fpdf": "^1.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "WPWE\\": "includes/"
+        }
+    },
+    "config": {
+        "vendor-dir": "vendor",
+        "optimize-autoloader": true
+    }
+}

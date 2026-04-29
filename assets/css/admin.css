@@ -1,0 +1,555 @@
+/* WP Waiver Engine – Admin Styles */
+
+/* ── Settings table ───────────────────────────────────────────────────────── */
+.wpwe-settings-table th {
+    width: 200px;
+    vertical-align: top;
+    padding-top: 10px;
+}
+
+/* ── Compact summary bar (meta box) ──────────────────────────────────────── */
+.wpwe-mapper-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0 4px;
+}
+
+.wpwe-mapper-summary-text {
+    flex: 1;
+    color: #555;
+    font-size: 13px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Full-screen Mapper Modal
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.wpwe-mapper-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;        /* above WP admin bar (z=99999) */
+    display: flex;
+    flex-direction: column;
+    background: #1a1a1a;
+}
+
+/* ── Modal header ─────────────────────────────────────────────────────────── */
+.wpwe-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 14px;
+    height: 52px;
+    flex-shrink: 0;
+    background: #2c2c2c;
+    border-bottom: 1px solid #444;
+    color: #fff;
+}
+
+.wpwe-modal-title {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    color: #fff;
+}
+
+.wpwe-modal-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    overflow: hidden;
+    font-size: 13px;
+    color: #ccc;
+}
+
+.wpwe-modal-toolbar label {
+    color: #ddd;
+    white-space: nowrap;
+}
+
+.wpwe-modal-toolbar select,
+.wpwe-modal-toolbar input[type="number"] {
+    background: #3c3c3c;
+    border: 1px solid #555;
+    color: #fff;
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 13px;
+}
+
+.wpwe-modal-toolbar .button {
+    background: #3c3c3c;
+    border-color: #666;
+    color: #ddd;
+    min-height: 26px;
+    padding: 2px 10px;
+    font-size: 13px;
+}
+
+.wpwe-modal-toolbar .button:hover { background: #505050; color: #fff; }
+
+.wpwe-draw-hint {
+    font-style: italic;
+    color: #7ec8e3;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wpwe-modal-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #aaa;
+    padding: 4px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.wpwe-modal-close:hover { background: rgba(255,255,255,.1); color: #fff; }
+.wpwe-modal-close .dashicons { font-size: 22px; width: 22px; height: 22px; }
+
+/* ── Two-panel body (column layout: PDF on top, fields panel below) ────────── */
+.wpwe-modal-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* Top: PDF canvas pane – takes remaining height, scrollable */
+.wpwe-modal-pdf-pane {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 12px;
+    background: #2a2a2a;
+    min-height: 0;
+}
+
+/* Bottom: field table pane – fixed height, full width, scrollable */
+.wpwe-modal-table-pane {
+    flex: 0 0 260px;
+    overflow-y: auto;
+    padding: 8px 12px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    border-top: 2px solid #444;
+}
+
+/* ── Modal footer ─────────────────────────────────────────────────────────── */
+.wpwe-modal-footer {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    flex-shrink: 0;
+    background: #2c2c2c;
+    border-top: 1px solid #444;
+}
+
+.wpwe-modal-footer-hint {
+    font-size: 12px;
+    color: #999;
+    font-style: italic;
+}
+
+/* ── Mapper hint (no PDF yet) ─────────────────────────────────────────────── */
+.wpwe-mapper-hint {
+    padding: 40px 20px;
+    text-align: center;
+    color: #888;
+    background: rgba(255,255,255,.05);
+    border: 2px dashed #555;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.wpwe-pdf-viewer {
+    display: inline-block; /* shrink-wrap the canvas */
+}
+
+/* ── Canvas stack ─────────────────────────────────────────────────────────── */
+.wpwe-canvas-wrap {
+    position: relative;
+    display: inline-block;
+    border: 1px solid #555;
+    border-radius: 3px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 16px rgba(0,0,0,.5);
+}
+
+#wpwe-pdf-canvas {
+    display: block;
+}
+
+#wpwe-draw-canvas {
+    position: absolute;
+    inset: 0;
+    cursor: crosshair;
+}
+
+/* ── Field overlays ───────────────────────────────────────────────────────── */
+#wpwe-overlays {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;  /* overlays are visuals only; drawCanvas handles mouse */
+}
+
+.wpwe-field-overlay {
+    position: absolute;
+    border: 2px solid #2271b1;
+    background: rgba(34, 113, 177, 0.12);
+    border-radius: 2px;
+    pointer-events: none;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Highlight while being dragged / resized */
+.wpwe-field-overlay.wpwe-overlay-active {
+    border-color: #e65100;
+    background: rgba(230, 81, 0, 0.12);
+    z-index: 2;
+}
+
+.wpwe-overlay-label {
+    position: absolute;
+    top: -18px;
+    left: 0;
+    background: #2271b1;
+    color: #fff;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 2px 2px 0 0;
+    white-space: nowrap;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.5;
+}
+
+/* Placeholder text rendered inside the overlay at the field's font size */
+.wpwe-overlay-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-start;
+    padding: 1px 2px;
+    overflow: hidden;
+    color: #2271b1;
+    white-space: nowrap;
+    pointer-events: none;
+    line-height: 1.2;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+/* Resize handle – 10×10 square at bottom-right corner */
+.wpwe-overlay-resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background: #2271b1;
+    opacity: 0.7;
+    border-top-left-radius: 2px;
+    cursor: se-resize;
+}
+
+/* ── Mapping table ────────────────────────────────────────────────────────── */
+.wpwe-mapping-table-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.wpwe-mapping-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 12px;
+}
+
+.wpwe-mapping-table th,
+.wpwe-mapping-table td {
+    padding: 4px 5px;
+    vertical-align: middle;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.wpwe-mapping-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f6f7f7;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    color: #555;
+    z-index: 1;
+}
+
+.wpwe-mapping-table .wpwe-mapping-row:hover td { background: #f0f6fc; }
+
+.wpwe-mapping-table select,
+.wpwe-mapping-table input[type="number"],
+.wpwe-mapping-table input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 12px;
+    padding: 2px 4px;
+}
+
+.wpwe-mapping-table .small-text { width: 100% !important; min-width: 40px; }
+
+.wpwe-mapping-table input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+    display: block;
+    margin: 0 auto;
+}
+
+/* ── Location badge cell ──────────────────────────────────────────────────── */
+.wpwe-map-location {
+    font-family: Consolas, Monaco, "Lucida Console", monospace;
+    font-size: 10px;
+    color: #1a6630;
+    white-space: nowrap;
+    background: #eef6ee;
+    padding: 2px 5px !important;
+    border-radius: 3px;
+}
+
+.wpwe-map-location em {
+    color: #bbb;
+    font-style: italic;
+    font-family: inherit;
+}
+
+.wpwe-no-schema-notice { display: none; }
+
+    font-family: Consolas, Monaco, "Lucida Console", monospace;
+    font-size: 11px;
+    color: #2c5f2e;
+    white-space: nowrap;
+    background: #f0f6f0;
+    padding: 2px 6px !important;
+    border-radius: 3px;
+    vertical-align: middle;
+}
+
+.wpwe-map-location em {
+    color: #aaa;
+    font-style: italic;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ── Settings table ───────────────────────────────────────────────────────── */
+.wpwe-settings-table th {
+    width: 200px;
+    vertical-align: top;
+    padding-top: 10px;
+}
+
+/* ── JSON schema editor ───────────────────────────────────────────────────── */
+.wpwe-json-editor {
+    font-family: Consolas, Monaco, "Lucida Console", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: 1px solid #555;
+    padding: 12px;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+.wpwe-json-editor:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+
+.wpwe-json-error {
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: #fceded;
+    border-left: 3px solid #d63638;
+    border-radius: 2px;
+    font-size: 12px;
+}
+
+/* ── Visual mapper toolbar ────────────────────────────────────────────────── */
+.wpwe-mapper-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: #f6f7f7;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.wpwe-toolbar-sep {
+    color: #999;
+    font-style: italic;
+}
+
+/* ── PDF viewer container ─────────────────────────────────────────────────── */
+.wpwe-mapper-hint {
+    padding: 16px;
+    text-align: center;
+    color: #777;
+    background: #fafafa;
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    margin-bottom: 14px;
+}
+
+.wpwe-pdf-viewer {
+    margin-bottom: 14px;
+}
+
+.wpwe-page-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.wpwe-draw-hint {
+    margin-left: auto;
+    font-style: italic;
+    color: #2271b1;
+    font-size: 12px;
+}
+
+/* Canvas stack wrapper */
+.wpwe-canvas-wrap {
+    position: relative;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    overflow: hidden;
+    max-width: 100%;
+    background: #fff;
+}
+
+#wpwe-pdf-canvas {
+    display: block;
+    max-width: 100%;
+}
+
+/* Draw overlay – sits on top, captures mouse */
+#wpwe-draw-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: crosshair;
+}
+
+/* ── Field overlays ───────────────────────────────────────────────────────── */
+#wpwe-overlays {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+.wpwe-field-overlay {
+    position: absolute;
+    border: 2px solid #2271b1;
+    background: rgba(34, 113, 177, 0.10);
+    border-radius: 2px;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+.wpwe-overlay-label {
+    position: absolute;
+    top: -18px;
+    left: 0;
+    background: #2271b1;
+    color: #fff;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 2px 2px 0 0;
+    white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.5;
+}
+
+/* ── Mapping table ────────────────────────────────────────────────────────── */
+.wpwe-mapping-table-wrap {
+    margin-top: 10px;
+}
+
+.wpwe-mapping-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+}
+
+.wpwe-mapping-table th,
+.wpwe-mapping-table td {
+    padding: 5px 6px;
+    vertical-align: middle;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.wpwe-mapping-table thead th {
+    background: #f6f7f7;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    color: #555;
+}
+
+.wpwe-mapping-table .wpwe-mapping-row:hover td {
+    background: #f0f6fc;
+}
+
+.wpwe-mapping-table select,
+.wpwe-mapping-table input[type="number"],
+.wpwe-mapping-table input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 13px;
+}
+
+.wpwe-mapping-table .small-text {
+    width: 100% !important;
+    min-width: 52px;
+}
+
+.wpwe-no-schema-notice {
+    display: none; /* notice no longer shown */
+}
+
+/* Checkbox cells (Required?, Repeat?) */
+.wpwe-mapping-table td:has( > input[type="checkbox"] ) {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.wpwe-mapping-table input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+    transform: scale(1.2);
+}

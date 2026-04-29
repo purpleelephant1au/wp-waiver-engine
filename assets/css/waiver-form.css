@@ -1,0 +1,940 @@
+/* WP Waiver Engine – Frontend Form Styles */
+
+/* Wrapper */
+.wpwe-form-wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: inherit;
+}
+
+.wpwe-form-title {
+    margin-bottom: 1.5rem;
+}
+
+/* Groups */
+.wpwe-group {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    background: #fafafa;
+}
+
+.wpwe-group-legend {
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0 0.5rem;
+    color: #333;
+}
+
+/* Rows */
+.wpwe-row {
+    position: relative;
+    padding: 0.75rem 0;
+    border-bottom: 1px dashed #e0e0e0;
+}
+
+.wpwe-row:last-child {
+    border-bottom: none;
+}
+
+.wpwe-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.wpwe-row-label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.wpwe-remove-row {
+    background: none;
+    border: none;
+    color: #d63638;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: background 0.15s;
+}
+
+.wpwe-remove-row:hover {
+    background: #fceded;
+}
+
+/* Fields grid */
+.wpwe-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem 1.5rem;
+}
+
+@media ( max-width: 540px ) {
+    .wpwe-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Full-width field types */
+.wpwe-field--textarea,
+.wpwe-field--signature,
+.wpwe-field--checkbox {
+    grid-column: 1 / -1;
+}
+
+.wpwe-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wpwe-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #444;
+}
+
+.wpwe-required {
+    color: #d63638;
+    margin-left: 2px;
+}
+
+/* Inputs */
+.wpwe-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9375rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    background: #fff;
+    box-sizing: border-box;
+}
+
+.wpwe-input:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 2px rgba(34,113,177,0.2);
+    outline: none;
+}
+
+.wpwe-textarea {
+    resize: vertical;
+    min-height: 90px;
+}
+
+/* Signature */
+.wpwe-signature-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.wpwe-signature-canvas {
+    width: 100%;
+    height: 120px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.wpwe-clear-signature {
+    align-self: flex-start;
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 3px 10px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: #555;
+    transition: background 0.15s;
+}
+
+.wpwe-clear-signature:hover {
+    background: #f0f0f0;
+}
+
+/* Validation errors */
+.wpwe-field--invalid .wpwe-input,
+.wpwe-field--invalid .wpwe-signature-canvas {
+    border-color: #d63638;
+}
+
+.wpwe-field-error {
+    font-size: 0.8rem;
+    color: #d63638;
+    min-height: 1rem;
+}
+
+/* Add row button */
+.wpwe-add-row {
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+}
+
+/* -------------------------------------------------------------------------
+   Table layout for repeatable groups
+   ------------------------------------------------------------------------- */
+
+/* Mode toggle inside <legend> */
+.wpwe-mode-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-left: 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 400;
+    vertical-align: middle;
+}
+
+.wpwe-mode-label {
+    color: #666;
+    white-space: nowrap;
+}
+
+.wpwe-mode-select {
+    padding: 1px 5px 2px;
+    font-size: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: #fff;
+    cursor: pointer;
+    color: #333;
+    line-height: 1.4;
+}
+
+.wpwe-mode-select:focus {
+    outline: 2px solid rgba( 34, 113, 177, 0.35 );
+    border-color: #2271b1;
+    outline-offset: 0;
+}
+
+/* Table container – horizontal scroll on small screens */
+.wpwe-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+/* Main table */
+.wpwe-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    min-width: 360px;
+}
+
+/* Header row */
+.wpwe-th {
+    background: #f0f2f5;
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: #444;
+    border-bottom: 2px solid #ddd;
+    white-space: nowrap;
+}
+
+.wpwe-th-rownum {
+    width: 28px;
+    min-width: 28px;
+    text-align: center;
+    color: #999;
+    font-weight: 400;
+    padding: 0.55rem 0.25rem;
+}
+
+.wpwe-cell--rownum {
+    width: 28px;
+    text-align: center;
+    vertical-align: middle;
+    color: #aaa;
+    font-size: 0.8rem;
+    padding: 0.45rem 0.25rem;
+    border-bottom: 1px solid #eee;
+    user-select: none;
+}
+
+.wpwe-th-action {
+    width: 76px;
+    min-width: 76px;
+}
+
+/* Data cells */
+.wpwe-cell {
+    padding: 0.45rem 0.5rem;
+    vertical-align: top;
+    border-bottom: 1px solid #eee;
+}
+
+.wpwe-cell .wpwe-input {
+    min-width: 80px;
+    box-sizing: border-box;
+}
+
+.wpwe-cell .wpwe-textarea {
+    min-width: 130px;
+    min-height: 54px;
+}
+
+.wpwe-cell .wpwe-signature-canvas {
+    min-width: 150px;
+    height: 72px;
+}
+
+.wpwe-cell .wpwe-field-error {
+    display: block;
+    font-size: 0.75rem;
+}
+
+/* Action column (remove + preview buttons) */
+.wpwe-cell--action {
+    text-align: center;
+    vertical-align: middle;
+    width: 76px;
+    padding: 0 4px;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+}
+
+.wpwe-cell--action .wpwe-remove-row {
+    background: none;
+    border: none;
+    color: #d63638;
+    cursor: pointer;
+    font-size: 1.15rem;
+    line-height: 1;
+    padding: 4px 6px;
+    border-radius: 3px;
+    transition: background 0.15s;
+}
+
+.wpwe-cell--action .wpwe-remove-row:hover {
+    background: #fceded;
+}
+
+/* Zebra striping */
+.wpwe-table tbody .wpwe-row:nth-child(even) .wpwe-cell,
+.wpwe-table tbody .wpwe-row:nth-child(even) .wpwe-cell--action {
+    background: #fafafa;
+}
+
+/* Subtle focus highlight for active row */
+.wpwe-table tbody .wpwe-row:focus-within .wpwe-cell,
+.wpwe-table tbody .wpwe-row:focus-within .wpwe-cell--action {
+    background: #f0f6fc;
+}
+
+/* Submit area */
+.wpwe-submit-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+/* Email-copy opt-in */
+.wpwe-email-copy-wrap {
+    margin-top: 1.25rem;
+    padding: 0.85rem 1rem;
+    background: #f6f7f7;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.wpwe-email-copy-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.wpwe-email-copy-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.wpwe-email-copy-input {
+    margin-top: 0.75rem;
+}
+
+.wpwe-email-copy-input .wpwe-label {
+    display: block;
+    font-size: 0.875rem;
+    margin-bottom: 0.3rem;
+}
+
+.wpwe-copy-email-input {
+    width: 100%;
+    max-width: 360px;
+    box-sizing: border-box;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.wpwe-copy-email-input:focus {
+    outline: none;
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.wpwe-copy-email-error {
+    display: block;
+    color: #d63638;
+    font-size: 0.825rem;
+    margin-top: 0.25rem;
+}
+
+.wpwe-submit-btn {
+    background: #2271b1;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 0.7rem 2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.wpwe-submit-btn:hover:not(:disabled) {
+    background: #135e96;
+}
+
+.wpwe-submit-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Spinner */
+.wpwe-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0,0,0,0.15);
+    border-top-color: #2271b1;
+    border-radius: 50%;
+    animation: wpwe-spin 0.7s linear infinite;
+}
+
+@keyframes wpwe-spin {
+    to { transform: rotate( 360deg ); }
+}
+
+/* Messages */
+.wpwe-messages {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9375rem;
+    display: none;
+}
+
+.wpwe-messages:not(:empty) {
+    display: block;
+}
+
+.wpwe-messages--success {
+    background: #edfaed;
+    border-left: 4px solid #00a32a;
+    color: #1a5c1a;
+}
+
+.wpwe-messages--error {
+    background: #fceded;
+    border-left: 4px solid #d63638;
+    color: #6e0d0e;
+}
+
+/* Inline error shortcode */
+.wpwe-error {
+    color: #d63638;
+    font-style: italic;
+}
+
+/* Preview button */
+.wpwe-preview-btn {
+    background: #fff;
+    color: #2271b1;
+    border: 1px solid #2271b1;
+    border-radius: 4px;
+    padding: 0.7rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.wpwe-preview-btn:hover {
+    background: #f0f6fc;
+}
+
+/* Preview overlay */
+.wpwe-preview-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 99999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+body.wpwe-preview-open {
+    overflow: hidden;
+}
+
+.wpwe-preview-modal {
+    background: #fff;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 680px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 4rem);
+    overflow: hidden;
+}
+
+/* Preview header */
+.wpwe-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e0e0e0;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.wpwe-preview-title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.wpwe-preview-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #555;
+    cursor: pointer;
+    padding: 0 4px;
+    border-radius: 3px;
+    transition: color 0.15s;
+}
+
+.wpwe-preview-close:hover {
+    color: #d63638;
+}
+
+/* Preview body (scrollable) */
+.wpwe-preview-body {
+    padding: 1.25rem 1.5rem;
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+/* Preview group */
+.wpwe-preview-group {
+    margin-bottom: 1.5rem;
+}
+
+.wpwe-preview-group:last-child {
+    margin-bottom: 0;
+}
+
+.wpwe-preview-group-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid #2271b1;
+}
+
+/* Preview row */
+.wpwe-preview-row {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+}
+
+.wpwe-preview-row:last-child {
+    margin-bottom: 0;
+}
+
+.wpwe-preview-row-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #555;
+    margin: 0 0 0.6rem;
+}
+
+/* Preview fields DL */
+.wpwe-preview-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem 1.25rem;
+    margin: 0;
+}
+
+@media ( max-width: 480px ) {
+    .wpwe-preview-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+.wpwe-preview-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.wpwe-preview-field dt {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.wpwe-preview-field dd {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: #1d2327;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+/* Signature preview image */
+.wpwe-preview-sig-img {
+    max-width: 220px;
+    height: auto;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background: #fff;
+    display: block;
+    margin-top: 2px;
+}
+
+/* For signature + checkbox fields — span full width */
+.wpwe-preview-field:has( .wpwe-preview-sig-img ),
+.wpwe-preview-field:has( img ) {
+    grid-column: 1 / -1;
+}
+
+/* Preview footer */
+.wpwe-preview-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+.wpwe-preview-edit-btn {
+    background: #fff;
+    color: #555;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0.6rem 1.25rem;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.wpwe-preview-edit-btn:hover {
+    background: #f0f0f0;
+}
+
+.wpwe-preview-confirm-btn {
+    background: #2271b1;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 0.6rem 1.5rem;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.wpwe-preview-confirm-btn:hover {
+    background: #135e96;
+}
+
+/* Per-row PDF preview button */
+.wpwe-row-preview-btn {
+    background: none;
+    border: none;
+    color: #2271b1;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 4px 5px;
+    border-radius: 3px;
+    transition: background 0.15s;
+    vertical-align: middle;
+}
+
+.wpwe-row-preview-btn:hover {
+    background: #e8f0fa;
+}
+
+/* Table cell validation errors */
+.wpwe-cell--invalid .wpwe-input,
+.wpwe-cell--invalid .wpwe-signature-canvas {
+    border-color: #d63638;
+    box-shadow: 0 0 0 1px #d63638;
+}
+
+.wpwe-cell--invalid .wpwe-field-error {
+    display: block;
+    color: #d63638;
+}
+
+/* PDF preview modal – tall framed iframe version */
+.wpwe-pdf-preview-modal {
+    max-width: 960px;
+    height: calc( 100vh - 4rem );
+    max-height: 960px;
+}
+
+.wpwe-pdf-preview-body {
+    flex: 1 1 auto;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    padding: 0 !important;
+}
+
+.wpwe-pdf-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
+.wpwe-pdf-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    color: #555;
+    background: #f0f0f0;
+}
+
+/* ── Booking Search Widget ───────────────────────────────────────────────── */
+.wpwe-booking-search {
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    background: #f0f6fc;
+    border: 1px solid #c5d9ed;
+    border-radius: 6px;
+}
+
+.wpwe-booking-search__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.wpwe-booking-search__label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1a2e45;
+}
+
+.wpwe-booking-search__hint {
+    font-size: 0.825rem;
+    color: #6b7a8d;
+}
+
+.wpwe-booking-search__input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.wpwe-booking-search-input {
+    flex: 1;
+    max-width: 420px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    background: #fff;
+}
+
+.wpwe-booking-search-input:focus {
+    outline: none;
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.wpwe-booking-search__or {
+    font-size: 0.825rem;
+    color: #6b7a8d;
+    white-space: nowrap;
+}
+
+.wpwe-booking-date-picker {
+    padding: 0.5rem 0.6rem;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    background: #fff;
+    color: #1a2e45;
+    cursor: pointer;
+}
+
+.wpwe-booking-date-picker:focus {
+    outline: none;
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.wpwe-booking-searching {
+    font-size: 0.85rem;
+    color: #6b7a8d;
+    font-style: italic;
+}
+
+.wpwe-booking-results {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    background: #fff;
+    border: 1px solid #c5d9ed;
+    border-radius: 4px;
+    max-height: 260px;
+    overflow-y: auto;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.wpwe-booking-result-item {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 0.5rem;
+    padding: 0.6rem 0.875rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    transition: background 0.1s;
+}
+
+.wpwe-booking-result-item:last-child {
+    border-bottom: none;
+}
+
+.wpwe-booking-result-item:hover,
+.wpwe-booking-result-item:focus {
+    background: #e8f0fb;
+    outline: none;
+}
+
+.wpwe-result-service {
+    font-weight: 600;
+    color: #2271b1;
+}
+
+.wpwe-result-customer {
+    color: #1a2e45;
+}
+
+.wpwe-result-date {
+    color: #6b7a8d;
+    font-size: 0.825rem;
+    white-space: nowrap;
+}
+
+.wpwe-booking-no-results {
+    padding: 0.75rem 0.875rem;
+    color: #6b7a8d;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.wpwe-booking-selected {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.875rem;
+    background: #e8f5e9;
+    border: 1px solid #81c784;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.wpwe-booking-selected__badge {
+    flex: 1;
+    font-weight: 500;
+    color: #1a5c1a;
+}
+
+.wpwe-booking-clear-btn {
+    background: none;
+    border: 1px solid #81c784;
+    border-radius: 3px;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: #2e7d32;
+    transition: background 0.1s;
+}
+
+.wpwe-booking-clear-btn:hover {
+    background: #c8e6c9;
+}
+
+@media (max-width: 640px) {
+    .wpwe-booking-search__input-row {
+        flex-wrap: wrap;
+    }
+    .wpwe-booking-search-input {
+        max-width: 100%;
+        flex: 1 1 100%;
+    }
+    .wpwe-booking-date-picker {
+        flex: 1 1 auto;
+    }
+    .wpwe-booking-result-item {
+        grid-template-columns: 1fr;
+        gap: 0.2rem;
+    }
+    .wpwe-result-date {
+        font-size: 0.775rem;
+    }
+}

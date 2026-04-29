@@ -1,0 +1,11 @@
+# Composer dependencies – install via `composer install` after cloning
+/vendor/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
