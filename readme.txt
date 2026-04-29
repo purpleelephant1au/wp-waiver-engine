@@ -163,6 +163,18 @@ schema and PDF coordinate mappings. Import merges those into an existing
 template on another site while preserving its title, notification email,
 and other settings.
 
+= Can booking confirmation emails link directly to the pre-filled waiver form? =
+
+Yes. Append a `booking_id` query parameter to the waiver page URL and the
+customer's Amelia appointment will be automatically pre-selected when the
+page loads — no searching required. Example link for inclusion in a booking
+confirmation email:
+
+    https://yoursite.com/waiver-page/?booking_id=42
+
+This requires the Amelia integration to be enabled in **Waivers > Settings**
+and the template to have at least one linked Amelia service.
+
 == Changelog ==
 
 = 1.0.0 =
@@ -177,6 +189,8 @@ and other settings.
   check, IP rate limiting (configurable via Settings), optional CAPTCHA
   (reCAPTCHA v3 or hCaptcha, configurable globally and per-template),
   and manual PDF cleanup tool.
+* Amelia integration: support `?booking_id=N` URL parameter to pre-select
+  a booking on the waiver form (for use in booking confirmation email links).
 
 == Upgrade Notice ==
 

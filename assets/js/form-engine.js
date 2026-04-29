@@ -163,6 +163,34 @@
             if ( selectedEl ) selectedEl.hidden = true;
             widget.classList.remove( 'wpwe-booking-search--has-selection' );
         }
+
+        // Auto-select a booking when the page URL contains ?booking_id=N.
+        // This allows booking confirmation emails to link directly to the waiver
+        // form with the customer's appointment already pre-selected.
+        var urlParams    = new URLSearchParams( window.location.search );
+        var urlBookingId = parseInt( urlParams.get( 'booking_id' ), 10 );
+        var templateId   = widget.dataset.templateId || form.dataset.templateId || '';
+
+        if ( urlBookingId > 0 && templateId ) {
+            var preBody = new FormData();
+            preBody.append( 'action',      'wpwe_get_booking' );
+            preBody.append( 'nonce',       wpweForm.bookingNonce );
+            preBody.append( 'template_id', templateId );
+            preBody.append( 'booking_id',  urlBookingId );
+
+            fetch( wpweForm.ajaxUrl, {
+                method:      'POST',
+                credentials: 'same-origin',
+                body:        preBody,
+            } )
+            .then( function ( r ) { return r.json(); } )
+            .then( function ( resp ) {
+                if ( resp.success && resp.data ) {
+                    selectBooking( resp.data );
+                }
+            } )
+            .catch( function () { /* ignore; search widget remains available */ } );
+        }
     }
 
     // -------------------------------------------------------------------------

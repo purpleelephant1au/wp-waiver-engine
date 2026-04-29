@@ -20,6 +20,8 @@ class Entry_Handler {
         add_action( 'wp_ajax_nopriv_wpwe_preview_pdf',   [ $this, 'ajax_preview_pdf' ] );
         add_action( 'wp_ajax_wpwe_search_bookings',        [ $this, 'ajax_search_bookings' ] );
         add_action( 'wp_ajax_nopriv_wpwe_search_bookings', [ $this, 'ajax_search_bookings' ] );
+        add_action( 'wp_ajax_wpwe_get_booking',            [ $this, 'ajax_get_booking' ] );
+        add_action( 'wp_ajax_nopriv_wpwe_get_booking',     [ $this, 'ajax_get_booking' ] );
     }
 
     // -----------------------------------------------------------------------
@@ -279,6 +281,49 @@ class Entry_Handler {
         }, $results );
 
         wp_send_json_success( $output );
+    }
+
+    /**
+     * Fetch a single Amelia booking by appointment ID.
+     *
+     * Used when the waiver form URL contains a `?booking_id=N` parameter so the
+     * booking can be pre-selected without the customer having to search for it.
+     *
+     * Nonce: reuses `wpwe_search_bookings` so no extra localised nonce is needed.
+     */
+    public function ajax_get_booking(): void {
+        if ( ! Settings::is_amelia_enabled() ) {
+            wp_send_json_error( [ 'message' => __( 'Amelia integration not enabled.', 'wp-waiver-engine' ) ], 400 );
+        }
+
+        if ( ! isset( $_POST['nonce'] ) ||
+             ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpwe_search_bookings' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'wp-waiver-engine' ) ], 403 );
+        }
+
+        $booking_id  = isset( $_POST['booking_id'] )  ? absint( $_POST['booking_id'] )  : 0;
+        $template_id = isset( $_POST['template_id'] ) ? absint( $_POST['template_id'] ) : 0;
+
+        if ( ! $booking_id || ! $template_id ) {
+            wp_send_json_error( [ 'message' => __( 'Invalid request.', 'wp-waiver-engine' ) ], 400 );
+        }
+
+        $template = Database::get_template( $template_id );
+        if ( ! $template ) {
+            wp_send_json_error( [ 'message' => __( 'Template not found.', 'wp-waiver-engine' ) ], 404 );
+        }
+
+        $row = Integration_Amelia::get_booking( $booking_id );
+        if ( ! $row ) {
+            wp_send_json_error( [ 'message' => __( 'Booking not found.', 'wp-waiver-engine' ) ], 404 );
+        }
+
+        wp_send_json_success( [
+            'id'          => (int) $row->appointment_id,
+            'bookingDate' => wp_date( 'd/m/Y g:i a', strtotime( $row->bookingStart ) ),
+            'service'     => $row->service_name,
+            'customer'    => $row->firstName . ' ' . $row->lastName,
+        ] );
     }
 
     // -----------------------------------------------------------------------
