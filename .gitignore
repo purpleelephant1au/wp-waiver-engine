@@ -1,5 +1,8 @@
-# Composer dependencies – install via `composer install` after cloning
+# Composer dependencies – run `bin/build-release.ps1` or `composer install` to populate
 /vendor/
+
+# Release ZIPs produced by build-release.ps1
+/*.zip
 
 # OS files
 .DS_Store
