@@ -112,28 +112,37 @@ $AllFiles = Get-ChildItem -Path $PluginRoot -Recurse -File -Force | Where-Object
     -not $excluded
 }
 
-# Create a temp staging folder so the ZIP contains a single top-level folder
-$TempDir  = Join-Path ([System.IO.Path]::GetTempPath()) "wpwe-build-$Version"
-$StageDir = Join-Path $TempDir 'wp-waiver-engine'
+# Build ZIP using .NET ZipArchive so entry paths always use forward slashes.
+# Compress-Archive on Windows writes backslash paths, which breaks WordPress's
+# ZIP extractor (it checks for a trailing '/' to detect directories).
+Add-Type -Assembly 'System.IO.Compression'
+Add-Type -Assembly 'System.IO.Compression.FileSystem'
 
-if (Test-Path $TempDir) { Remove-Item $TempDir -Recurse -Force }
-New-Item -ItemType Directory -Path $StageDir | Out-Null
+$zipStream = [System.IO.File]::Open($ZipPath, [System.IO.FileMode]::Create)
+$archive   = New-Object System.IO.Compression.ZipArchive(
+    $zipStream,
+    [System.IO.Compression.ZipArchiveMode]::Create
+)
 
+$fileCount = 0
 foreach ($File in $AllFiles) {
-    $rel    = $File.FullName.Substring($PluginRoot.Length + 1)
-    $dest   = Join-Path $StageDir $rel
-    $destDir = Split-Path $dest -Parent
-    if (-not (Test-Path $destDir)) {
-        New-Item -ItemType Directory -Path $destDir | Out-Null
-    }
-    Copy-Item $File.FullName -Destination $dest
+    # Convert Windows backslashes → forward slashes and prefix with plugin folder
+    $rel       = $File.FullName.Substring($PluginRoot.Length + 1) -replace '\\', '/'
+    $entryName = "wp-waiver-engine/$rel"
+
+    $entry       = $archive.CreateEntry($entryName, [System.IO.Compression.CompressionLevel]::Optimal)
+    $entryStream = $entry.Open()
+    $fileStream  = [System.IO.File]::OpenRead($File.FullName)
+    $fileStream.CopyTo($entryStream)
+    $fileStream.Dispose()
+    $entryStream.Dispose()
+    $fileCount++
 }
 
-Write-Host "   Staged $($AllFiles.Count) files."
+$archive.Dispose()
+$zipStream.Dispose()
 
-# Compress
-Compress-Archive -Path (Join-Path $TempDir 'wp-waiver-engine') -DestinationPath $ZipPath
-Remove-Item $TempDir -Recurse -Force
+Write-Host "   Packed $fileCount files."
 
 Write-Host "`n[OK] Release ZIP created: $ZipName"
 Write-Host "  Path: $ZipPath"
