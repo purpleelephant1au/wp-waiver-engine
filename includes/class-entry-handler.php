@@ -32,6 +32,42 @@ class Entry_Handler {
             wp_send_json_error( [ 'message' => __( 'Security check failed.', 'wp-waiver-engine' ) ], 403 );
         }
 
+        // ----- Anti-bot: honeypot -----
+        // The field must exist AND be empty. If a bot fills it, reject silently.
+        if ( ! isset( $_POST['wpwe_hp'] ) || '' !== $_POST['wpwe_hp'] ) {
+            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'wp-waiver-engine' ) ], 403 );
+        }
+
+        // ----- Anti-bot: timing check -----
+        // Reject if form was submitted in under 3 seconds (bot speed) or token is invalid/expired (>2h).
+        $ts    = isset( $_POST['wpwe_ts'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['wpwe_ts'] ) ) : 0;
+        $ts_sig = isset( $_POST['wpwe_ts_sig'] ) ? sanitize_text_field( wp_unslash( $_POST['wpwe_ts_sig'] ) ) : '';
+        $expected_sig = hash_hmac( 'sha256', (string) $ts, wp_salt( 'nonce' ) );
+        $age   = time() - $ts;
+        if ( ! hash_equals( $expected_sig, $ts_sig ) || $age < 3 || $age > 7200 ) {
+            wp_send_json_error( [ 'message' => __( 'Submission rejected. Please reload the page and try again.', 'wp-waiver-engine' ) ], 429 );
+        }
+
+        // ----- Anti-bot: IP rate limiting -----
+        if ( Settings::is_rate_limit_enabled() ) {
+            $ip  = $this->get_ip();
+            $key = 'wpwe_rl_' . md5( $ip );
+            $max    = Settings::rate_limit_max();
+            $window = Settings::rate_limit_window() * MINUTE_IN_SECONDS;
+            $hits   = (int) get_transient( $key );
+            if ( $hits >= $max ) {
+                wp_send_json_error( [ 'message' => __( 'Too many submissions. Please wait a few minutes and try again.', 'wp-waiver-engine' ) ], 429 );
+            }
+            // Increment counter; set expiry only on first hit so the window is sliding.
+            if ( $hits === 0 ) {
+                set_transient( $key, 1, $window );
+            } else {
+                // get_transient doesn't return the remaining TTL, so we just update the value.
+                // The expiry was set on first hit and will naturally expire after the window.
+                set_transient( $key, $hits + 1, $window );
+            }
+        }
+
         $template_id = isset( $_POST['template_id'] ) ? absint( $_POST['template_id'] ) : 0;
         if ( ! $template_id ) {
             wp_send_json_error( [ 'message' => __( 'Invalid template.', 'wp-waiver-engine' ) ], 400 );

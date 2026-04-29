@@ -131,6 +131,9 @@ class Admin_Menu {
             case 'save_settings':
                 $this->action_save_settings();
                 break;
+            case 'cleanup_pdfs':
+                $this->action_cleanup_pdfs();
+                break;
             case 'export_mappings':
                 $this->action_export_mappings();
                 break;
@@ -393,7 +396,42 @@ class Admin_Menu {
         update_option( 'wpwe_amelia_enabled',      ! empty( $_POST['wpwe_amelia_enabled'] )      ? '1' : '' );
         update_option( 'wpwe_admin_email_enabled', ! empty( $_POST['wpwe_admin_email_enabled'] ) ? '1' : '' );
         update_option( 'wpwe_user_email_enabled',  ! empty( $_POST['wpwe_user_email_enabled'] )  ? '1' : '' );
+        update_option( 'wpwe_rate_limit_enabled',  ! empty( $_POST['wpwe_rate_limit_enabled'] )  ? '1' : '' );
+        update_option( 'wpwe_rate_limit_max',    max( 1, (int) ( $_POST['wpwe_rate_limit_max']    ?? 5  ) ) );
+        update_option( 'wpwe_rate_limit_window', max( 1, (int) ( $_POST['wpwe_rate_limit_window'] ?? 15 ) ) );
+        update_option( 'wpwe_pdf_retention_days', max( 1, (int) ( $_POST['wpwe_pdf_retention_days'] ?? 90 ) ) );
         wp_safe_redirect( admin_url( 'admin.php?page=wpwe-settings&wpwe_settings_saved=1' ) );
+        exit;
+    }
+
+    // -----------------------------------------------------------------------
+    // Action: cleanup old PDF files
+    // -----------------------------------------------------------------------
+
+    private function action_cleanup_pdfs(): void {
+        check_admin_referer( 'wpwe_cleanup_pdfs' );
+
+        // Save chosen retention days before running cleanup.
+        $retention_days = max( 1, (int) ( $_POST['wpwe_pdf_retention_days'] ?? 90 ) );
+        update_option( 'wpwe_pdf_retention_days', $retention_days );
+
+        $upload_dir = wp_upload_dir();
+        $pdf_dir    = $upload_dir['basedir'] . '/wpwe-pdfs';
+        $cutoff     = time() - ( $retention_days * DAY_IN_SECONDS );
+        $deleted    = 0;
+
+        if ( is_dir( $pdf_dir ) ) {
+            foreach ( new \DirectoryIterator( $pdf_dir ) as $file ) {
+                if ( $file->isFile() && $file->getMTime() < $cutoff ) {
+                    // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+                    if ( @unlink( $file->getPathname() ) ) {
+                        $deleted++;
+                    }
+                }
+            }
+        }
+
+        wp_safe_redirect( admin_url( 'admin.php?page=wpwe-settings&wpwe_cleanup_done=' . $deleted ) );
         exit;
     }
 

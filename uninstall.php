@@ -21,3 +21,7 @@ delete_option( 'wpwe_db_version' );
 delete_option( 'wpwe_amelia_enabled' );
 delete_option( 'wpwe_admin_email_enabled' );
 delete_option( 'wpwe_user_email_enabled' );
+delete_option( 'wpwe_rate_limit_enabled' );
+delete_option( 'wpwe_rate_limit_max' );
+delete_option( 'wpwe_rate_limit_window' );
+delete_option( 'wpwe_pdf_retention_days' );

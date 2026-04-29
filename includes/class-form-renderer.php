@@ -161,6 +161,19 @@ class Form_Renderer {
                 <?php wp_nonce_field( 'wpwe_submit_waiver', 'wpwe_nonce', false ); ?>
                 <input type="hidden" name="wpwe_booking_id" class="wpwe-booking-id-input" value="">
 
+                <?php
+                // Anti-bot: timing token (HMAC of timestamp; rejected server-side if < 3 s old)
+                $ts = time();
+                echo '<input type="hidden" name="wpwe_ts" value="' . esc_attr( $ts ) . '">';
+                echo '<input type="hidden" name="wpwe_ts_sig" value="' . esc_attr( hash_hmac( 'sha256', (string) $ts, wp_salt( 'nonce' ) ) ) . '">';
+                ?>
+
+                <?php /* Anti-bot honeypot: hidden with CSS; bots fill it, humans leave it blank */ ?>
+                <div class="wpwe-hp-field" aria-hidden="true" style="position:absolute;left:-9999px;height:0;overflow:hidden;" tabindex="-1">
+                    <label for="wpwe_hp_<?php echo $uid; ?>"><?php esc_html_e( 'Leave this field empty', 'wp-waiver-engine' ); ?></label>
+                    <input type="text" id="wpwe_hp_<?php echo $uid; ?>" name="wpwe_hp" value="" autocomplete="off" tabindex="-1" aria-hidden="true">
+                </div>
+
                 <?php foreach ( $schema['groups'] as $group ) :
                     $this->render_group( $group );
                 endforeach; ?>
