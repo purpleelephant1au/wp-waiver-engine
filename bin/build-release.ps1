@@ -81,6 +81,7 @@ $ExcludePatterns = @(
     '.git*',
     'bin*',
     'composer.*',
+    'instructions*',
     '*.zip'
 )
 
