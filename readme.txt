@@ -44,6 +44,46 @@ when Amelia is not installed.
 4. Upload a PDF template file, map form fields to PDF coordinates, and
    copy the `[waiver_form id="N"]` shortcode into any page or post.
 
+== Development & Building a Release ==
+
+The source repository does not include the `vendor/` directory (Composer
+dependencies). After cloning you must install them before the plugin will
+run locally.
+
+**Requirements:**
+
+* Git
+* PHP 8.0+
+* [Composer](https://getcomposer.org/download/)
+* PowerShell 5.1+ (Windows) or PowerShell 7+ (cross-platform)
+
+**Install dependencies after cloning:**
+
+    git clone https://github.com/purpleelephant1au/wp-waiver-engine.git
+    cd wp-waiver-engine
+    composer install
+
+**Build a production-ready release ZIP:**
+
+    .\bin\build-release.ps1
+
+The script will:
+
+1. Verify Composer is available on PATH.
+2. Run `composer install --no-dev --optimize-autoloader` to ensure
+   `vendor/` is present and contains only production dependencies.
+3. Read the version number automatically from the plugin header.
+4. Collect all plugin files (excluding `.git`, `bin/`, `composer.*`,
+   and any previously generated ZIPs).
+5. Bundle them under a top-level `wp-waiver-engine/` folder and output
+   `wp-waiver-engine-<version>.zip` at the repository root.
+
+The resulting ZIP is ready to upload via **WordPress Admin → Plugins →
+Add New → Upload Plugin**, or to submit to the WordPress.org plugin
+directory.
+
+Generated ZIP files are excluded from version control via `.gitignore`.
+
 == Frequently Asked Questions ==
 
 = Does this plugin require Amelia Booking? =
