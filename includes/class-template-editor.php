@@ -101,6 +101,7 @@ class Template_Editor {
         $notify           = $tpl ? $tpl->notification_email : '';
         $send_admin_email = $tpl ? (bool) ( $tpl->send_admin_email ?? 1 ) : true;
         $send_user_email  = $tpl ? (bool) ( $tpl->send_user_email  ?? 1 ) : true;
+        $captcha_enabled  = $tpl ? (bool) ( $tpl->captcha_enabled  ?? 0 ) : false;
         $active           = $tpl ? (bool) $tpl->active : true;
 
         $mapping_raw = $tpl ? $tpl->pdf_mapping : '';
@@ -245,6 +246,30 @@ class Template_Editor {
                                     </td>
                                 </tr>
                                 <?php endif; /* Settings::is_user_email_enabled() */ ?>
+                                <?php if ( Settings::captcha_provider() !== 'none' ) : ?>
+                                <tr>
+                                    <th><label for="wpwe_captcha_enabled"><?php esc_html_e( 'CAPTCHA', 'wp-waiver-engine' ); ?></label></th>
+                                    <td>
+                                        <input type="checkbox" id="wpwe_captcha_enabled" name="wpwe_captcha_enabled" value="1"
+                                               <?php checked( $captcha_enabled ); ?>>
+                                        <label for="wpwe_captcha_enabled">
+                                            <?php esc_html_e( 'Require CAPTCHA verification on this form', 'wp-waiver-engine' ); ?>
+                                        </label>
+                                        <p class="description">
+                                            <?php
+                                            $provider_label = Settings::captcha_provider() === 'recaptcha_v3'
+                                                ? __( 'Google reCAPTCHA v3', 'wp-waiver-engine' )
+                                                : __( 'hCaptcha', 'wp-waiver-engine' );
+                                            printf(
+                                                /* translators: CAPTCHA provider name */
+                                                esc_html__( 'When checked, %s will silently verify each submission. Global provider is configured in Settings.', 'wp-waiver-engine' ),
+                                                esc_html( $provider_label )
+                                            );
+                                            ?>
+                                        </p>
+                                    </td>
+                                </tr>
+                                <?php endif; /* captcha_provider !== 'none' */ ?>
                                 <tr>
                                     <th><label for="wpwe_active"><?php esc_html_e( 'Active', 'wp-waiver-engine' ); ?></label></th>
                                     <td>

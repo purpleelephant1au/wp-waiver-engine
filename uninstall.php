@@ -25,3 +25,6 @@ delete_option( 'wpwe_rate_limit_enabled' );
 delete_option( 'wpwe_rate_limit_max' );
 delete_option( 'wpwe_rate_limit_window' );
 delete_option( 'wpwe_pdf_retention_days' );
+delete_option( 'wpwe_captcha_provider' );
+delete_option( 'wpwe_captcha_site_key' );
+delete_option( 'wpwe_captcha_secret_key' );

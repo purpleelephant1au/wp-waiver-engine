@@ -7,6 +7,18 @@
     padding-top: 10px;
 }
 
+/* ── Tooltip icon ─────────────────────────────────────────────────────────── */
+.wpwe-tooltip.dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    color: #72777c;
+    margin-left: 4px;
+    cursor: help;
+}
+.wpwe-tooltip.dashicons:hover { color: #0073aa; }
+
 /* ── Compact summary bar (meta box) ──────────────────────────────────────── */
 .wpwe-mapper-summary {
     display: flex;

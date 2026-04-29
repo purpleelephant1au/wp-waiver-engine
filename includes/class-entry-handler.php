@@ -68,6 +68,25 @@ class Entry_Handler {
             }
         }
 
+        // ----- Anti-bot: CAPTCHA verification -----
+        // Must load template first so we can check per-template captcha_enabled flag.
+        // We do a lightweight load here and re-use it below.
+        $captcha_template_id = isset( $_POST['template_id'] ) ? absint( $_POST['template_id'] ) : 0;
+        if ( $captcha_template_id ) {
+            $captcha_tpl = Database::get_template( $captcha_template_id );
+            if ( $captcha_tpl ) {
+                $captcha_provider = Settings::captcha_provider();
+                if ( $captcha_provider !== 'none' && ! empty( $captcha_tpl->captcha_enabled ) ) {
+                    $captcha_token = isset( $_POST['wpwe_captcha_token'] )
+                        ? sanitize_text_field( wp_unslash( $_POST['wpwe_captcha_token'] ) )
+                        : '';
+                    if ( ! $this->verify_captcha( $captcha_token, $captcha_provider ) ) {
+                        wp_send_json_error( [ 'message' => __( 'CAPTCHA verification failed. Please reload the page and try again.', 'wp-waiver-engine' ) ], 403 );
+                    }
+                }
+            }
+        }
+
         $template_id = isset( $_POST['template_id'] ) ? absint( $_POST['template_id'] ) : 0;
         if ( ! $template_id ) {
             wp_send_json_error( [ 'message' => __( 'Invalid template.', 'wp-waiver-engine' ) ], 400 );
@@ -500,5 +519,70 @@ class Entry_Handler {
     private function get_ip(): string {
         // Basic IP retrieval; deliberately not trusting X-Forwarded-For without config
         return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+    }
+
+    /**
+     * Verify a CAPTCHA token server-side.
+     *
+     * Returns true on success or when the network request fails (fail-open to avoid
+     * false positives on connectivity issues). Returns false only on a confirmed
+     * invalid/missing token.
+     *
+     * @param string $token    Token from the frontend.
+     * @param string $provider 'recaptcha_v3' or 'hcaptcha'.
+     */
+    private function verify_captcha( string $token, string $provider ): bool {
+        if ( '' === $token ) {
+            return false;
+        }
+
+        $secret = Settings::captcha_secret_key();
+        if ( '' === $secret ) {
+            // No secret key configured – can't verify, fail open
+            return true;
+        }
+
+        if ( $provider === 'recaptcha_v3' ) {
+            $response = wp_remote_post(
+                'https://www.google.com/recaptcha/api/siteverify',
+                [
+                    'timeout' => 10,
+                    'body'    => [
+                        'secret'   => $secret,
+                        'response' => $token,
+                        'remoteip' => $this->get_ip(),
+                    ],
+                ]
+            );
+        } else { // hcaptcha
+            $response = wp_remote_post(
+                'https://api.hcaptcha.com/siteverify',
+                [
+                    'timeout' => 10,
+                    'body'    => [
+                        'secret'   => $secret,
+                        'response' => $token,
+                        'remoteip' => $this->get_ip(),
+                    ],
+                ]
+            );
+        }
+
+        // On network failure, fail open to avoid blocking legitimate users
+        if ( is_wp_error( $response ) ) {
+            return true;
+        }
+
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        if ( ! is_array( $body ) || empty( $body['success'] ) ) {
+            return false;
+        }
+
+        // reCAPTCHA v3 also returns a score; require >= 0.5
+        if ( $provider === 'recaptcha_v3' && isset( $body['score'] ) ) {
+            return ( (float) $body['score'] ) >= 0.5;
+        }
+
+        return true;
     }
 }

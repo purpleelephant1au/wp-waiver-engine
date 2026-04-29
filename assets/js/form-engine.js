@@ -504,7 +504,48 @@
             return;
         }
 
-        submitForm( form );
+        var tokenInput = form.querySelector( '.wpwe-captcha-token' );
+        var provider   = ( wpweForm.captchaProvider ) || 'none';
+
+        if ( ! tokenInput || provider === 'none' ) {
+            submitForm( form );
+            return;
+        }
+
+        // Obtain CAPTCHA token before submitting
+        var siteKey = wpweForm.captchaSiteKey || '';
+
+        if ( provider === 'recaptcha_v3' ) {
+            if ( typeof grecaptcha === 'undefined' ) {
+                submitForm( form ); // SDK not loaded – fail open
+                return;
+            }
+            grecaptcha.ready( function () {
+                grecaptcha.execute( siteKey, { action: 'waiver' } )
+                    .then( function ( token ) {
+                        tokenInput.value = token;
+                        submitForm( form );
+                    } )
+                    .catch( function () {
+                        submitForm( form ); // fail open on execute error
+                    } );
+            } );
+        } else if ( provider === 'hcaptcha' ) {
+            if ( typeof hcaptcha === 'undefined' ) {
+                submitForm( form ); // SDK not loaded – fail open
+                return;
+            }
+            hcaptcha.execute( { sitekey: siteKey } )
+                .then( function ( result ) {
+                    tokenInput.value = result.response || result;
+                    submitForm( form );
+                } )
+                .catch( function () {
+                    submitForm( form ); // fail open on execute error
+                } );
+        } else {
+            submitForm( form );
+        }
     }
 
     function submitForm( form ) {

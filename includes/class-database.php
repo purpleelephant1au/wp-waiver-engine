@@ -14,7 +14,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class Database {
 
-    const DB_VERSION = '1.2';
+    const DB_VERSION = '1.3';
 
     // -----------------------------------------------------------------------
     // Table name helpers
@@ -65,6 +65,7 @@ CREATE TABLE $templates (
   amelia_service_ids  TEXT,
   send_admin_email    TINYINT(1)          NOT NULL DEFAULT 1,
   send_user_email     TINYINT(1)          NOT NULL DEFAULT 1,
+  captcha_enabled     TINYINT(1)          NOT NULL DEFAULT 0,
   active              TINYINT(1)          NOT NULL DEFAULT 1,
   created_at          DATETIME            NOT NULL DEFAULT '0000-00-00 00:00:00',
   updated_at          DATETIME            NOT NULL DEFAULT '0000-00-00 00:00:00',
@@ -116,6 +117,16 @@ CREATE TABLE $entries (
             $has_user_email = $wpdb->get_results( "SHOW COLUMNS FROM $templates LIKE 'send_user_email'" );
             if ( empty( $has_user_email ) ) {
                 $wpdb->query( "ALTER TABLE $templates ADD COLUMN send_user_email TINYINT(1) NOT NULL DEFAULT 1 AFTER send_admin_email" );
+            }
+            // phpcs:enable
+        }
+
+        // ── v1.3 live-site column migrations ────────────────────────────────
+        if ( version_compare( $current_version, '1.3', '<' ) ) {
+            // phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+            $has_captcha = $wpdb->get_results( "SHOW COLUMNS FROM $templates LIKE 'captcha_enabled'" );
+            if ( empty( $has_captcha ) ) {
+                $wpdb->query( "ALTER TABLE $templates ADD COLUMN captcha_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER send_user_email" );
             }
             // phpcs:enable
         }
@@ -352,11 +363,12 @@ CREATE TABLE $entries (
             'amelia_service_ids' => wp_json_encode( $service_ids ),
             'send_admin_email'   => array_key_exists( 'send_admin_email', $data ) ? ( $data['send_admin_email'] ? 1 : 0 ) : 1,
             'send_user_email'    => array_key_exists( 'send_user_email', $data )  ? ( $data['send_user_email']  ? 1 : 0 ) : 1,
+            'captcha_enabled'    => array_key_exists( 'captcha_enabled', $data )  ? ( $data['captcha_enabled']  ? 1 : 0 ) : 0,
             'active'             => empty( $data['active'] ) ? 0 : 1,
         ];
     }
 
     private static function template_formats(): array {
-        return [ '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%s', '%s' ];
+        return [ '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%s', '%s' ];
     }
 }

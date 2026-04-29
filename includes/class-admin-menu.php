@@ -208,6 +208,7 @@ class Admin_Menu {
             'notification_email' => isset( $_POST['wpwe_notification_email'] ) ? sanitize_email( wp_unslash( $_POST['wpwe_notification_email'] ) ) : '',
             'send_admin_email'   => ! empty( $_POST['wpwe_send_admin_email'] ) ? 1 : 0,
             'send_user_email'    => ! empty( $_POST['wpwe_send_user_email'] )  ? 1 : 0,
+            'captcha_enabled'    => ! empty( $_POST['wpwe_captcha_enabled'] )  ? 1 : 0,
             'amelia_service_ids' => array_values( $raw_amelia_ids ),
             'active'             => ! empty( $_POST['wpwe_active'] ) ? 1 : 0,
             'field_schema'       => wp_json_encode( $schema ),
@@ -400,6 +401,13 @@ class Admin_Menu {
         update_option( 'wpwe_rate_limit_max',    max( 1, (int) ( $_POST['wpwe_rate_limit_max']    ?? 5  ) ) );
         update_option( 'wpwe_rate_limit_window', max( 1, (int) ( $_POST['wpwe_rate_limit_window'] ?? 15 ) ) );
         update_option( 'wpwe_pdf_retention_days', max( 1, (int) ( $_POST['wpwe_pdf_retention_days'] ?? 90 ) ) );
+        $captcha_provider = isset( $_POST['wpwe_captcha_provider'] ) ? sanitize_text_field( wp_unslash( $_POST['wpwe_captcha_provider'] ) ) : 'none';
+        if ( ! in_array( $captcha_provider, [ 'none', 'recaptcha_v3', 'hcaptcha' ], true ) ) {
+            $captcha_provider = 'none';
+        }
+        update_option( 'wpwe_captcha_provider',   $captcha_provider );
+        update_option( 'wpwe_captcha_site_key',   isset( $_POST['wpwe_captcha_site_key'] )   ? sanitize_text_field( wp_unslash( $_POST['wpwe_captcha_site_key'] ) )   : '' );
+        update_option( 'wpwe_captcha_secret_key', isset( $_POST['wpwe_captcha_secret_key'] ) ? sanitize_text_field( wp_unslash( $_POST['wpwe_captcha_secret_key'] ) ) : '' );
         wp_safe_redirect( admin_url( 'admin.php?page=wpwe-settings&wpwe_settings_saved=1' ) );
         exit;
     }

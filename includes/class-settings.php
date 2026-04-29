@@ -14,6 +14,9 @@ defined( 'ABSPATH' ) || exit;
  *   wpwe_rate_limit_max       – int, max submissions per window – defaults to 5.
  *   wpwe_rate_limit_window    – int, window in minutes – defaults to 15.
  *   wpwe_pdf_retention_days   – int, days retained for manual cleanup tool – defaults to 90.
+ *   wpwe_captcha_provider     – 'none' | 'recaptcha_v3' | 'hcaptcha' – defaults to 'none'.
+ *   wpwe_captcha_site_key     – string, published site key.
+ *   wpwe_captcha_secret_key   – string, server-side secret key.
  *
  * Amelia settings are only saved/displayed when Amelia is detected by
  * Integration_Manager::is_amelia_active().
@@ -27,6 +30,9 @@ class Settings {
     const OPTION_RATE_LIMIT_MAX      = 'wpwe_rate_limit_max';
     const OPTION_RATE_LIMIT_WINDOW   = 'wpwe_rate_limit_window';
     const OPTION_PDF_RETENTION_DAYS  = 'wpwe_pdf_retention_days';
+    const OPTION_CAPTCHA_PROVIDER    = 'wpwe_captcha_provider';
+    const OPTION_CAPTCHA_SITE_KEY    = 'wpwe_captcha_site_key';
+    const OPTION_CAPTCHA_SECRET_KEY  = 'wpwe_captcha_secret_key';
 
     /**
      * Returns true when the Amelia booking integration is enabled.
@@ -82,6 +88,28 @@ class Settings {
         return max( 1, (int) get_option( self::OPTION_PDF_RETENTION_DAYS, 90 ) );
     }
 
+    /**
+     * CAPTCHA provider: 'none' (default), 'recaptcha_v3', or 'hcaptcha'.
+     */
+    public static function captcha_provider(): string {
+        $val = (string) get_option( self::OPTION_CAPTCHA_PROVIDER, 'none' );
+        return in_array( $val, [ 'none', 'recaptcha_v3', 'hcaptcha' ], true ) ? $val : 'none';
+    }
+
+    /**
+     * CAPTCHA public site key.
+     */
+    public static function captcha_site_key(): string {
+        return (string) get_option( self::OPTION_CAPTCHA_SITE_KEY, '' );
+    }
+
+    /**
+     * CAPTCHA server-side secret key (never exposed to the browser).
+     */
+    public static function captcha_secret_key(): string {
+        return (string) get_option( self::OPTION_CAPTCHA_SECRET_KEY, '' );
+    }
+
     // -----------------------------------------------------------------------
     // Settings page
     // -----------------------------------------------------------------------
@@ -118,7 +146,11 @@ class Settings {
 
                 <table class="form-table" role="presentation">
                     <tr>
-                        <th scope="row"><?php esc_html_e( 'Amelia Integration', 'wp-waiver-engine' ); ?></th>
+                        <th scope="row">
+                            <?php esc_html_e( 'Amelia Integration', 'wp-waiver-engine' ); ?>
+                            <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                                  title="<?php esc_attr_e( 'Connect Waiver Engine with the Amelia Booking plugin. When active, a booking-search widget appears on waiver forms so customers can link their submission to an existing appointment.', 'wp-waiver-engine' ); ?>"></span>
+                        </th>
                         <td>
                         <?php if ( Integration_Manager::is_amelia_active() ) : ?>
                             <fieldset>
@@ -139,7 +171,11 @@ class Settings {
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e( 'Admin Notification Emails', 'wp-waiver-engine' ); ?></th>
+                        <th scope="row">
+                            <?php esc_html_e( 'Admin Notification Emails', 'wp-waiver-engine' ); ?>
+                            <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                                  title="<?php esc_attr_e( 'When enabled, the notification address receives an email with the PDF attached each time a waiver is submitted. Can also be toggled per-template in the template editor.', 'wp-waiver-engine' ); ?>"></span>
+                        </th>
                         <td>
                             <fieldset>
                                 <label>
@@ -154,7 +190,11 @@ class Settings {
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e( 'Submitter Copy Emails', 'wp-waiver-engine' ); ?></th>
+                        <th scope="row">
+                            <?php esc_html_e( 'Submitter Copy Emails', 'wp-waiver-engine' ); ?>
+                            <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                                  title="<?php esc_attr_e( 'When enabled, an opt-in checkbox appears on waiver forms so submitters can request a PDF copy by email. Can also be toggled per-template.', 'wp-waiver-engine' ); ?>"></span>
+                        </th>
                         <td>
                             <fieldset>
                                 <label>
@@ -171,7 +211,11 @@ class Settings {
 
                     <!-- ── Submission rate limiting ── -->
                     <tr>
-                        <th scope="row"><?php esc_html_e( 'Submission Rate Limiting', 'wp-waiver-engine' ); ?></th>
+                        <th scope="row">
+                            <?php esc_html_e( 'Submission Rate Limiting', 'wp-waiver-engine' ); ?>
+                            <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                                  title="<?php esc_attr_e( 'Limits how many waivers a single IP address can submit within a rolling time window. Protects against bots flooding PDFs to disk. Uses WordPress transients — no extra database tables needed.', 'wp-waiver-engine' ); ?>"></span>
+                        </th>
                         <td>
                             <fieldset>
                                 <label>
@@ -203,7 +247,68 @@ class Settings {
                             </fieldset>
                         </td>
                     </tr>
+
+                    <!-- ── CAPTCHA ── -->
+                    <tr>
+                        <th scope="row">
+                            <?php esc_html_e( 'CAPTCHA', 'wp-waiver-engine' ); ?>
+                            <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                                  title="<?php esc_attr_e( 'Add an invisible CAPTCHA challenge to waiver forms to block automated bots. Choose a provider, enter your API keys, then enable CAPTCHA per-template in the template editor. Defaults to OFF.', 'wp-waiver-engine' ); ?>"></span>
+                        </th>
+                        <td>
+                            <fieldset>
+                                <label for="wpwe_captcha_provider"><?php esc_html_e( 'Provider:', 'wp-waiver-engine' ); ?></label>
+                                <select id="wpwe_captcha_provider" name="wpwe_captcha_provider">
+                                    <option value="none" <?php selected( self::captcha_provider(), 'none' ); ?>>
+                                        <?php esc_html_e( 'None (disabled)', 'wp-waiver-engine' ); ?>
+                                    </option>
+                                    <option value="recaptcha_v3" <?php selected( self::captcha_provider(), 'recaptcha_v3' ); ?>>
+                                        <?php esc_html_e( 'Google reCAPTCHA v3 (invisible)', 'wp-waiver-engine' ); ?>
+                                    </option>
+                                    <option value="hcaptcha" <?php selected( self::captcha_provider(), 'hcaptcha' ); ?>>
+                                        <?php esc_html_e( 'hCaptcha (invisible)', 'wp-waiver-engine' ); ?>
+                                    </option>
+                                </select>
+                                <p class="description">
+                                    <?php esc_html_e( 'reCAPTCHA v3: register at google.com/recaptcha. hCaptcha: register at hcaptcha.com. Both are invisible to users; scoring happens server-side.', 'wp-waiver-engine' ); ?>
+                                </p>
+
+                                <div id="wpwe-captcha-keys" <?php echo self::captcha_provider() === 'none' ? 'style="display:none;"' : ''; ?>>
+                                    <br>
+                                    <label for="wpwe_captcha_site_key">
+                                        <?php esc_html_e( 'Site Key (public):', 'wp-waiver-engine' ); ?>
+                                        <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                                              title="<?php esc_attr_e( 'The public key embedded in the page HTML. Obtained from your CAPTCHA provider\'s dashboard.', 'wp-waiver-engine' ); ?>"></span>
+                                    </label><br>
+                                    <input type="text" id="wpwe_captcha_site_key" name="wpwe_captcha_site_key"
+                                           value="<?php echo esc_attr( self::captcha_site_key() ); ?>"
+                                           class="regular-text" autocomplete="off">
+                                    <br><br>
+                                    <label for="wpwe_captcha_secret_key">
+                                        <?php esc_html_e( 'Secret Key (private):', 'wp-waiver-engine' ); ?>
+                                        <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                                              title="<?php esc_attr_e( 'The private key used server-side to verify tokens. Never exposed to the browser. Keep this confidential.', 'wp-waiver-engine' ); ?>"></span>
+                                    </label><br>
+                                    <input type="password" id="wpwe_captcha_secret_key" name="wpwe_captcha_secret_key"
+                                           value="<?php echo esc_attr( self::captcha_secret_key() ); ?>"
+                                           class="regular-text" autocomplete="off">
+                                </div>
+                            </fieldset>
+                        </td>
+                    </tr>
                 </table>
+
+                <script>
+                (function() {
+                    var sel  = document.getElementById('wpwe_captcha_provider');
+                    var wrap = document.getElementById('wpwe-captcha-keys');
+                    if ( sel && wrap ) {
+                        sel.addEventListener('change', function() {
+                            wrap.style.display = this.value === 'none' ? 'none' : '';
+                        });
+                    }
+                })();
+                </script>
 
                 <p class="submit">
                     <button type="submit" class="button button-primary">

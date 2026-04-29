@@ -84,6 +84,62 @@ directory.
 
 Generated ZIP files are excluded from version control via `.gitignore`.
 
+== Security ==
+
+WP Waiver Engine implements multiple layers of protection against automated
+abuse and bot submissions:
+
+**1. WordPress Nonce (CSRF protection)**
+Every form submission is validated against a standard WordPress nonce
+(`wp_verify_nonce`). Requests without a valid nonce are rejected with HTTP 403.
+
+**2. Honeypot Field**
+A hidden text input is rendered off-screen (CSS `position:absolute; left:-9999px`)
+and labelled with `aria-hidden="true"`. The field must exist and be completely
+empty. Bots that auto-fill all inputs will be silently rejected.
+
+**3. Timing Check**
+On page load, the form records a HMAC-SHA256-signed timestamp (using WordPress's
+`wp_salt('nonce')` as the key). On submission the signature is verified and the
+elapsed time is checked: submissions faster than 3 seconds or older than 2 hours
+are rejected with HTTP 429. This prevents replay attacks and trivially fast bot
+submissions.
+
+**4. IP Rate Limiting**
+A sliding-window rate limiter (implemented using WordPress transients) limits how
+many waivers a single IP address can submit within a configurable time window.
+Defaults to 5 submissions per 15 minutes. Configurable in **Waivers > Settings**.
+Can be disabled independently if another rate-limiting layer exists.
+
+**5. CAPTCHA (optional)**
+An invisible CAPTCHA challenge can be added to waiver forms for additional
+protection. Supported providers:
+
+* **Google reCAPTCHA v3** – invisible scoring model. A score of ≥ 0.5 is
+  required. Register your keys at https://www.google.com/recaptcha/admin.
+* **hCaptcha (invisible)** – privacy-respecting alternative. Register at
+  https://www.hcaptcha.com/signup-interstitial.
+
+Configuration steps:
+
+1. Go to **Waivers > Settings** and choose a CAPTCHA provider.
+2. Enter the **Site Key** (public) and **Secret Key** (private) from your
+   provider's dashboard.
+3. Open any template in **Waivers > Templates > Edit** and check **Require
+   CAPTCHA verification on this form**.
+
+The CAPTCHA toggle defaults to OFF globally. Individual templates also default
+to OFF even when a provider is configured, so you can roll out selectively.
+
+Token verification happens entirely server-side via `wp_remote_post()` to the
+provider's verify endpoint. The secret key is never exposed in browser output.
+
+**6. PDF File Cleanup**
+The **PDF File Cleanup** tool in Settings lets you permanently delete generated
+PDFs older than a chosen number of days. PDFs older than the threshold are
+removed from disk; database entry records are preserved. This reduces disk
+footprint and limits the blast radius of any hypothetical file-disclosure issue.
+
 == Frequently Asked Questions ==
 
 = Does this plugin require Amelia Booking? =
@@ -117,6 +173,10 @@ and other settings.
 * Amelia Booking integration (auto-detected, opt-in via Settings).
 * Admin and submitter email notifications, configurable per template.
 * Import / export of template field-to-PDF mappings.
+* Security: WordPress nonce validation, honeypot field, HMAC-signed timing
+  check, IP rate limiting (configurable via Settings), optional CAPTCHA
+  (reCAPTCHA v3 or hCaptcha, configurable globally and per-template),
+  and manual PDF cleanup tool.
 
 == Upgrade Notice ==
 

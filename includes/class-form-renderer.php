@@ -38,10 +38,12 @@ class Form_Renderer {
             true
         );
         wp_localize_script( 'wpwe-form-engine', 'wpweForm', [
-            'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
-            'nonce'         => wp_create_nonce( 'wpwe_submit_waiver' ),
-            'previewNonce'  => wp_create_nonce( 'wpwe_preview_pdf' ),
-            'bookingNonce'  => wp_create_nonce( 'wpwe_search_bookings' ),
+            'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+            'nonce'           => wp_create_nonce( 'wpwe_submit_waiver' ),
+            'previewNonce'    => wp_create_nonce( 'wpwe_preview_pdf' ),
+            'bookingNonce'    => wp_create_nonce( 'wpwe_search_bookings' ),
+            'captchaProvider' => Settings::captcha_provider(),
+            'captchaSiteKey'  => Settings::captcha_site_key(),
             'i18n'          => [
                 'submitting'          => __( 'Submitting…', 'wp-waiver-engine' ),
                 'success'             => __( 'Thank you! Your waiver has been submitted.', 'wp-waiver-engine' ),
@@ -70,6 +72,27 @@ class Form_Renderer {
             [],
             WPWE_VERSION
         );
+
+        // Conditionally enqueue CAPTCHA SDKs (only when a provider is configured)
+        $captcha_provider = Settings::captcha_provider();
+        $captcha_site_key = Settings::captcha_site_key();
+        if ( $captcha_provider === 'recaptcha_v3' && $captcha_site_key ) {
+            wp_enqueue_script(
+                'google-recaptcha',
+                'https://www.google.com/recaptcha/api.js?render=' . rawurlencode( $captcha_site_key ),
+                [],
+                null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+                true
+            );
+        } elseif ( $captcha_provider === 'hcaptcha' && $captcha_site_key ) {
+            wp_enqueue_script(
+                'hcaptcha',
+                'https://js.hcaptcha.com/1/api.js',
+                [],
+                null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+                true
+            );
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -107,7 +130,8 @@ class Form_Renderer {
 
         ob_start();
         $allow_copy_email = Settings::is_user_email_enabled() && ! empty( $template->send_user_email );
-        $this->render_form( $template_id, $template->title, $schema, $template->output_mode ?? 'single', $amelia_services, $allow_copy_email );
+        $captcha_active   = Settings::captcha_provider() !== 'none' && ! empty( $template->captcha_enabled );
+        $this->render_form( $template_id, $template->title, $schema, $template->output_mode ?? 'single', $amelia_services, $allow_copy_email, $captcha_active );
         return ob_get_clean();
     }
 
@@ -115,7 +139,7 @@ class Form_Renderer {
     // Render Form
     // -----------------------------------------------------------------------
 
-    private function render_form( int $template_id, string $title, array $schema, string $output_mode = 'single', array $amelia_services = [], bool $allow_copy_email = true ): void {
+    private function render_form( int $template_id, string $title, array $schema, string $output_mode = 'single', array $amelia_services = [], bool $allow_copy_email = true, bool $captcha_active = false ): void {
         $uid             = esc_attr( $template_id );
         $services_json   = esc_attr( wp_json_encode( $amelia_services ) );
         $has_booking_svc = ! empty( $amelia_services );
@@ -160,6 +184,10 @@ class Form_Renderer {
 
                 <?php wp_nonce_field( 'wpwe_submit_waiver', 'wpwe_nonce', false ); ?>
                 <input type="hidden" name="wpwe_booking_id" class="wpwe-booking-id-input" value="">
+
+                <?php if ( $captcha_active ) : ?>
+                <input type="hidden" name="wpwe_captcha_token" class="wpwe-captcha-token" value="">
+                <?php endif; ?>
 
                 <?php
                 // Anti-bot: timing token (HMAC of timestamp; rejected server-side if < 3 s old)
