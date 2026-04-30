@@ -79,6 +79,8 @@ $ExcludeRelative = @(
 # Patterns applied with -like against the relative path
 $ExcludePatterns = @(
     '.git*',
+    '.tmp-phpini*',
+    '.release-stage*',
     'bin*',
     'composer.*',
     'instructions*',

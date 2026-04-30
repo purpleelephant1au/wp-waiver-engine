@@ -171,7 +171,7 @@ email they used in Amelia. Optionally include `booking_email` as a convenience
 parameter. Example links for inclusion in booking confirmation emails:
 
     https://yoursite.com/waiver-page/?booking_id=42
-   https://yoursite.com/waiver-page/?booking_id=42&booking_email=customer@example.com
+  https://yoursite.com/waiver-page/?booking_id=42&booking_email=customer@example.com
 
 This requires the Amelia integration to be enabled in **Waivers > Settings**
 and the template to have at least one linked Amelia service.
