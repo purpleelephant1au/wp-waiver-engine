@@ -59,9 +59,9 @@ class Form_Renderer {
                 'confirmSubmit'       => __( 'Confirm & Submit', 'wp-waiver-engine' ),
                 'notSigned'           => __( 'Not signed', 'wp-waiver-engine' ),
                 'bookingSearchLabel'  => __( 'Find your booking', 'wp-waiver-engine' ),
-                'bookingSearchHint'   => __( 'Search by customer name or date (YYYY-MM-DD)', 'wp-waiver-engine' ),
-                'bookingSearching'    => __( 'Searching…', 'wp-waiver-engine' ),
-                'bookingNoResults'    => __( 'No upcoming bookings found.', 'wp-waiver-engine' ),
+                'bookingSearchHint'   => __( 'Enter booking ID and booking email to verify.', 'wp-waiver-engine' ),
+                'bookingSearching'    => __( 'Verifying…', 'wp-waiver-engine' ),
+                'bookingNoResults'    => __( 'Booking not found or details do not match.', 'wp-waiver-engine' ),
                 'bookingSelected'     => __( 'Booking selected:', 'wp-waiver-engine' ),
                 'bookingClear'        => __( 'Change', 'wp-waiver-engine' ),
             ],
@@ -153,23 +153,26 @@ class Form_Renderer {
             <!-- Booking search widget -->
             <div class="wpwe-booking-search" data-amelia-services="<?php echo $services_json; ?>" data-template-id="<?php echo $uid; ?>">
                 <div class="wpwe-booking-search__header">
-                    <span class="wpwe-booking-search__label"><?php esc_html_e( 'Find your booking', 'wp-waiver-engine' ); ?></span>
-                    <span class="wpwe-booking-search__hint"><?php esc_html_e( 'Search by customer name or pick a date', 'wp-waiver-engine' ); ?></span>
+                    <span class="wpwe-booking-search__label"><?php esc_html_e( 'Verify your booking', 'wp-waiver-engine' ); ?></span>
+                    <span class="wpwe-booking-search__hint"><?php esc_html_e( 'Enter your booking ID and the same email used in the booking.', 'wp-waiver-engine' ); ?></span>
                 </div>
                 <div class="wpwe-booking-search__input-row">
-                    <input type="text"
-                           class="wpwe-booking-search-input"
-                           placeholder="<?php esc_attr_e( 'e.g. Jane Smith', 'wp-waiver-engine' ); ?>"
-                           autocomplete="off"
-                           aria-label="<?php esc_attr_e( 'Search bookings by name', 'wp-waiver-engine' ); ?>">
-                    <span class="wpwe-booking-search__or"><?php esc_html_e( 'or pick a date:', 'wp-waiver-engine' ); ?></span>
-                    <input type="date"
-                           class="wpwe-booking-date-picker"
-                           title="<?php esc_attr_e( 'Pick a booking date', 'wp-waiver-engine' ); ?>"
-                           aria-label="<?php esc_attr_e( 'Pick a booking date', 'wp-waiver-engine' ); ?>">
-                    <span class="wpwe-booking-searching" hidden><?php esc_html_e( 'Searching…', 'wp-waiver-engine' ); ?></span>
+                    <input type="number"
+                           class="wpwe-booking-id-lookup"
+                           placeholder="<?php esc_attr_e( 'Booking ID (e.g. 123)', 'wp-waiver-engine' ); ?>"
+                           min="1"
+                           step="1"
+                           inputmode="numeric"
+                           aria-label="<?php esc_attr_e( 'Booking ID', 'wp-waiver-engine' ); ?>">
+                    <input type="email"
+                           class="wpwe-booking-email-lookup"
+                           placeholder="<?php esc_attr_e( 'Booking email', 'wp-waiver-engine' ); ?>"
+                           autocomplete="email"
+                           aria-label="<?php esc_attr_e( 'Booking email', 'wp-waiver-engine' ); ?>">
+                    <button type="button" class="wpwe-booking-verify-btn"><?php esc_html_e( 'Verify', 'wp-waiver-engine' ); ?></button>
+                    <span class="wpwe-booking-searching" hidden><?php esc_html_e( 'Verifying…', 'wp-waiver-engine' ); ?></span>
                 </div>
-                <ul class="wpwe-booking-results" hidden role="listbox" aria-label="<?php esc_attr_e( 'Booking results', 'wp-waiver-engine' ); ?>"></ul>
+                <div class="wpwe-booking-search-error" hidden></div>
                 <div class="wpwe-booking-selected" hidden>
                     <span class="wpwe-booking-selected__badge"></span>
                     <button type="button" class="wpwe-booking-clear-btn"><?php esc_html_e( 'Change', 'wp-waiver-engine' ); ?></button>

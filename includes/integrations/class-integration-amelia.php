@@ -72,10 +72,12 @@ class Integration_Amelia {
             $wpdb->prepare(
                 "SELECT
                     a.id      AS appointment_id,
+                    a.serviceId AS service_id,
                     a.bookingStart,
                     s.name    AS service_name,
                     u.firstName,
-                    u.lastName
+                    u.lastName,
+                    u.email   AS customer_email
                  FROM {$appt} a
                  JOIN {$books} cb ON cb.appointmentId = a.id
                  JOIN {$svc}   s  ON s.id = a.serviceId

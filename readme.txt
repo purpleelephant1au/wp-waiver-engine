@@ -165,15 +165,47 @@ and other settings.
 
 = Can booking confirmation emails link directly to the pre-filled waiver form? =
 
-Yes. Append a `booking_id` query parameter to the waiver page URL and the
-customer's Amelia appointment will be automatically pre-selected when the
-page loads — no searching required. Example link for inclusion in a booking
-confirmation email:
+Yes. Append a `booking_id` query parameter to the waiver page URL to pre-fill
+the booking ID field, and ask the customer to confirm using the same booking
+email they used in Amelia. Optionally include `booking_email` as a convenience
+parameter. Example links for inclusion in booking confirmation emails:
 
     https://yoursite.com/waiver-page/?booking_id=42
+   https://yoursite.com/waiver-page/?booking_id=42&booking_email=customer@example.com
 
 This requires the Amelia integration to be enabled in **Waivers > Settings**
 and the template to have at least one linked Amelia service.
+
+== WordPress.org Submission Checklist (One Pass) ==
+
+Run this checklist before uploading your first SVN commit:
+
+1. Clean package contents:
+  - include runtime plugin files only
+  - exclude `.git/`, build scripts, local docs, test fixtures, and release ZIP artifacts
+2. Verify plugin header and readme consistency:
+  - plugin `Version` matches `Stable tag`
+  - `Requires at least`, `Tested up to`, `Requires PHP` are accurate
+3. Verify licenses:
+  - plugin is GPL-compatible
+  - third-party libraries in `vendor/` include compatible licenses
+4. Run security checks:
+  - all state-changing admin actions use nonce + capability checks
+  - sanitize all input, escape all output, prepare SQL queries
+5. Verify privacy behavior:
+  - no public endpoints expose customer PII via open search
+  - booking lookup requires booking ID + matching booking email
+6. Test on clean WordPress install:
+  - activate/deactivate/uninstall
+  - create template, submit waiver, generate/download PDF, send emails
+  - test with Amelia both enabled and disabled
+7. Run plugin quality checks:
+  - WordPress Plugin Check plugin
+  - PHPCS with WordPress coding standards (recommended)
+8. Final smoke test:
+  - frontend waiver flow works
+  - admin list/detail screens load
+  - no PHP warnings/notices in debug log
 
 == Changelog ==
 

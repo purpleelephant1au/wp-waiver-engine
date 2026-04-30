@@ -19,7 +19,6 @@ class Entry_Handler {
         add_action( 'wp_ajax_wpwe_preview_pdf',          [ $this, 'ajax_preview_pdf' ] );
         add_action( 'wp_ajax_nopriv_wpwe_preview_pdf',   [ $this, 'ajax_preview_pdf' ] );
         add_action( 'wp_ajax_wpwe_search_bookings',        [ $this, 'ajax_search_bookings' ] );
-        add_action( 'wp_ajax_nopriv_wpwe_search_bookings', [ $this, 'ajax_search_bookings' ] );
         add_action( 'wp_ajax_wpwe_get_booking',            [ $this, 'ajax_get_booking' ] );
         add_action( 'wp_ajax_nopriv_wpwe_get_booking',     [ $this, 'ajax_get_booking' ] );
     }
@@ -243,6 +242,10 @@ class Entry_Handler {
     // -----------------------------------------------------------------------
 
     public function ajax_search_bookings(): void {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => __( 'Access denied.', 'wp-waiver-engine' ) ], 403 );
+        }
+
         if ( ! Settings::is_amelia_enabled() ) {
             wp_send_json_success( [] ); // Amelia integration is disabled
         }
@@ -303,8 +306,11 @@ class Entry_Handler {
 
         $booking_id  = isset( $_POST['booking_id'] )  ? absint( $_POST['booking_id'] )  : 0;
         $template_id = isset( $_POST['template_id'] ) ? absint( $_POST['template_id'] ) : 0;
+        $customer_email = isset( $_POST['customer_email'] )
+            ? sanitize_email( wp_unslash( $_POST['customer_email'] ) )
+            : '';
 
-        if ( ! $booking_id || ! $template_id ) {
+        if ( ! $booking_id || ! $template_id || ! is_email( $customer_email ) ) {
             wp_send_json_error( [ 'message' => __( 'Invalid request.', 'wp-waiver-engine' ) ], 400 );
         }
 
@@ -315,6 +321,18 @@ class Entry_Handler {
 
         $row = Integration_Amelia::get_booking( $booking_id );
         if ( ! $row ) {
+            wp_send_json_error( [ 'message' => __( 'Booking not found.', 'wp-waiver-engine' ) ], 404 );
+        }
+
+        $service_ids = json_decode( $template->amelia_service_ids ?? '', true ) ?: [];
+        $service_ids = array_map( 'intval', $service_ids );
+
+        if ( $service_ids && ! in_array( (int) $row->service_id, $service_ids, true ) ) {
+            wp_send_json_error( [ 'message' => __( 'Booking not found.', 'wp-waiver-engine' ) ], 404 );
+        }
+
+        $stored_email = isset( $row->customer_email ) ? sanitize_email( (string) $row->customer_email ) : '';
+        if ( strtolower( $stored_email ) !== strtolower( $customer_email ) ) {
             wp_send_json_error( [ 'message' => __( 'Booking not found.', 'wp-waiver-engine' ) ], 404 );
         }
 

@@ -36,63 +36,53 @@
         var widget = wrap.querySelector( '.wpwe-booking-search' );
         if ( ! widget ) return;  // template has no linked services
 
-        var searchInput   = widget.querySelector( '.wpwe-booking-search-input' );
-        var datePicker    = widget.querySelector( '.wpwe-booking-date-picker' );
+        var bookingIdInput = widget.querySelector( '.wpwe-booking-id-lookup' );
+        var bookingEmailInput = widget.querySelector( '.wpwe-booking-email-lookup' );
+        var verifyBtn    = widget.querySelector( '.wpwe-booking-verify-btn' );
         var searchingEl   = widget.querySelector( '.wpwe-booking-searching' );
-        var resultsList   = widget.querySelector( '.wpwe-booking-results' );
+        var errorEl       = widget.querySelector( '.wpwe-booking-search-error' );
         var selectedEl    = widget.querySelector( '.wpwe-booking-selected' );
         var selectedBadge = widget.querySelector( '.wpwe-booking-selected__badge' );
         var clearBtn      = widget.querySelector( '.wpwe-booking-clear-btn' );
         var bookingInput  = form.querySelector( '.wpwe-booking-id-input' );
 
-        if ( ! searchInput || ! resultsList || ! bookingInput ) return;
+        if ( ! bookingIdInput || ! bookingEmailInput || ! verifyBtn || ! bookingInput ) return;
 
-        var searchTimer;
-
-        searchInput.addEventListener( 'input', function () {
-            clearTimeout( searchTimer );
-            if ( datePicker ) datePicker.value = '';
-            var q = this.value.trim();
-            if ( q.length < 2 ) {
-                hideResults();
-                return;
-            }
-            searchTimer = setTimeout( function () {
-                doSearch( q );
-            }, 320 );
+        verifyBtn.addEventListener( 'click', function () {
+            verifyBooking();
         } );
 
-        if ( datePicker ) {
-            datePicker.addEventListener( 'change', function () {
-                if ( this.value ) {
-                    clearTimeout( searchTimer );
-                    searchInput.value = '';
-                    doSearch( this.value );
-                }
-            } );
-        }
-
-        // Close results when clicking outside
-        document.addEventListener( 'click', function ( e ) {
-            if ( ! widget.contains( e.target ) ) hideResults();
+        bookingEmailInput.addEventListener( 'keydown', function ( e ) {
+            if ( e.key === 'Enter' ) {
+                e.preventDefault();
+                verifyBooking();
+            }
         } );
 
         clearBtn && clearBtn.addEventListener( 'click', function () {
             clearSelection();
-            searchInput.value = '';
-            searchInput.focus();
+            bookingIdInput.focus();
         } );
 
-        function doSearch( query ) {
+        function verifyBooking() {
+            var bookingId = parseInt( bookingIdInput.value, 10 );
+            var customerEmail = bookingEmailInput.value.trim();
+
+            if ( ! bookingId || bookingId <= 0 || ! customerEmail ) {
+                showError( ( wpweForm.i18n && wpweForm.i18n.bookingNoResults ) || 'Booking not found or details do not match.' );
+                return;
+            }
+
             if ( searchingEl ) searchingEl.hidden = false;
-            hideResults();
+            clearError();
 
             var templateId = widget.dataset.templateId || form.dataset.templateId || '';
             var body = new FormData();
-            body.append( 'action',      'wpwe_search_bookings' );
+            body.append( 'action',      'wpwe_get_booking' );
             body.append( 'nonce',       wpweForm.bookingNonce );
             body.append( 'template_id', templateId );
-            body.append( 'query',       query );
+            body.append( 'booking_id',  bookingId );
+            body.append( 'customer_email', customerEmail );
 
             fetch( wpweForm.ajaxUrl, {
                 method:      'POST',
@@ -102,53 +92,33 @@
             .then( function ( r ) { return r.json(); } )
             .then( function ( resp ) {
                 if ( searchingEl ) searchingEl.hidden = true;
-                if ( resp.success && resp.data && resp.data.length ) {
-                    renderResults( resp.data );
+                if ( resp.success && resp.data ) {
+                    selectBooking( resp.data );
                 } else {
-                    renderNoResults();
+                    showError( ( wpweForm.i18n && wpweForm.i18n.bookingNoResults ) || 'Booking not found or details do not match.' );
                 }
             } )
             .catch( function () {
                 if ( searchingEl ) searchingEl.hidden = true;
+                showError( ( wpweForm.i18n && wpweForm.i18n.bookingNoResults ) || 'Booking not found or details do not match.' );
             } );
         }
 
-        function renderResults( bookings ) {
-            resultsList.innerHTML = '';
-            bookings.forEach( function ( b ) {
-                var li = document.createElement( 'li' );
-                li.className = 'wpwe-booking-result-item';
-                li.setAttribute( 'role', 'option' );
-                li.dataset.bookingId = b.id;
-                li.innerHTML =
-                    '<span class="wpwe-result-service">' + escHtml( b.service ) + '</span>' +
-                    '<span class="wpwe-result-customer">' + escHtml( b.customer ) + '</span>' +
-                    '<span class="wpwe-result-date">' + escHtml( b.bookingDate ) + '</span>';
-                li.addEventListener( 'click', function () {
-                    selectBooking( b );
-                } );
-                resultsList.appendChild( li );
-            } );
-            resultsList.hidden = false;
+        function showError( msg ) {
+            if ( ! errorEl ) return;
+            errorEl.textContent = msg;
+            errorEl.hidden = false;
         }
 
-        function renderNoResults() {
-            resultsList.innerHTML =
-                '<li class="wpwe-booking-no-results">' +
-                escHtml( ( wpweForm.i18n && wpweForm.i18n.bookingNoResults ) || 'No upcoming bookings found.' ) +
-                '</li>';
-            resultsList.hidden = false;
-        }
-
-        function hideResults() {
-            resultsList.hidden = true;
-            resultsList.innerHTML = '';
+        function clearError() {
+            if ( ! errorEl ) return;
+            errorEl.textContent = '';
+            errorEl.hidden = true;
         }
 
         function selectBooking( b ) {
             bookingInput.value = b.id;
-            hideResults();
-            searchInput.value = '';
+            clearError();
             if ( selectedBadge ) {
                 selectedBadge.textContent =
                     b.service + ' — ' + b.customer + ' — ' + b.bookingDate;
@@ -159,8 +129,10 @@
 
         function clearSelection() {
             bookingInput.value = '';
-            if ( datePicker ) datePicker.value = '';
+            bookingIdInput.value = '';
+            bookingEmailInput.value = '';
             if ( selectedEl ) selectedEl.hidden = true;
+            clearError();
             widget.classList.remove( 'wpwe-booking-search--has-selection' );
         }
 
@@ -172,25 +144,19 @@
         var templateId   = widget.dataset.templateId || form.dataset.templateId || '';
 
         if ( urlBookingId > 0 && templateId ) {
-            var preBody = new FormData();
-            preBody.append( 'action',      'wpwe_get_booking' );
-            preBody.append( 'nonce',       wpweForm.bookingNonce );
-            preBody.append( 'template_id', templateId );
-            preBody.append( 'booking_id',  urlBookingId );
+            bookingIdInput.value = String( urlBookingId );
 
-            fetch( wpweForm.ajaxUrl, {
-                method:      'POST',
-                credentials: 'same-origin',
-                body:        preBody,
-            } )
-            .then( function ( r ) { return r.json(); } )
-            .then( function ( resp ) {
-                if ( resp.success && resp.data ) {
-                    selectBooking( resp.data );
-                }
-            } )
-            .catch( function () { /* ignore; search widget remains available */ } );
+            // Optional convenience: support ?booking_email=user@example.com
+            var urlBookingEmail = urlParams.get( 'booking_email' );
+            if ( urlBookingEmail ) {
+                bookingEmailInput.value = urlBookingEmail;
+                verifyBooking();
+            }
+
+            // If email is not present, keep booking ID pre-filled and wait for user email entry.
         }
+
+        // Privacy-safe flow requires customer email verification before selecting a booking.
     }
 
     // -------------------------------------------------------------------------

@@ -796,6 +796,45 @@ body.wpwe-preview-open {
     background: #fff;
 }
 
+.wpwe-booking-id-lookup,
+.wpwe-booking-email-lookup {
+    flex: 1;
+    min-width: 180px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    background: #fff;
+}
+
+.wpwe-booking-id-lookup:focus,
+.wpwe-booking-email-lookup:focus {
+    outline: none;
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.wpwe-booking-verify-btn {
+    border: 1px solid #2271b1;
+    background: #2271b1;
+    color: #fff;
+    border-radius: 4px;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.wpwe-booking-verify-btn:hover {
+    background: #135e96;
+    border-color: #135e96;
+}
+
+.wpwe-booking-search-error {
+    margin-top: 0.6rem;
+    color: #b32d2e;
+    font-size: 0.85rem;
+}
+
 .wpwe-booking-search-input:focus {
     outline: none;
     border-color: #2271b1;
@@ -925,6 +964,11 @@ body.wpwe-preview-open {
     }
     .wpwe-booking-search-input {
         max-width: 100%;
+        flex: 1 1 100%;
+    }
+    .wpwe-booking-id-lookup,
+    .wpwe-booking-email-lookup,
+    .wpwe-booking-verify-btn {
         flex: 1 1 100%;
     }
     .wpwe-booking-date-picker {
