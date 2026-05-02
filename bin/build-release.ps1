@@ -1,13 +1,10 @@
 <#
 .SYNOPSIS
-    Build a production-ready ZIP for WP Waiver Engine.
+    Build a single release ZIP for WP Waiver Engine.
 
 .DESCRIPTION
-    1. Ensures Composer is available.
-    2. Runs `composer install --no-dev` so vendor/ is present and clean.
-    3. Reads the version from wp-waiver-engine.php automatically.
-    4. Creates a ZIP at the repo root named wp-waiver-engine-<version>.zip
-       containing only the files needed to run the plugin (no dev/build artifacts).
+    Outputs one ZIP file using plugin root folder `wp-waiver-engine/`.
+    Feature access is controlled at runtime through Freemius entitlement checks.
 
 .EXAMPLE
     .\bin\build-release.ps1
@@ -20,8 +17,7 @@ $ErrorActionPreference = 'Stop'
 # Paths
 # ---------------------------------------------------------------------------
 $ScriptDir  = Split-Path -Parent $MyInvocation.MyCommand.Path
-$PluginRoot = (Resolve-Path (Join-Path $ScriptDir '..'))
-$PluginRoot = $PluginRoot.Path
+$PluginRoot = (Resolve-Path (Join-Path $ScriptDir '..')).Path
 
 # ---------------------------------------------------------------------------
 # Read version from plugin header
@@ -31,11 +27,13 @@ if (-not (Test-Path $MainFile)) {
     Write-Error "Cannot find wp-waiver-engine.php at $PluginRoot"
     exit 1
 }
+
 $VersionLine = Select-String -Path $MainFile -Pattern '^\s*\*\s*Version:\s*(.+)$' | Select-Object -First 1
 if (-not $VersionLine) {
     Write-Error "Could not parse Version from wp-waiver-engine.php"
     exit 1
 }
+
 $Version = $VersionLine.Matches[0].Groups[1].Value.Trim()
 Write-Host "Building WP Waiver Engine v$Version ..."
 
@@ -57,26 +55,31 @@ Write-Host "`n-- Running composer install --no-dev --optimize-autoloader ..."
 Push-Location $PluginRoot
 composer install --no-dev --optimize-autoloader --quiet
 if ($LASTEXITCODE -ne 0) {
-    Pop-Location
-    Write-Error "composer install failed. Aborting."
-    exit 1
+    Write-Warning "composer install failed. Continuing with existing vendor/ directory."
 }
 Pop-Location
 Write-Host "   vendor/ is ready."
 
 # ---------------------------------------------------------------------------
-# Files/folders to EXCLUDE from the ZIP
+# Validate Freemius SDK presence in vendor/
 # ---------------------------------------------------------------------------
-$ExcludeRelative = @(
-    '.git',
-    '.gitignore',
-    'bin',
-    'composer.json',
-    'composer.lock',
-    'vendor/autoload.php'    # included via vendor/ folder below
-    '*.zip'
-)
-# Patterns applied with -like against the relative path
+$FreemiusStart = Join-Path $PluginRoot 'vendor\freemius\wordpress-sdk\start.php'
+if (-not (Test-Path $FreemiusStart)) {
+        Write-Error @"
+Freemius SDK is missing: $FreemiusStart
+
+Run:
+    composer require freemius/wordpress-sdk
+Then re-run this release script.
+"@
+        exit 1
+}
+
+Write-Host "   Freemius SDK found in vendor/."
+
+# ---------------------------------------------------------------------------
+# Exclusions
+# ---------------------------------------------------------------------------
 $ExcludePatterns = @(
     '.git*',
     '.tmp-phpini*',
@@ -87,65 +90,108 @@ $ExcludePatterns = @(
     '*.zip'
 )
 
+function Get-ReleaseFiles {
+    $files = Get-ChildItem -Path $PluginRoot -Recurse -File -Force | Where-Object {
+        $rel = $_.FullName.Substring($PluginRoot.Length + 1)
+
+        $excluded = $false
+        foreach ($pat in $ExcludePatterns) {
+            if ($rel -like "$pat*" -or $rel -like "*\$pat*") {
+                $excluded = $true
+                break
+            }
+        }
+
+        if ($excluded) { return $false }
+
+        return $true
+    }
+
+    return $files
+}
+
+function New-ReleaseZip {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ZipName
+    )
+
+    $zipPath = Join-Path $PluginRoot $ZipName
+    if (Test-Path $zipPath) {
+        Remove-Item $zipPath -Force
+    }
+
+    $files = Get-ReleaseFiles
+
+    Add-Type -Assembly 'System.IO.Compression'
+    Add-Type -Assembly 'System.IO.Compression.FileSystem'
+
+    $zipStream = [System.IO.File]::Open($zipPath, [System.IO.FileMode]::Create)
+    $archive   = New-Object System.IO.Compression.ZipArchive(
+        $zipStream,
+        [System.IO.Compression.ZipArchiveMode]::Create
+    )
+
+    $fileCount = 0
+    foreach ($file in $files) {
+        $rel       = $file.FullName.Substring($PluginRoot.Length + 1) -replace '\\', '/'
+        $entryName = "wp-waiver-engine/$rel"
+
+        $entry       = $archive.CreateEntry($entryName, [System.IO.Compression.CompressionLevel]::Optimal)
+        $entryStream = $entry.Open()
+        $fileStream  = [System.IO.File]::OpenRead($file.FullName)
+        $fileStream.CopyTo($entryStream)
+        $fileStream.Dispose()
+        $entryStream.Dispose()
+        $fileCount++
+    }
+
+    $archive.Dispose()
+    $zipStream.Dispose()
+
+    Write-Host "   Packed $fileCount files -> $ZipName"
+}
+
+function Test-ZipContainsEntry {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ZipPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$EntryPath
+    )
+
+    Add-Type -Assembly 'System.IO.Compression'
+    Add-Type -Assembly 'System.IO.Compression.FileSystem'
+
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+    try {
+        $entry = $zip.GetEntry($EntryPath)
+        return $null -ne $entry
+    }
+    finally {
+        $zip.Dispose()
+    }
+}
+
 # ---------------------------------------------------------------------------
-# Build ZIP
+# Build a single release ZIP
 # ---------------------------------------------------------------------------
+Write-Host "`n-- Building release ZIP ..."
+
 $ZipName = "wp-waiver-engine-$Version.zip"
+New-ReleaseZip -ZipName $ZipName
+
+$FreemiusZipEntry = 'wp-waiver-engine/vendor/freemius/wordpress-sdk/start.php'
 $ZipPath = Join-Path $PluginRoot $ZipName
 
-if (Test-Path $ZipPath) {
-    Remove-Item $ZipPath -Force
+if (-not (Test-ZipContainsEntry -ZipPath $ZipPath -EntryPath $FreemiusZipEntry)) {
+    Write-Error "Release ZIP is missing Freemius SDK entry: $FreemiusZipEntry"
+    exit 1
 }
 
-Write-Host "`n-- Collecting files ..."
+Write-Host "`n[OK] Release ZIP created:"
+Write-Host "  - $ZipName"
+Write-Host "  - Freemius SDK verified"
+Write-Host "`nPlugin folder slug: wp-waiver-engine"
 
-# Gather all files recursively, excluding unwanted paths
-$AllFiles = Get-ChildItem -Path $PluginRoot -Recurse -File -Force | Where-Object {
-    $rel = $_.FullName.Substring($PluginRoot.Length + 1)  # e.g. "includes/class-core.php"
-
-    # Exclude anything starting with these folder/file prefixes
-    $excluded = $false
-    foreach ($pat in $ExcludePatterns) {
-        if ($rel -like "$pat*" -or $rel -like "*\$pat*") {
-            $excluded = $true
-            break
-        }
-    }
-    -not $excluded
-}
-
-# Build ZIP using .NET ZipArchive so entry paths always use forward slashes.
-# Compress-Archive on Windows writes backslash paths, which breaks WordPress's
-# ZIP extractor (it checks for a trailing '/' to detect directories).
-Add-Type -Assembly 'System.IO.Compression'
-Add-Type -Assembly 'System.IO.Compression.FileSystem'
-
-$zipStream = [System.IO.File]::Open($ZipPath, [System.IO.FileMode]::Create)
-$archive   = New-Object System.IO.Compression.ZipArchive(
-    $zipStream,
-    [System.IO.Compression.ZipArchiveMode]::Create
-)
-
-$fileCount = 0
-foreach ($File in $AllFiles) {
-    # Convert Windows backslashes → forward slashes and prefix with plugin folder
-    $rel       = $File.FullName.Substring($PluginRoot.Length + 1) -replace '\\', '/'
-    $entryName = "wp-waiver-engine/$rel"
-
-    $entry       = $archive.CreateEntry($entryName, [System.IO.Compression.CompressionLevel]::Optimal)
-    $entryStream = $entry.Open()
-    $fileStream  = [System.IO.File]::OpenRead($File.FullName)
-    $fileStream.CopyTo($entryStream)
-    $fileStream.Dispose()
-    $entryStream.Dispose()
-    $fileCount++
-}
-
-$archive.Dispose()
-$zipStream.Dispose()
-
-Write-Host "   Packed $fileCount files."
-
-Write-Host "`n[OK] Release ZIP created: $ZipName"
-Write-Host "  Path: $ZipPath"
-Write-Host "`nUpload this ZIP via: WordPress Admin -> Plugins -> Add New -> Upload Plugin"

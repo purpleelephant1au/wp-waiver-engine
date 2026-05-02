@@ -116,7 +116,7 @@ class Entry_Handler {
         // ----- Optional Amelia booking linkage (only when integration enabled) -----
         $amelia_booking_id = 0;
         $booking_info      = null;
-        if ( Settings::is_amelia_enabled() ) {
+        if ( Settings::is_amelia_enabled() && Plan::is_feature_enabled( 'amelia_integration' ) ) {
             $amelia_booking_id = isset( $_POST['wpwe_booking_id'] ) ? absint( $_POST['wpwe_booking_id'] ) : 0;
             if ( $amelia_booking_id ) {
                 $booking_info = Integration_Amelia::get_booking( $amelia_booking_id );
@@ -153,7 +153,9 @@ class Entry_Handler {
         }
 
         // ----- Send notification email -----
-        $should_notify = Settings::is_admin_email_enabled() && ! empty( $template->send_admin_email );
+        $should_notify = Plan::is_feature_enabled( 'email_sending' )
+            && Settings::is_admin_email_enabled()
+            && ! empty( $template->send_admin_email );
         $email_sent    = $should_notify
             ? $this->send_notification( $template, $entry_id, $data, $pdf_paths, $booking_info )
             : false;
@@ -162,7 +164,8 @@ class Entry_Handler {
         Database::update_entry_after_process( $entry_id, $pdf_paths, $email_sent, $pdf_error );
 
         // ----- Optional copy email to submitter (not saved) -----
-        if ( Settings::is_user_email_enabled() && ! empty( $template->send_user_email )
+           if ( Plan::is_feature_enabled( 'email_sending' )
+               && Settings::is_user_email_enabled() && ! empty( $template->send_user_email )
              && ! empty( $_POST['wpwe_send_copy'] ) && ! empty( $_POST['wpwe_copy_email'] ) ) {
             $copy_to = sanitize_email( wp_unslash( $_POST['wpwe_copy_email'] ) );
             if ( is_email( $copy_to ) ) {
@@ -246,7 +249,7 @@ class Entry_Handler {
             wp_send_json_error( [ 'message' => __( 'Access denied.', 'wp-waiver-engine' ) ], 403 );
         }
 
-        if ( ! Settings::is_amelia_enabled() ) {
+        if ( ! Settings::is_amelia_enabled() || ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
             wp_send_json_success( [] ); // Amelia integration is disabled
         }
 
@@ -295,7 +298,7 @@ class Entry_Handler {
      * Nonce: reuses `wpwe_search_bookings` so no extra localised nonce is needed.
      */
     public function ajax_get_booking(): void {
-        if ( ! Settings::is_amelia_enabled() ) {
+        if ( ! Settings::is_amelia_enabled() || ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
             wp_send_json_error( [ 'message' => __( 'Amelia integration not enabled.', 'wp-waiver-engine' ) ], 400 );
         }
 

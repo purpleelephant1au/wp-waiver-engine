@@ -1,0 +1,111 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write   # needed to create GitHub Releases and upload assets
+
+jobs:
+  build:
+    name: Build release ZIP
+    runs-on: ubuntu-latest
+
+    steps:
+      # ---------------------------------------------------------------
+      # 1. Checkout code
+      # ---------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---------------------------------------------------------------
+      # 2. Install PHP (required for Composer)
+      # ---------------------------------------------------------------
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: openssl, zip
+          tools: composer:v2
+
+      # ---------------------------------------------------------------
+      # 3. Install production Composer dependencies
+      # ---------------------------------------------------------------
+      - name: Composer install (no-dev)
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      # ---------------------------------------------------------------
+      # 4. Read version from plugin header (strips the leading "v")
+      # ---------------------------------------------------------------
+      - name: Read plugin version
+        id: version
+        run: |
+          VERSION=$(grep -oP '(?<=\* Version:\s{1,20})\S+' wp-waiver-engine.php | head -1)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Plugin version: $VERSION"
+
+      # ---------------------------------------------------------------
+      # 5. Build the ZIP (mirrors build-release.ps1 logic via zip CLI)
+      # ---------------------------------------------------------------
+      - name: Build ZIP
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          ZIP_NAME="wp-waiver-engine-${VERSION}.zip"
+
+          # Stage into a folder named wp-waiver-engine/ so the ZIP
+          # extracts with the correct slug as the top-level folder.
+          mkdir -p /tmp/stage/wp-waiver-engine
+          rsync -a \
+            --exclude='.git*' \
+            --exclude='bin/' \
+            --exclude='composer.*' \
+            --exclude='instructions/' \
+            --exclude='*.zip' \
+            --exclude='.github/' \
+            . /tmp/stage/wp-waiver-engine/
+
+          cd /tmp/stage
+          zip -r "$GITHUB_WORKSPACE/${ZIP_NAME}" wp-waiver-engine/
+
+          echo "ZIP_NAME=${ZIP_NAME}" >> "$GITHUB_ENV"
+          echo "ZIP_PATH=${GITHUB_WORKSPACE}/${ZIP_NAME}" >> "$GITHUB_ENV"
+
+      # ---------------------------------------------------------------
+      # 6. Verify Freemius SDK is inside the ZIP
+      # ---------------------------------------------------------------
+      - name: Verify Freemius SDK in ZIP
+        run: |
+          unzip -l "$ZIP_PATH" | grep -q 'freemius/wordpress-sdk/start.php' \
+            || (echo "ERROR: Freemius SDK missing from ZIP" && exit 1)
+          echo "Freemius SDK verified in ZIP."
+
+      # ---------------------------------------------------------------
+      # 7. Create GitHub Release and upload ZIP asset
+      # ---------------------------------------------------------------
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "WP Waiver Engine ${{ steps.version.outputs.version }}"
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: ${{ env.ZIP_PATH }}
+
+      # ---------------------------------------------------------------
+      # 8. Deploy to Freemius
+      # ---------------------------------------------------------------
+      - name: Deploy to Freemius
+        uses: buttonizer/freemius-deploy@v0.1.3
+        with:
+          file_name: ${{ env.ZIP_NAME }}
+          release_mode: pending
+          version: ${{ steps.version.outputs.version }}
+          sandbox: false
+        env:
+          PUBLIC_KEY: ${{ secrets.FREEMIUS_PUBLIC_KEY }}
+          SECRET_KEY: ${{ secrets.FREEMIUS_SECRET_KEY }}
+          DEV_ID: ${{ secrets.FREEMIUS_DEV_ID }}
+          PLUGIN_SLUG: wp-waiver-engine
+          PLUGIN_ID: 28928

@@ -192,6 +192,11 @@ class Admin_Menu {
 
         $id = isset( $_POST['wpwe_template_id'] ) ? absint( $_POST['wpwe_template_id'] ) : 0;
 
+        if ( $id === 0 && Plan::is_template_creation_blocked() ) {
+            wp_safe_redirect( admin_url( 'admin.php?page=wpwe&wpwe_limit_reached=1' ) );
+            exit;
+        }
+
         // Build both pdf_mapping and field_schema from the unified table POST data
         [ $mapping, $schema ] = Template_Editor::build_from_post();
 
@@ -199,15 +204,31 @@ class Admin_Menu {
             ? array_map( 'absint', $_POST['wpwe_amelia_service_ids'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
             : [];
 
+        $output_mode = isset( $_POST['wpwe_output_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['wpwe_output_mode'] ) ) : 'single';
+        if ( $output_mode === 'per_row' && ! Plan::is_feature_enabled( 'repeating_rows' ) ) {
+            $output_mode = 'single';
+        }
+
+        if ( ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
+            $raw_amelia_ids = [];
+        }
+
+        $send_admin_email = ! empty( $_POST['wpwe_send_admin_email'] ) ? 1 : 0;
+        $send_user_email  = ! empty( $_POST['wpwe_send_user_email'] ) ? 1 : 0;
+        if ( ! Plan::is_feature_enabled( 'email_sending' ) ) {
+            $send_admin_email = 0;
+            $send_user_email  = 0;
+        }
+
         $data = [
             'title'              => isset( $_POST['wpwe_title'] ) ? sanitize_text_field( wp_unslash( $_POST['wpwe_title'] ) ) : '',
             'description'        => isset( $_POST['wpwe_description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['wpwe_description'] ) ) : '',
             'pdf_attachment_id'  => isset( $_POST['wpwe_pdf_attachment_id'] ) ? absint( $_POST['wpwe_pdf_attachment_id'] ) : 0,
-            'output_mode'        => isset( $_POST['wpwe_output_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['wpwe_output_mode'] ) ) : 'single',
+            'output_mode'        => $output_mode,
             'output_group_key'   => isset( $_POST['wpwe_output_group_key'] ) ? sanitize_key( wp_unslash( $_POST['wpwe_output_group_key'] ) ) : '',
             'notification_email' => isset( $_POST['wpwe_notification_email'] ) ? sanitize_email( wp_unslash( $_POST['wpwe_notification_email'] ) ) : '',
-            'send_admin_email'   => ! empty( $_POST['wpwe_send_admin_email'] ) ? 1 : 0,
-            'send_user_email'    => ! empty( $_POST['wpwe_send_user_email'] )  ? 1 : 0,
+            'send_admin_email'   => $send_admin_email,
+            'send_user_email'    => $send_user_email,
             'captcha_enabled'    => ! empty( $_POST['wpwe_captcha_enabled'] )  ? 1 : 0,
             'amelia_service_ids' => array_values( $raw_amelia_ids ),
             'active'             => ! empty( $_POST['wpwe_active'] ) ? 1 : 0,
@@ -264,19 +285,49 @@ class Admin_Menu {
             wp_die( esc_html__( 'Access denied.', 'wp-waiver-engine' ) );
         }
         $templates = Database::get_templates();
+        $limit     = Plan::template_limit();
+        $blocked   = Plan::is_template_creation_blocked();
         ?>
         <div class="wrap">
             <h1 class="wp-heading-inline"><?php esc_html_e( 'Waiver Templates', 'wp-waiver-engine' ); ?></h1>
-            <a href="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-new' ) ); ?>" class="page-title-action">
-                <?php esc_html_e( 'Add New', 'wp-waiver-engine' ); ?>
-            </a>
+            <?php if ( ! $blocked ) : ?>
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-new' ) ); ?>" class="page-title-action">
+                    <?php esc_html_e( 'Add New', 'wp-waiver-engine' ); ?>
+                </a>
+            <?php endif; ?>
             <hr class="wp-header-end">
+
+            <?php if ( $limit > 0 ) : ?>
+            <div class="notice notice-info">
+                <p>
+                    <?php
+                    printf(
+                        /* translators: 1: current count, 2: limit */
+                        esc_html__( 'Free plan: %1$d of %2$d templates used.', 'wp-waiver-engine' ),
+                        count( $templates ),
+                        $limit
+                    );
+                    ?>
+                    <?php if ( $blocked ) : ?>
+                        <strong><?php esc_html_e( 'Template limit reached.', 'wp-waiver-engine' ); ?></strong>
+                    <?php endif; ?>
+                    <?php if ( Plan::get_upgrade_url() !== '#' ) : ?>
+                        <a class="button button-secondary" href="<?php echo esc_url( Plan::get_upgrade_url() ); ?>" target="_blank" rel="noopener noreferrer" style="margin-left:8px;">
+                            <?php esc_html_e( 'Upgrade to Pro', 'wp-waiver-engine' ); ?>
+                        </a>
+                    <?php endif; ?>
+                </p>
+            </div>
+            <?php endif; ?>
 
             <?php if ( isset( $_GET['wpwe_saved'] ) ) : ?>
             <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Template saved.', 'wp-waiver-engine' ); ?></p></div>
             <?php endif; ?>
             <?php if ( isset( $_GET['wpwe_deleted'] ) ) : ?>
             <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Template deleted.', 'wp-waiver-engine' ); ?></p></div>
+            <?php endif; ?>
+            <?php if ( isset( $_GET['wpwe_limit_reached'] ) ) : ?>
+            <div class="notice notice-warning is-dismissible"><p><?php esc_html_e( 'Template limit reached for the free plan. Upgrade to Pro to create more templates.', 'wp-waiver-engine' ); ?></p></div>
             <?php endif; ?>
 
             <table class="wp-list-table widefat fixed striped">
@@ -394,9 +445,13 @@ class Admin_Menu {
 
     private function action_save_settings(): void {
         check_admin_referer( 'wpwe_save_settings' );
-        update_option( 'wpwe_amelia_enabled',      ! empty( $_POST['wpwe_amelia_enabled'] )      ? '1' : '' );
-        update_option( 'wpwe_admin_email_enabled', ! empty( $_POST['wpwe_admin_email_enabled'] ) ? '1' : '' );
-        update_option( 'wpwe_user_email_enabled',  ! empty( $_POST['wpwe_user_email_enabled'] )  ? '1' : '' );
+
+        $allow_amelia = Plan::is_feature_enabled( 'amelia_integration' );
+        $allow_email  = Plan::is_feature_enabled( 'email_sending' );
+
+        update_option( 'wpwe_amelia_enabled', $allow_amelia && ! empty( $_POST['wpwe_amelia_enabled'] ) ? '1' : '' );
+        update_option( 'wpwe_admin_email_enabled', $allow_email && ! empty( $_POST['wpwe_admin_email_enabled'] ) ? '1' : '' );
+        update_option( 'wpwe_user_email_enabled', $allow_email && ! empty( $_POST['wpwe_user_email_enabled'] ) ? '1' : '' );
         update_option( 'wpwe_rate_limit_enabled',  ! empty( $_POST['wpwe_rate_limit_enabled'] )  ? '1' : '' );
         update_option( 'wpwe_rate_limit_max',    max( 1, (int) ( $_POST['wpwe_rate_limit_max']    ?? 5  ) ) );
         update_option( 'wpwe_rate_limit_window', max( 1, (int) ( $_POST['wpwe_rate_limit_window'] ?? 15 ) ) );

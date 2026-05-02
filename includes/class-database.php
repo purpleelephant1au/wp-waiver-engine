@@ -212,6 +212,19 @@ CREATE TABLE $entries (
     }
 
     /**
+     * Get total template count.
+     */
+    public static function get_templates_count( bool $active_only = false ): int {
+        global $wpdb;
+        $where = $active_only ? ' WHERE active = 1' : '';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+        return (int) $wpdb->get_var(
+            'SELECT COUNT(*) FROM ' . self::templates_table() . $where // phpcs:ignore
+        );
+    }
+
+    /**
      * Delete a template (and optionally its entries).
      *
      * @param int  $id
