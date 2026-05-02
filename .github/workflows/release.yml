@@ -1,9 +1,10 @@
 name: Build & Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*'
 
 permissions:
   contents: write   # needed to create GitHub Releases and upload assets
