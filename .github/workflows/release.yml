@@ -124,7 +124,33 @@ jobs:
           files: ${{ env.ZIP_PATH }}
 
       # ---------------------------------------------------------------
-      # 8. Deploy to Freemius
+      # 8. Sanitize + validate Freemius credentials
+      # ---------------------------------------------------------------
+      - name: Validate Freemius credentials
+        id: freemius_creds
+        env:
+          RAW_PUBLIC_KEY: ${{ secrets.FREEMIUS_PUBLIC_KEY }}
+          RAW_SECRET_KEY: ${{ secrets.FREEMIUS_SECRET_KEY }}
+          RAW_DEV_ID: ${{ secrets.FREEMIUS_DEV_ID }}
+        run: |
+          PUBLIC_KEY="$(echo "$RAW_PUBLIC_KEY" | tr -d '\r' | xargs)"
+          SECRET_KEY="$(echo "$RAW_SECRET_KEY" | tr -d '\r' | xargs)"
+          DEV_ID="$(echo "$RAW_DEV_ID" | tr -d '\r' | xargs)"
+
+          [ -n "$PUBLIC_KEY" ] || (echo "ERROR: FREEMIUS_PUBLIC_KEY is empty" && exit 1)
+          [ -n "$SECRET_KEY" ] || (echo "ERROR: FREEMIUS_SECRET_KEY is empty" && exit 1)
+          [ -n "$DEV_ID" ] || (echo "ERROR: FREEMIUS_DEV_ID is empty" && exit 1)
+
+          echo "$PUBLIC_KEY" | grep -Eq '^pk_' || (echo "ERROR: FREEMIUS_PUBLIC_KEY must start with pk_" && exit 1)
+          echo "$SECRET_KEY" | grep -Eq '^(sk_|sec_)' || (echo "ERROR: FREEMIUS_SECRET_KEY appears invalid" && exit 1)
+          echo "$DEV_ID" | grep -Eq '^[0-9]+$' || (echo "ERROR: FREEMIUS_DEV_ID must be numeric" && exit 1)
+
+          echo "public_key=$PUBLIC_KEY" >> "$GITHUB_OUTPUT"
+          echo "secret_key=$SECRET_KEY" >> "$GITHUB_OUTPUT"
+          echo "dev_id=$DEV_ID" >> "$GITHUB_OUTPUT"
+
+      # ---------------------------------------------------------------
+      # 9. Deploy to Freemius
       # ---------------------------------------------------------------
       - name: Deploy to Freemius
         uses: buttonizer/freemius-deploy@v0.1.3
@@ -134,8 +160,8 @@ jobs:
           version: ${{ steps.version.outputs.version }}
           sandbox: false
         env:
-          PUBLIC_KEY: ${{ secrets.FREEMIUS_PUBLIC_KEY }}
-          SECRET_KEY: ${{ secrets.FREEMIUS_SECRET_KEY }}
-          DEV_ID: ${{ secrets.FREEMIUS_DEV_ID }}
+          PUBLIC_KEY: ${{ steps.freemius_creds.outputs.public_key }}
+          SECRET_KEY: ${{ steps.freemius_creds.outputs.secret_key }}
+          DEV_ID: ${{ steps.freemius_creds.outputs.dev_id }}
           PLUGIN_SLUG: wp-waiver-engine
           PLUGIN_ID: 28928
