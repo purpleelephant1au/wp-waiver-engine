@@ -43,7 +43,18 @@ jobs:
       - name: Read plugin version
         id: version
         run: |
-          VERSION=$(grep -oP '(?<=\* Version:\s{1,20})\S+' wp-waiver-engine.php | head -1)
+          VERSION=$(awk -F':' '/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*/ {
+            v=$2
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
+            print v
+            exit
+          }' wp-waiver-engine.php)
+
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: Could not parse plugin version from wp-waiver-engine.php"
+            exit 1
+          fi
+
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Plugin version: $VERSION"
 
