@@ -48,6 +48,23 @@ jobs:
           echo "Plugin version: $VERSION"
 
       # ---------------------------------------------------------------
+      # 4b. Resolve release tag
+      # - For tag pushes: use the pushed tag (e.g. v1.0.1)
+      # - For manual runs: use v<plugin-version> (never "master")
+      # ---------------------------------------------------------------
+      - name: Resolve release tag
+        id: release_tag
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            RELEASE_TAG="${GITHUB_REF_NAME}"
+          else
+            RELEASE_TAG="v${VERSION}"
+          fi
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Release tag: ${RELEASE_TAG}"
+
+      # ---------------------------------------------------------------
       # 5. Build the ZIP (mirrors build-release.ps1 logic via zip CLI)
       # ---------------------------------------------------------------
       - name: Build ZIP
@@ -89,7 +106,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: "WP Waiver Engine ${{ steps.version.outputs.version }}"
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ steps.release_tag.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
           draft: false
           prerelease: false
           files: ${{ env.ZIP_PATH }}
