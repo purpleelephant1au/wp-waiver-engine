@@ -18,15 +18,31 @@ and automatically generate filled PDFs when visitors submit the form.
 
 **Key features:**
 
-* Build multi-section, repeatable waiver/contract forms
+* Build multi-section waiver/contract forms
 * Map form fields to exact coordinate positions on a PDF
 * Auto-generate filled PDFs on each submission
-* Admin and submitter notification emails with PDF attachments
-* Email notifications configurable globally (Settings) and per template
 * Admin entry list with pagination, filtering, sorting, and PDF download
 * Import / export template field-to-PDF mappings for easy site migration
-* Optional Amelia Booking integration – automatically enabled when Amelia
-  is detected, allowing forms to link to Amelia appointments
+
+**Free vs Pro features:**
+
+**Free**
+
+* Up to 2 active waiver templates
+* PDF field mapping and PDF generation
+* Waiver submission capture and admin entry management
+* Security protections (nonce, honeypot, timing checks, rate limiting, optional CAPTCHA)
+* Import/export of template field mappings
+
+**Pro**
+
+* Unlimited waiver templates
+* Repeating rows in form sections (per-row output mode)
+* Admin notification emails with PDF attachments
+* Submitter email copies with PDF attachments
+* Amelia Booking integration and booking-linked waiver flows
+
+Feature access is controlled at runtime through Freemius licensing.
 
 **Integration architecture:**
 
@@ -144,10 +160,10 @@ footprint and limits the blast radius of any hypothetical file-disclosure issue.
 
 = Does this plugin require Amelia Booking? =
 
-No. Amelia integration is entirely optional. If the Amelia Booking plugin
-is active, an "Amelia Integration" toggle appears under **Waivers > Settings**.
-Without Amelia, the plugin works identically — booking fields, columns, and
-search inputs are simply not shown.
+No. Amelia integration is entirely optional and available on Pro plans.
+If the Amelia Booking plugin is active and Pro is enabled, an
+"Amelia Integration" toggle appears under **Waivers > Settings**.
+Without Amelia (or on Free), the plugin still works for standalone waivers.
 
 = Where are submitted PDFs stored? =
 
