@@ -33,7 +33,7 @@ class Integration_Manager {
      * integration whose host plugin is currently active.
      */
     public static function register(): void {
-        if ( Plan::is_feature_enabled( 'amelia_integration' ) && self::is_amelia_active() ) {
+        if ( \WPWE\Plan::is_feature_enabled( 'amelia_integration' ) && self::is_amelia_active() ) {
             ( new Integration_Amelia() )->register();
         }
     }

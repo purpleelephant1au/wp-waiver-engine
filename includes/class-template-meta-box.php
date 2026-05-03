@@ -31,7 +31,7 @@ class Template_Meta_Box {
         // PDF.js (UMD – exposes window.pdfjsLib)
         wp_enqueue_script(
             'pdfjs',
-            WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.min.js',
+            \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.min.js',
             [],
             '3.11.174',
             true
@@ -39,16 +39,16 @@ class Template_Meta_Box {
 
         wp_enqueue_script(
             'wpwe-admin-editor',
-            WPWE_PLUGIN_URL . 'assets/js/admin-editor.js',
+            \WPWE_PLUGIN_URL . 'assets/js/admin-editor.js',
             [ 'jquery', 'pdfjs' ],
-            WPWE_VERSION,
+            \WPWE_VERSION,
             true
         );
         wp_enqueue_style(
             'wpwe-admin',
-            WPWE_PLUGIN_URL . 'assets/css/admin.css',
+            \WPWE_PLUGIN_URL . 'assets/css/admin.css',
             [],
-            WPWE_VERSION
+            \WPWE_VERSION
         );
 
         // Resolve the current PDF URL to pass to JS for live preview
@@ -68,7 +68,7 @@ class Template_Meta_Box {
         wp_localize_script( 'wpwe-admin-editor', 'wpweAdmin', [
             'mediaTitle'   => __( 'Select Base PDF', 'wp-waiver-engine' ),
             'mediaButton'  => __( 'Use this PDF', 'wp-waiver-engine' ),
-            'workerSrc'    => WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.worker.min.js',
+            'workerSrc'    => \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.worker.min.js',
             'currentPdfUrl'=> $pdf_url,
             'builtinForms' => [
                 [ 'label' => 'Archery Tag',    'value' => 'archerytag.pdf',   'url' => home_url( '/forms/archerytag.pdf' ) ],
@@ -188,7 +188,7 @@ class Template_Meta_Box {
                     <?php
                     $saved_ids     = json_decode( (string) get_post_meta( $post->ID, 'amelia_service_ids', true ), true ) ?: [];
                     $saved_ids     = array_map( 'intval', $saved_ids );
-                    $amelia_svc    = Database::get_amelia_services();
+                    $amelia_svc    = Integration_Amelia::get_services();
                     if ( empty( $amelia_svc ) ) : ?>
                         <p class="description"><?php esc_html_e( 'No Amelia services found. Activate the Amelia plugin and create services first.', 'wp-waiver-engine' ); ?></p>
                     <?php else : ?>

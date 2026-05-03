@@ -9,9 +9,9 @@
         "setasign/fpdf": "^1.8"
     },
     "autoload": {
-        "psr-4": {
-            "WPWE\\": "includes/"
-        }
+        "classmap": [
+            "includes/"
+        ]
     },
     "config": {
         "vendor-dir": "vendor",

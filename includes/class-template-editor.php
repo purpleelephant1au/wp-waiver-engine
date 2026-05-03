@@ -29,23 +29,23 @@ class Template_Editor {
 
         wp_enqueue_script(
             'pdfjs',
-            WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.min.js',
+            \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.min.js',
             [],
             '3.11.174',
             true
         );
         wp_enqueue_script(
             'wpwe-admin-editor',
-            WPWE_PLUGIN_URL . 'assets/js/admin-editor.js',
+            \WPWE_PLUGIN_URL . 'assets/js/admin-editor.js',
             [ 'jquery', 'pdfjs' ],
-            WPWE_VERSION,
+            \WPWE_VERSION,
             true
         );
         wp_enqueue_style(
             'wpwe-admin',
-            WPWE_PLUGIN_URL . 'assets/css/admin.css',
+            \WPWE_PLUGIN_URL . 'assets/css/admin.css',
             [],
-            WPWE_VERSION
+            \WPWE_VERSION
         );
 
         // Resolve PDF preview URL
@@ -63,7 +63,7 @@ class Template_Editor {
         wp_localize_script( 'wpwe-admin-editor', 'wpweAdmin', [
             'mediaTitle'    => __( 'Select Base PDF', 'wp-waiver-engine' ),
             'mediaButton'   => __( 'Use this PDF', 'wp-waiver-engine' ),
-            'workerSrc'     => WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.worker.min.js',
+            'workerSrc'     => \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.worker.min.js',
             'currentPdfUrl' => $pdf_url,
             'builtinForms'  => [
                 [ 'label' => 'Archery Tag',    'value' => 'archerytag.pdf',   'url' => home_url( '/forms/archerytag.pdf' ) ],

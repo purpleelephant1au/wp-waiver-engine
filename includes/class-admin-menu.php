@@ -192,30 +192,30 @@ class Admin_Menu {
 
         $id = isset( $_POST['wpwe_template_id'] ) ? absint( $_POST['wpwe_template_id'] ) : 0;
 
-        if ( $id === 0 && Plan::is_template_creation_blocked() ) {
+        if ( $id === 0 && \WPWE\Plan::is_template_creation_blocked() ) {
             wp_safe_redirect( admin_url( 'admin.php?page=wpwe&wpwe_limit_reached=1' ) );
             exit;
         }
 
         // Build both pdf_mapping and field_schema from the unified table POST data
-        [ $mapping, $schema ] = Template_Editor::build_from_post();
+        [ $mapping, $schema ] = \WPWE\Template_Editor::build_from_post();
 
         $raw_amelia_ids = isset( $_POST['wpwe_amelia_service_ids'] ) && is_array( $_POST['wpwe_amelia_service_ids'] )
             ? array_map( 'absint', $_POST['wpwe_amelia_service_ids'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
             : [];
 
         $output_mode = isset( $_POST['wpwe_output_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['wpwe_output_mode'] ) ) : 'single';
-        if ( $output_mode === 'per_row' && ! Plan::is_feature_enabled( 'repeating_rows' ) ) {
+        if ( $output_mode === 'per_row' && ! \WPWE\Plan::is_feature_enabled( 'repeating_rows' ) ) {
             $output_mode = 'single';
         }
 
-        if ( ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
+        if ( ! \WPWE\Plan::is_feature_enabled( 'amelia_integration' ) ) {
             $raw_amelia_ids = [];
         }
 
         $send_admin_email = ! empty( $_POST['wpwe_send_admin_email'] ) ? 1 : 0;
         $send_user_email  = ! empty( $_POST['wpwe_send_user_email'] ) ? 1 : 0;
-        if ( ! Plan::is_feature_enabled( 'email_sending' ) ) {
+        if ( ! \WPWE\Plan::is_feature_enabled( 'email_sending' ) ) {
             $send_admin_email = 0;
             $send_user_email  = 0;
         }
@@ -285,8 +285,8 @@ class Admin_Menu {
             wp_die( esc_html__( 'Access denied.', 'wp-waiver-engine' ) );
         }
         $templates = Database::get_templates();
-        $limit     = Plan::template_limit();
-        $blocked   = Plan::is_template_creation_blocked();
+        $limit     = \WPWE\Plan::template_limit();
+        $blocked   = \WPWE\Plan::is_template_creation_blocked();
         ?>
         <div class="wrap">
             <h1 class="wp-heading-inline"><?php esc_html_e( 'Waiver Templates', 'wp-waiver-engine' ); ?></h1>
@@ -311,8 +311,8 @@ class Admin_Menu {
                     <?php if ( $blocked ) : ?>
                         <strong><?php esc_html_e( 'Template limit reached.', 'wp-waiver-engine' ); ?></strong>
                     <?php endif; ?>
-                    <?php if ( Plan::get_upgrade_url() !== '#' ) : ?>
-                        <a class="button button-secondary" href="<?php echo esc_url( Plan::get_upgrade_url() ); ?>" target="_blank" rel="noopener noreferrer" style="margin-left:8px;">
+                    <?php if ( \WPWE\Plan::get_upgrade_url() !== '#' ) : ?>
+                        <a class="button button-secondary" href="<?php echo esc_url( \WPWE\Plan::get_upgrade_url() ); ?>" target="_blank" rel="noopener noreferrer" style="margin-left:8px;">
                             <?php esc_html_e( 'Upgrade to Pro', 'wp-waiver-engine' ); ?>
                         </a>
                     <?php endif; ?>
@@ -401,7 +401,7 @@ class Admin_Menu {
         $id  = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
         $tpl = $id ? Database::get_template( $id ) : null;
 
-        ( new Template_Editor( $tpl ) )->render();
+        ( new \WPWE\Template_Editor( $tpl ) )->render();
     }
 
     // -----------------------------------------------------------------------
@@ -446,8 +446,8 @@ class Admin_Menu {
     private function action_save_settings(): void {
         check_admin_referer( 'wpwe_save_settings' );
 
-        $allow_amelia = Plan::is_feature_enabled( 'amelia_integration' );
-        $allow_email  = Plan::is_feature_enabled( 'email_sending' );
+        $allow_amelia = \WPWE\Plan::is_feature_enabled( 'amelia_integration' );
+        $allow_email  = \WPWE\Plan::is_feature_enabled( 'email_sending' );
 
         update_option( 'wpwe_amelia_enabled', $allow_amelia && ! empty( $_POST['wpwe_amelia_enabled'] ) ? '1' : '' );
         update_option( 'wpwe_admin_email_enabled', $allow_email && ! empty( $_POST['wpwe_admin_email_enabled'] ) ? '1' : '' );

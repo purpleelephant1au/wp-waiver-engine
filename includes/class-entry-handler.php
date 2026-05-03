@@ -54,7 +54,7 @@ class Entry_Handler {
             $ip  = $this->get_ip();
             $key = 'wpwe_rl_' . md5( $ip );
             $max    = Settings::rate_limit_max();
-            $window = Settings::rate_limit_window() * MINUTE_IN_SECONDS;
+                $window = Settings::rate_limit_window() * \MINUTE_IN_SECONDS;
             $hits   = (int) get_transient( $key );
             if ( $hits >= $max ) {
                 wp_send_json_error( [ 'message' => __( 'Too many submissions. Please wait a few minutes and try again.', 'wp-waiver-engine' ) ], 429 );
@@ -429,7 +429,7 @@ class Entry_Handler {
         return [ $row, $errors ];
     }
 
-    private function sanitize_field( $value, string $type ): string {
+    private function sanitize_field( mixed $value, string $type ): string {
         if ( ! is_scalar( $value ) ) {
             return '';
         }

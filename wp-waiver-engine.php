@@ -134,7 +134,7 @@ add_action( 'plugins_loaded', [ 'WPWE\Core', 'init' ] );
 // Activation - create tables immediately
 // -----------------------------------------------------------------------
 register_activation_hook( __FILE__, function (): void {
-    WPWE\Database::install();
+    \WPWE\Database::install();
 } );
 
 // -----------------------------------------------------------------------

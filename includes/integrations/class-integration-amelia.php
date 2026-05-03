@@ -186,7 +186,7 @@ class Integration_Amelia {
         int    $amelia_service_id = 0
     ): array {
         global $wpdb;
-        $entries = Database::entries_table();
+        $entries = \WPWE\Database::entries_table();
         $appt    = $wpdb->prefix . 'amelia_appointments';
         $books   = $wpdb->prefix . 'amelia_customer_bookings';
         $svc     = $wpdb->prefix . 'amelia_services';

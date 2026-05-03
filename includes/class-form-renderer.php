@@ -25,16 +25,16 @@ class Form_Renderer {
         // Scripts use defer so no cost if shortcode is absent.
         wp_enqueue_script(
             'signature-pad',
-            WPWE_PLUGIN_URL . 'assets/js/signature_pad.umd.min.js',
+            \WPWE_PLUGIN_URL . 'assets/js/signature_pad.umd.min.js',
             [],
             '5.0.2',
             true
         );
         wp_enqueue_script(
             'wpwe-form-engine',
-            WPWE_PLUGIN_URL . 'assets/js/form-engine.js',
+            \WPWE_PLUGIN_URL . 'assets/js/form-engine.js',
             [ 'signature-pad' ],
-            WPWE_VERSION,
+            \WPWE_VERSION,
             true
         );
         wp_localize_script( 'wpwe-form-engine', 'wpweForm', [
@@ -68,9 +68,9 @@ class Form_Renderer {
         ] );
         wp_enqueue_style(
             'wpwe-form',
-            WPWE_PLUGIN_URL . 'assets/css/waiver-form.css',
+            \WPWE_PLUGIN_URL . 'assets/css/waiver-form.css',
             [],
-            WPWE_VERSION
+            \WPWE_VERSION
         );
 
         // Conditionally enqueue CAPTCHA SDKs (only when a provider is configured)
@@ -356,7 +356,7 @@ class Form_Renderer {
     // Render individual field
     // -----------------------------------------------------------------------
 
-    private function render_field( array $field, string $group_key, $row_index, bool $in_table = false ): void {
+    private function render_field( array $field, string $group_key, int|string $row_index, bool $in_table = false ): void {
         $key      = sanitize_key( $field['key'] ?? '' );
         $label    = esc_html( $field['label'] ?? $key );
         $type     = sanitize_key( $field['type'] ?? 'text' );

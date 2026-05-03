@@ -42,11 +42,11 @@ class Settings {
      *   2. The user has explicitly enabled the integration in Settings.
      */
     public static function is_amelia_enabled(): bool {
-        if ( ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
+        if ( ! \WPWE\Plan::is_feature_enabled( 'amelia_integration' ) ) {
             return false;
         }
 
-        return Integration_Manager::is_amelia_active()
+        return \WPWE\Integration_Manager::is_amelia_active()
             && (bool) get_option( self::OPTION_AMELIA_ENABLED, false );
     }
 
@@ -54,7 +54,7 @@ class Settings {
      * Returns true when admin notification emails are globally enabled (default ON).
      */
     public static function is_admin_email_enabled(): bool {
-        if ( ! Plan::is_feature_enabled( 'email_sending' ) ) {
+        if ( ! \WPWE\Plan::is_feature_enabled( 'email_sending' ) ) {
             return false;
         }
 
@@ -65,7 +65,7 @@ class Settings {
      * Returns true when submitter copy emails are globally enabled (default ON).
      */
     public static function is_user_email_enabled(): bool {
-        if ( ! Plan::is_feature_enabled( 'email_sending' ) ) {
+        if ( ! \WPWE\Plan::is_feature_enabled( 'email_sending' ) ) {
             return false;
         }
 
@@ -134,12 +134,12 @@ class Settings {
         <div class="wrap">
             <h1><?php esc_html_e( 'Waiver Engine Settings', 'wp-waiver-engine' ); ?></h1>
 
-            <?php if ( ! Plan::is_pro() ) : ?>
+            <?php if ( ! \WPWE\Plan::is_pro() ) : ?>
             <div class="notice notice-info">
                 <p>
                     <?php esc_html_e( 'You are on the Free plan. Email sending, repeating rows, and Amelia integration require Pro.', 'wp-waiver-engine' ); ?>
-                    <?php if ( Plan::get_upgrade_url() !== '#' ) : ?>
-                        <a class="button button-secondary" href="<?php echo esc_url( Plan::get_upgrade_url() ); ?>" target="_blank" rel="noopener noreferrer" style="margin-left:8px;">
+                    <?php if ( \WPWE\Plan::get_upgrade_url() !== '#' ) : ?>
+                        <a class="button button-secondary" href="<?php echo esc_url( \WPWE\Plan::get_upgrade_url() ); ?>" target="_blank" rel="noopener noreferrer" style="margin-left:8px;">
                             <?php esc_html_e( 'Upgrade to Pro', 'wp-waiver-engine' ); ?>
                         </a>
                     <?php endif; ?>
@@ -177,11 +177,11 @@ class Settings {
                                   title="<?php esc_attr_e( 'Connect Waiver Engine with the Amelia Booking plugin. When active, a booking-search widget appears on waiver forms so customers can link their submission to an existing appointment.', 'wp-waiver-engine' ); ?>"></span>
                         </th>
                         <td>
-                        <?php if ( ! Plan::is_feature_enabled( 'amelia_integration' ) ) : ?>
+                        <?php if ( ! \WPWE\Plan::is_feature_enabled( 'amelia_integration' ) ) : ?>
                             <p class="description">
                                 <?php esc_html_e( 'Available on Pro plans.', 'wp-waiver-engine' ); ?>
                             </p>
-                        <?php elseif ( Integration_Manager::is_amelia_active() ) : ?>
+                        <?php elseif ( \WPWE\Integration_Manager::is_amelia_active() ) : ?>
                             <fieldset>
                                 <label>
                                     <input type="checkbox" name="wpwe_amelia_enabled" value="1"
@@ -206,7 +206,7 @@ class Settings {
                                   title="<?php esc_attr_e( 'When enabled, the notification address receives an email with the PDF attached each time a waiver is submitted. Can also be toggled per-template in the template editor.', 'wp-waiver-engine' ); ?>"></span>
                         </th>
                         <td>
-                            <?php if ( Plan::is_feature_enabled( 'email_sending' ) ) : ?>
+                            <?php if ( \WPWE\Plan::is_feature_enabled( 'email_sending' ) ) : ?>
                             <fieldset>
                                 <label>
                                     <input type="checkbox" name="wpwe_admin_email_enabled" value="1"
@@ -229,7 +229,7 @@ class Settings {
                                   title="<?php esc_attr_e( 'When enabled, an opt-in checkbox appears on waiver forms so submitters can request a PDF copy by email. Can also be toggled per-template.', 'wp-waiver-engine' ); ?>"></span>
                         </th>
                         <td>
-                            <?php if ( Plan::is_feature_enabled( 'email_sending' ) ) : ?>
+                            <?php if ( \WPWE\Plan::is_feature_enabled( 'email_sending' ) ) : ?>
                             <fieldset>
                                 <label>
                                     <input type="checkbox" name="wpwe_user_email_enabled" value="1"
