@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Waiver Engine
  * Description:       Template-driven waiver and contract system with PDF overlay generation and optional third-party booking integrations.
- * Version:           1.0.1
+ * Version:           1.1.0
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            Nathaniel Smith
@@ -18,13 +18,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'WPWE_VERSION' ) ) {
-    define( 'WPWE_VERSION', '1.0.1' );
+    define( 'WPWE_VERSION', '1.1.0' );
 }
 if ( ! defined( 'WPWE_PLUGIN_DIR' ) ) {
     define( 'WPWE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 }
 if ( ! defined( 'WPWE_PLUGIN_URL' ) ) {
     define( 'WPWE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+}
+if ( ! defined( 'WPWE_PLUGIN_BASENAME' ) ) {
+    define( 'WPWE_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 }
 
 // -----------------------------------------------------------------------
@@ -69,10 +72,6 @@ if ( ! function_exists( 'wwe_fs' ) ) {
                 'has_paid_plans'      => true,
                 'is_org_compliant'    => true,
                 'wp_org_gatekeeper'   => 'OA7#BoRiBNqdf52FvzEf!!074aRLPs8fspif$7K1#4u4Csys1fQlCecVcUTOs2mcpeVHi#C2j9d09fOTvbC0HloPT7fFee5WdS3G',
-                'trial'               => array(
-                    'days'               => 3,
-                    'is_require_payment' => true,
-                ),
                 'menu'                => array(
                     'slug'           => 'wpwe-settings',
                     'parent'         => array(
@@ -97,6 +96,41 @@ if ( ! function_exists( 'wwe_fs' ) ) {
 if ( ! function_exists( 'wpwe_fs' ) ) {
     function wpwe_fs() {
         return function_exists( 'wwe_fs' ) ? wwe_fs() : null;
+    }
+}
+
+/**
+ * Whether this running package is the premium package.
+ *
+ * Freemius sets this in premium builds so we can safely branch behavior
+ * between free and pro ZIPs produced from the same codebase.
+ */
+if ( ! function_exists( 'wpwe_is_premium_package' ) ) {
+    function wpwe_is_premium_package(): bool {
+        $fs = function_exists( 'wwe_fs' ) ? wwe_fs() : null;
+
+        return $fs && method_exists( $fs, 'is__premium_only' )
+            ? (bool) $fs->is__premium_only()
+            : false;
+    }
+}
+
+/**
+ * Whether premium functionality should be available at runtime.
+ *
+ * Primary source is Freemius entitlement (`can_use_premium_code`).
+ * Premium package fallback keeps behavior deterministic in environments where
+ * entitlement checks are temporarily unavailable.
+ */
+if ( ! function_exists( 'wpwe_can_use_premium_features' ) ) {
+    function wpwe_can_use_premium_features(): bool {
+        $fs = function_exists( 'wwe_fs' ) ? wwe_fs() : null;
+
+        if ( $fs && method_exists( $fs, 'can_use_premium_code' ) ) {
+            return (bool) $fs->can_use_premium_code();
+        }
+
+        return wpwe_is_premium_package();
     }
 }
 

@@ -353,6 +353,179 @@ CREATE TABLE $entries (
     }
 
     // -----------------------------------------------------------------------
+    // Full data export / import (migration tooling)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Export templates, entries, and key plugin options into a portable package.
+     */
+    public static function export_data_package(): array {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+        $templates = $wpdb->get_results( 'SELECT * FROM ' . self::templates_table() . ' ORDER BY id ASC', ARRAY_A ) ?: [];
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+        $entries   = $wpdb->get_results( 'SELECT * FROM ' . self::entries_table() . ' ORDER BY id ASC', ARRAY_A ) ?: [];
+
+        $option_keys = [
+            'wpwe_db_version',
+            'wpwe_amelia_enabled',
+            'wpwe_admin_email_enabled',
+            'wpwe_user_email_enabled',
+            'wpwe_rate_limit_enabled',
+            'wpwe_rate_limit_max',
+            'wpwe_rate_limit_window',
+            'wpwe_pdf_retention_days',
+            'wpwe_captcha_provider',
+            'wpwe_captcha_site_key',
+            'wpwe_captcha_secret_key',
+        ];
+
+        $options = [];
+        foreach ( $option_keys as $key ) {
+            $options[ $key ] = get_option( $key, null );
+        }
+
+        return [
+            'export_version' => 1,
+            'generated_at'   => gmdate( 'c' ),
+            'plugin'         => [
+                'slug'    => 'wp-waiver-engine',
+                'version' => defined( 'WPWE_VERSION' ) ? WPWE_VERSION : '',
+            ],
+            'tables'         => [
+                'templates' => $templates,
+                'entries'   => $entries,
+            ],
+            'options'        => $options,
+        ];
+    }
+
+    /**
+     * Import a package created by export_data_package().
+     *
+     * @return array{templates:int,entries:int,options:int}
+     */
+    public static function import_data_package( array $package, bool $replace_existing = false ): array {
+        global $wpdb;
+
+        $templates = isset( $package['tables']['templates'] ) && is_array( $package['tables']['templates'] )
+            ? $package['tables']['templates']
+            : [];
+        $entries = isset( $package['tables']['entries'] ) && is_array( $package['tables']['entries'] )
+            ? $package['tables']['entries']
+            : [];
+        $options = isset( $package['options'] ) && is_array( $package['options'] )
+            ? $package['options']
+            : [];
+
+        if ( $replace_existing ) {
+            // phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+            $wpdb->query( 'DELETE FROM ' . self::entries_table() );
+            $wpdb->query( 'DELETE FROM ' . self::templates_table() );
+            // phpcs:enable
+        }
+
+        $templates_imported = 0;
+        foreach ( $templates as $row ) {
+            if ( ! is_array( $row ) ) {
+                continue;
+            }
+
+            $sanitized = self::sanitize_template_data( $row );
+            $payload   = [
+                'id'                 => absint( $row['id'] ?? 0 ),
+                'title'              => $sanitized['title'],
+                'description'        => $sanitized['description'],
+                'field_schema'       => (string) $sanitized['field_schema'],
+                'pdf_mapping'        => (string) $sanitized['pdf_mapping'],
+                'pdf_attachment_id'  => (int) $sanitized['pdf_attachment_id'],
+                'output_mode'        => (string) $sanitized['output_mode'],
+                'output_group_key'   => (string) $sanitized['output_group_key'],
+                'notification_email' => (string) $sanitized['notification_email'],
+                'amelia_service_ids' => (string) $sanitized['amelia_service_ids'],
+                'send_admin_email'   => (int) $sanitized['send_admin_email'],
+                'send_user_email'    => (int) $sanitized['send_user_email'],
+                'captcha_enabled'    => (int) $sanitized['captcha_enabled'],
+                'active'             => (int) $sanitized['active'],
+                'created_at'         => sanitize_text_field( (string) ( $row['created_at'] ?? current_time( 'mysql', true ) ) ),
+                'updated_at'         => sanitize_text_field( (string) ( $row['updated_at'] ?? current_time( 'mysql', true ) ) ),
+            ];
+
+            if ( $payload['id'] <= 0 ) {
+                unset( $payload['id'] );
+                $ok = $wpdb->insert( self::templates_table(), $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            } else {
+                $ok = $wpdb->replace( self::templates_table(), $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            }
+
+            if ( false !== $ok ) {
+                $templates_imported++;
+            }
+        }
+
+        $entries_imported = 0;
+        foreach ( $entries as $row ) {
+            if ( ! is_array( $row ) ) {
+                continue;
+            }
+
+            $payload = [
+                'id'                => absint( $row['id'] ?? 0 ),
+                'template_id'       => absint( $row['template_id'] ?? 0 ),
+                'amelia_booking_id' => absint( $row['amelia_booking_id'] ?? 0 ),
+                'submission_data'   => (string) ( $row['submission_data'] ?? '' ),
+                'pdf_paths'         => (string) ( $row['pdf_paths'] ?? '' ),
+                'submitter_ip'      => sanitize_text_field( (string) ( $row['submitter_ip'] ?? '' ) ),
+                'email_sent'        => ! empty( $row['email_sent'] ) ? 1 : 0,
+                'pdf_error'         => sanitize_textarea_field( (string) ( $row['pdf_error'] ?? '' ) ),
+                'created_at'        => sanitize_text_field( (string) ( $row['created_at'] ?? current_time( 'mysql', true ) ) ),
+            ];
+
+            if ( $payload['template_id'] <= 0 ) {
+                continue;
+            }
+
+            if ( $payload['id'] <= 0 ) {
+                unset( $payload['id'] );
+                $ok = $wpdb->insert( self::entries_table(), $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            } else {
+                $ok = $wpdb->replace( self::entries_table(), $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            }
+
+            if ( false !== $ok ) {
+                $entries_imported++;
+            }
+        }
+
+        $options_imported = 0;
+        $allowed_options  = [
+            'wpwe_amelia_enabled',
+            'wpwe_admin_email_enabled',
+            'wpwe_user_email_enabled',
+            'wpwe_rate_limit_enabled',
+            'wpwe_rate_limit_max',
+            'wpwe_rate_limit_window',
+            'wpwe_pdf_retention_days',
+            'wpwe_captcha_provider',
+            'wpwe_captcha_site_key',
+            'wpwe_captcha_secret_key',
+        ];
+        foreach ( $allowed_options as $key ) {
+            if ( array_key_exists( $key, $options ) ) {
+                update_option( $key, $options[ $key ] );
+                $options_imported++;
+            }
+        }
+
+        return [
+            'templates' => $templates_imported,
+            'entries'   => $entries_imported,
+            'options'   => $options_imported,
+        ];
+    }
+
+    // -----------------------------------------------------------------------
     // Private helpers
     // -----------------------------------------------------------------------
 

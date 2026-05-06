@@ -5,7 +5,7 @@ Tags: pdf, forms, contracts, signature, booking
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 8.0
-Stable tag: 1.0.1
+Stable tag: 1.1.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -235,6 +235,12 @@ Run this checklist before uploading your first SVN commit:
 
 == Changelog ==
 
+= 1.1.0 =
+* Added Free-to-Pro handoff detection and in-dashboard migration guidance.
+* Added full data migration tooling (templates, entries, and key settings export/import).
+* Added one-click Free plugin deactivation action from Pro handoff notice with nonce/capability safeguards.
+* Refined Freemius premium package/runtime helpers for single-codebase dual ZIP packaging.
+
 = 1.0.1 =
 * Improvements to form/template handling and admin workflows.
 * User guide updates with reorganized flow-based screenshots.
@@ -256,6 +262,9 @@ Run this checklist before uploading your first SVN commit:
   a booking on the waiver form (for use in booking confirmation email links).
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Adds migration and handoff tooling for Free-to-Pro transitions and data transfer.
 
 = 1.0.1 =
 Maintenance release with fixes and documentation updates.

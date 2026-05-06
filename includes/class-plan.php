@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
  * - no repeating rows
  * - no Amelia integration
  *
- * Pro requires an active Freemius premium entitlement (trial or paid).
+ * Pro requires premium entitlement resolved through Freemius runtime checks.
  */
 class Plan {
 

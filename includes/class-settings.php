@@ -165,6 +165,55 @@ class Settings {
             </div>
             <?php endif; ?>
 
+            <?php if ( isset( $_GET['wpwe_data_imported'] ) ) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p><?php
+                    printf(
+                        /* translators: 1: templates count, 2: entries count, 3: options count */
+                        esc_html__( 'Data import complete: %1$d template(s), %2$d entry(s), %3$d option(s).', 'wp-waiver-engine' ),
+                        isset( $_GET['wpwe_import_templates'] ) ? (int) $_GET['wpwe_import_templates'] : 0,
+                        isset( $_GET['wpwe_import_entries'] ) ? (int) $_GET['wpwe_import_entries'] : 0,
+                        isset( $_GET['wpwe_import_options'] ) ? (int) $_GET['wpwe_import_options'] : 0
+                    );
+                ?></p>
+            </div>
+            <?php endif; ?>
+
+            <?php if ( isset( $_GET['wpwe_data_import_error'] ) ) : ?>
+            <div class="notice notice-error is-dismissible">
+                <p><?php esc_html_e( 'Data import failed. Please verify you uploaded a valid WPWE data export JSON file and try again.', 'wp-waiver-engine' ); ?></p>
+            </div>
+            <?php endif; ?>
+
+            <?php if ( isset( $_GET['wpwe_handoff_deactivated'] ) ) : ?>
+                <?php if ( (int) $_GET['wpwe_handoff_deactivated'] === 1 ) : ?>
+                <div class="notice notice-success is-dismissible">
+                    <p><?php esc_html_e( 'Free plugin deactivated successfully. Your data remains available in Pro.', 'wp-waiver-engine' ); ?></p>
+                </div>
+                <?php else : ?>
+                <div class="notice notice-error is-dismissible">
+                    <p><?php esc_html_e( 'Could not deactivate the Free plugin automatically. You can deactivate it manually from the Plugins screen.', 'wp-waiver-engine' ); ?></p>
+                </div>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <?php if ( self::is_free_to_pro_handoff_detected() ) : ?>
+            <div class="notice notice-info is-dismissible">
+                <p>
+                    <strong><?php esc_html_e( 'Free-to-Pro handoff detected.', 'wp-waiver-engine' ); ?></strong>
+                    <?php esc_html_e( 'This Pro package uses the same templates, entries, and settings schema as Free. Your existing data is already available. You can safely deactivate and remove the Free plugin after confirming your forms and admin pages in Pro.', 'wp-waiver-engine' ); ?>
+                </p>
+                <?php $target = self::get_handoff_target_plugin(); ?>
+                <?php if ( $target !== '' ) : ?>
+                <p>
+                    <a class="button button-secondary" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=wpwe-settings&wpwe_action=deactivate_free_plugin&plugin=' . rawurlencode( $target ) ), 'wpwe_deactivate_free_plugin' ) ); ?>" onclick="return confirm('<?php echo esc_js( __( 'Deactivate the Free plugin now? Your data will remain in Pro.', 'wp-waiver-engine' ) ); ?>');">
+                        <?php esc_html_e( 'Deactivate Free plugin now', 'wp-waiver-engine' ); ?>
+                    </a>
+                </p>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
             <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-settings' ) ); ?>">
                 <?php wp_nonce_field( 'wpwe_save_settings' ); ?>
                 <input type="hidden" name="wpwe_action" value="save_settings">
@@ -437,7 +486,86 @@ class Settings {
                 });
             })();
             </script>
+
+            <!-- ── Free/Pro migration helpers ── -->
+            <hr>
+            <h2><?php esc_html_e( 'Migration & Data Transfer', 'wp-waiver-engine' ); ?></h2>
+            <p><?php esc_html_e( 'Export and import the full Waiver Engine dataset (templates, entries, and plugin settings). Use this for migrations, backups, and Free-to-Pro handoff verification.', 'wp-waiver-engine' ); ?></p>
+
+            <h3><?php esc_html_e( 'Export Full Data Package', 'wp-waiver-engine' ); ?></h3>
+            <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-settings' ) ); ?>">
+                <?php wp_nonce_field( 'wpwe_export_all_data' ); ?>
+                <input type="hidden" name="wpwe_action" value="export_all_data">
+                <p>
+                    <button type="submit" class="button button-secondary">
+                        <?php esc_html_e( 'Download Full Data JSON', 'wp-waiver-engine' ); ?>
+                    </button>
+                </p>
+            </form>
+
+            <h3><?php esc_html_e( 'Import Full Data Package', 'wp-waiver-engine' ); ?></h3>
+            <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-settings' ) ); ?>" enctype="multipart/form-data">
+                <?php wp_nonce_field( 'wpwe_import_all_data' ); ?>
+                <input type="hidden" name="wpwe_action" value="import_all_data">
+                <p>
+                    <input type="file" name="wpwe_data_import_file" accept="application/json,.json" required>
+                </p>
+                <p>
+                    <label>
+                        <input type="checkbox" name="wpwe_data_replace_existing" value="1">
+                        <?php esc_html_e( 'Replace existing templates and entries before import', 'wp-waiver-engine' ); ?>
+                    </label>
+                </p>
+                <p class="description">
+                    <?php esc_html_e( 'Leave unchecked to merge data by ID (existing matching IDs are updated). Check to replace current templates/entries with the imported dataset first.', 'wp-waiver-engine' ); ?>
+                </p>
+                <p>
+                    <button type="submit" class="button button-primary" onclick="return confirm('<?php echo esc_js( __( 'Importing data may overwrite existing records with matching IDs. Continue?', 'wp-waiver-engine' ) ); ?>');">
+                        <?php esc_html_e( 'Import Data JSON', 'wp-waiver-engine' ); ?>
+                    </button>
+                </p>
+            </form>
         </div>
         <?php
+    }
+
+    /**
+     * Detect when a premium package is active alongside another WPWE plugin entry.
+     */
+    public static function is_free_to_pro_handoff_detected(): bool {
+        if ( ! function_exists( 'wpwe_is_premium_package' ) || ! wpwe_is_premium_package() ) {
+            return false;
+        }
+
+        return self::get_handoff_target_plugin() !== '';
+    }
+
+    /**
+     * Return active plugin basename for the Free package when detected.
+     */
+    public static function get_handoff_target_plugin(): string {
+        if ( ! function_exists( 'wpwe_is_premium_package' ) || ! wpwe_is_premium_package() ) {
+            return '';
+        }
+
+        $current = defined( 'WPWE_PLUGIN_BASENAME' ) ? (string) WPWE_PLUGIN_BASENAME : '';
+        $active  = (array) get_option( 'active_plugins', [] );
+
+        if ( is_multisite() ) {
+            $network_active = array_keys( (array) get_site_option( 'active_sitewide_plugins', [] ) );
+            $active         = array_merge( $active, $network_active );
+        }
+
+        foreach ( $active as $plugin_basename ) {
+            $plugin_basename = (string) $plugin_basename;
+            if ( $plugin_basename === $current ) {
+                continue;
+            }
+            if ( strpos( $plugin_basename, 'wp-waiver-engine' ) !== false ) {
+                return $plugin_basename;
+            }
+        }
+
+        return '';
     }
 }

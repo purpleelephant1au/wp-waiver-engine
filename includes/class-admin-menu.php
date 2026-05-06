@@ -134,6 +134,15 @@ class Admin_Menu {
             case 'cleanup_pdfs':
                 $this->action_cleanup_pdfs();
                 break;
+            case 'export_all_data':
+                $this->action_export_all_data();
+                break;
+            case 'import_all_data':
+                $this->action_import_all_data();
+                break;
+            case 'deactivate_free_plugin':
+                $this->action_deactivate_free_plugin();
+                break;
             case 'export_mappings':
                 $this->action_export_mappings();
                 break;
@@ -495,6 +504,122 @@ class Admin_Menu {
         }
 
         wp_safe_redirect( admin_url( 'admin.php?page=wpwe-settings&wpwe_cleanup_done=' . $deleted ) );
+        exit;
+    }
+
+    // -----------------------------------------------------------------------
+    // Action: export all plugin data (templates, entries, options)
+    // -----------------------------------------------------------------------
+
+    private function action_export_all_data(): void {
+        check_admin_referer( 'wpwe_export_all_data' );
+
+        $payload = Database::export_data_package();
+
+        if ( ob_get_level() ) {
+            ob_end_clean();
+        }
+
+        $filename = 'wpwe-data-export-' . gmdate( 'Y-m-d-His' ) . '.json';
+        header( 'Content-Type: application/json; charset=utf-8' );
+        header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Cache-Control: no-cache, no-store, must-revalidate' );
+        header( 'Pragma: no-cache' );
+
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo wp_json_encode( $payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+        exit;
+    }
+
+    // -----------------------------------------------------------------------
+    // Action: import all plugin data (templates, entries, options)
+    // -----------------------------------------------------------------------
+
+    private function action_import_all_data(): void {
+        check_admin_referer( 'wpwe_import_all_data' );
+
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+        if ( ! isset( $_FILES['wpwe_data_import_file'] ) || (int) $_FILES['wpwe_data_import_file']['error'] !== UPLOAD_ERR_OK ) {
+            wp_safe_redirect( admin_url( 'admin.php?page=wpwe-settings&wpwe_data_import_error=1' ) );
+            exit;
+        }
+
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+        $tmp_path = (string) $_FILES['wpwe_data_import_file']['tmp_name'];
+        if ( ! is_uploaded_file( $tmp_path ) ) {
+            wp_safe_redirect( admin_url( 'admin.php?page=wpwe-settings&wpwe_data_import_error=1' ) );
+            exit;
+        }
+
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+        $json = file_get_contents( $tmp_path );
+        if ( false === $json ) {
+            wp_safe_redirect( admin_url( 'admin.php?page=wpwe-settings&wpwe_data_import_error=2' ) );
+            exit;
+        }
+
+        $decoded = json_decode( $json, true );
+        if ( ! is_array( $decoded ) || ! isset( $decoded['tables'] ) || ! is_array( $decoded['tables'] ) ) {
+            wp_safe_redirect( admin_url( 'admin.php?page=wpwe-settings&wpwe_data_import_error=3' ) );
+            exit;
+        }
+
+        $replace = ! empty( $_POST['wpwe_data_replace_existing'] );
+        $result  = Database::import_data_package( $decoded, $replace );
+
+        $query = add_query_arg(
+            [
+                'page'                 => 'wpwe-settings',
+                'wpwe_data_imported'   => 1,
+                'wpwe_import_templates' => (int) $result['templates'],
+                'wpwe_import_entries'   => (int) $result['entries'],
+                'wpwe_import_options'   => (int) $result['options'],
+            ],
+            admin_url( 'admin.php' )
+        );
+
+        wp_safe_redirect( $query );
+        exit;
+    }
+
+    // -----------------------------------------------------------------------
+    // Action: one-click deactivate Free plugin during Pro handoff
+    // -----------------------------------------------------------------------
+
+    private function action_deactivate_free_plugin(): void {
+        check_admin_referer( 'wpwe_deactivate_free_plugin' );
+
+        if ( ! current_user_can( 'activate_plugins' ) ) {
+            wp_die( esc_html__( 'You do not have permission to deactivate plugins.', 'wp-waiver-engine' ) );
+        }
+
+        $target = isset( $_GET['plugin'] ) ? sanitize_text_field( wp_unslash( $_GET['plugin'] ) ) : '';
+        if ( $target === '' ) {
+            wp_safe_redirect( admin_url( 'admin.php?page=wpwe-settings&wpwe_handoff_deactivated=0' ) );
+            exit;
+        }
+
+        $current = defined( 'WPWE_PLUGIN_BASENAME' ) ? (string) WPWE_PLUGIN_BASENAME : '';
+        if ( $target === $current || strpos( $target, 'wp-waiver-engine' ) === false ) {
+            wp_safe_redirect( admin_url( 'admin.php?page=wpwe-settings&wpwe_handoff_deactivated=0' ) );
+            exit;
+        }
+
+        if ( ! function_exists( 'deactivate_plugins' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        $is_network_active = is_multisite() && is_plugin_active_for_network( $target );
+        deactivate_plugins( $target, false, $is_network_active );
+
+        $active = (array) get_option( 'active_plugins', [] );
+        $still_active = in_array( $target, $active, true );
+        if ( is_multisite() ) {
+            $network_active = array_keys( (array) get_site_option( 'active_sitewide_plugins', [] ) );
+            $still_active   = $still_active || in_array( $target, $network_active, true );
+        }
+
+        wp_safe_redirect( admin_url( 'admin.php?page=wpwe-settings&wpwe_handoff_deactivated=' . ( $still_active ? '0' : '1' ) ) );
         exit;
     }
 

@@ -31,6 +31,10 @@ class License_Provider_Freemius implements License_Provider_Interface {
             return false;
         }
 
+        if ( function_exists( 'wpwe_can_use_premium_features' ) ) {
+            return (bool) wpwe_can_use_premium_features();
+        }
+
         $fs = $this->get_fs();
 
         return $fs && method_exists( $fs, 'can_use_premium_code' )
