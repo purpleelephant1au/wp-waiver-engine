@@ -170,6 +170,11 @@ class Premium_Bridge {
     }
 
     public static function render_template_meta_box_premium_rows( \WP_Post $post, string $notify_email ): void {
+        $send_admin_raw   = get_post_meta( $post->ID, 'send_admin_email', true );
+        $send_user_raw    = get_post_meta( $post->ID, 'send_user_email', true );
+        $send_admin_email = ( $send_admin_raw === '' ) ? true : (bool) $send_admin_raw;
+        $send_user_email  = ( $send_user_raw === '' ) ? true : (bool) $send_user_raw;
+
         ?>
         <tr>
             <th><label for="wpwe_notification_email"><?php esc_html_e( 'Notification Email', 'wp-waiver-engine' ); ?></label></th>
@@ -208,6 +213,31 @@ class Premium_Bridge {
                 <?php endif; ?>
             </td>
         </tr>
+        <?php if ( Settings::is_admin_email_enabled() ) : ?>
+        <tr>
+            <th><label for="wpwe_send_admin_email"><?php esc_html_e( 'Admin Notification', 'wp-waiver-engine' ); ?></label></th>
+            <td>
+                <input type="checkbox" id="wpwe_send_admin_email" name="wpwe_send_admin_email" value="1"
+                       <?php checked( $send_admin_email ); ?>>
+                <label for="wpwe_send_admin_email">
+                    <?php esc_html_e( 'Send completed waiver PDF to admin email', 'wp-waiver-engine' ); ?>
+                </label>
+            </td>
+        </tr>
+        <?php endif; ?>
+
+        <?php if ( Settings::is_user_email_enabled() ) : ?>
+        <tr>
+            <th><label for="wpwe_send_user_email"><?php esc_html_e( 'Submitter Copy', 'wp-waiver-engine' ); ?></label></th>
+            <td>
+                <input type="checkbox" id="wpwe_send_user_email" name="wpwe_send_user_email" value="1"
+                       <?php checked( $send_user_email ); ?>>
+                <label for="wpwe_send_user_email">
+                    <?php esc_html_e( 'Allow submitter to request an emailed copy', 'wp-waiver-engine' ); ?>
+                </label>
+            </td>
+        </tr>
+        <?php endif; ?>
         <?php
     }
 
@@ -251,9 +281,13 @@ class Premium_Bridge {
     }
 
     public static function should_offer_submitter_copy( object $template ): bool {
+        $template_allows_copy = isset( $template->send_user_email )
+            ? ! empty( $template->send_user_email )
+            : true;
+
         return Plan::is_feature_enabled( 'email_sending' )
             && Settings::is_user_email_enabled()
-            && ! empty( $template->send_user_email );
+            && $template_allows_copy;
     }
 
     public static function ajax_search_bookings(): void {

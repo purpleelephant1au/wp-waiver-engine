@@ -427,6 +427,8 @@ class Template_Meta_Box {
         update_post_meta( $post_id, 'output_mode', (string) ( $premium_data['output_mode'] ?? 'single' ) );
         update_post_meta( $post_id, 'output_group_key', (string) ( $premium_data['output_group_key'] ?? '' ) );
         update_post_meta( $post_id, 'notification_email', (string) ( $premium_data['notification_email'] ?? '' ) );
+        update_post_meta( $post_id, 'send_admin_email', (int) ( $premium_data['send_admin_email'] ?? 0 ) );
+        update_post_meta( $post_id, 'send_user_email', (int) ( $premium_data['send_user_email'] ?? 0 ) );
 
         // active
         $active = isset( $_POST['wpwe_active'] ) ? true : false;
@@ -580,6 +582,8 @@ class Template_Meta_Box {
             'output_mode'        => 'single',
             'output_group_key'   => '',
             'notification_email' => '',
+            'send_admin_email'   => 0,
+            'send_user_email'    => 0,
             'amelia_service_ids' => [],
         ];
 
