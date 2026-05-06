@@ -8,8 +8,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * Menu structure:
  *   Waivers                     (top-level, slug: wpwe)
- *   ├─ Templates                (sub: wpwe)          → template list
- *   └─ Entries                  (sub: wpwe-entries)   → entry list
+ *   â”œâ”€ Templates                (sub: wpwe)          â†’ template list
+ *   â””â”€ Entries                  (sub: wpwe-entries)   â†’ entry list
  *
  * Edit-template page is accessed via `?page=wpwe-edit&id=N` (hidden from menu).
  * View-entry page is accessed via `?page=wpwe-entry&id=N` (hidden from menu).
@@ -28,8 +28,8 @@ class Admin_Menu {
 
     public function add_menu(): void {
         add_menu_page(
-            __( 'Waivers', 'wp-waiver-engine' ),
-            __( 'Waivers', 'wp-waiver-engine' ),
+            __( 'Waivers', 'waiver-engine' ),
+            __( 'Waivers', 'waiver-engine' ),
             'manage_options',
             'wpwe',
             [ $this, 'page_template_list' ],
@@ -39,28 +39,28 @@ class Admin_Menu {
 
         add_submenu_page(
             'wpwe',
-            __( 'Templates', 'wp-waiver-engine' ),
-            __( 'Templates', 'wp-waiver-engine' ),
+            __( 'Templates', 'waiver-engine' ),
+            __( 'Templates', 'waiver-engine' ),
             'manage_options',
             'wpwe',
             [ $this, 'page_template_list' ]
         );
 
-        // Add New — hidden from sidebar; accessed via the button in the template list
+        // Add New â€” hidden from sidebar; accessed via the button in the template list
         add_submenu_page(
             null,
-            __( 'Add New Template', 'wp-waiver-engine' ),
-            __( 'Add New', 'wp-waiver-engine' ),
+            __( 'Add New Template', 'waiver-engine' ),
+            __( 'Add New', 'waiver-engine' ),
             'manage_options',
             'wpwe-new',
             [ $this, 'page_template_edit' ]
         );
 
-        // Edit page — hidden (no parent), accessed via ?page=wpwe-edit&id=N
+        // Edit page â€” hidden (no parent), accessed via ?page=wpwe-edit&id=N
         add_submenu_page(
             null,
-            __( 'Edit Template', 'wp-waiver-engine' ),
-            __( 'Edit Template', 'wp-waiver-engine' ),
+            __( 'Edit Template', 'waiver-engine' ),
+            __( 'Edit Template', 'waiver-engine' ),
             'manage_options',
             'wpwe-edit',
             [ $this, 'page_template_edit' ]
@@ -68,18 +68,18 @@ class Admin_Menu {
 
         add_submenu_page(
             'wpwe',
-            __( 'Entries', 'wp-waiver-engine' ),
-            __( 'Entries', 'wp-waiver-engine' ),
+            __( 'Entries', 'waiver-engine' ),
+            __( 'Entries', 'waiver-engine' ),
             'manage_options',
             'wpwe-entries',
             [ $this, 'page_entry_list' ]
         );
 
-        // Entry detail — hidden
+        // Entry detail â€” hidden
         add_submenu_page(
             null,
-            __( 'View Entry', 'wp-waiver-engine' ),
-            __( 'View Entry', 'wp-waiver-engine' ),
+            __( 'View Entry', 'waiver-engine' ),
+            __( 'View Entry', 'waiver-engine' ),
             'manage_options',
             'wpwe-entry',
             [ $this, 'page_entry_detail' ]
@@ -87,8 +87,8 @@ class Admin_Menu {
 
         add_submenu_page(
             'wpwe',
-            __( 'Settings', 'wp-waiver-engine' ),
-            __( 'Settings', 'wp-waiver-engine' ),
+            __( 'Settings', 'waiver-engine' ),
+            __( 'Settings', 'waiver-engine' ),
             'manage_options',
             'wpwe-settings',
             [ $this, 'page_settings' ]
@@ -96,10 +96,11 @@ class Admin_Menu {
     }
 
     // -----------------------------------------------------------------------
-    // POST action handling (save, delete, etc.) – runs before output
+    // POST action handling (save, delete, etc.) â€“ runs before output
     // -----------------------------------------------------------------------
 
     public function handle_actions(): void {
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only routing values.
         $page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
         if ( ! in_array( $page, [ 'wpwe', 'wpwe-new', 'wpwe-edit', 'wpwe-entries', 'wpwe-entry', 'wpwe-settings' ], true ) ) {
             return;
@@ -117,6 +118,7 @@ class Admin_Menu {
         if ( $page === 'wpwe-entry' && isset( $_GET['view_pdf'] ) ) {
             $this->action_serve_pdf( true );
         }
+        // phpcs:enable
 
         switch ( $action ) {
             case 'save_template':
@@ -159,16 +161,20 @@ class Admin_Menu {
     private function action_serve_pdf( bool $inline ): void {
         $entry_id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
         if ( ! $entry_id ) {
-            wp_die( esc_html__( 'Invalid entry.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'Invalid entry.', 'waiver-engine' ) );
         }
 
         // Both view_pdf and dl_pdf use the same nonce key so links can be shared
-        $idx = $inline ? absint( $_GET['view_pdf'] ) : absint( $_GET['dl_pdf'] );
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- checked immediately below via check_admin_referer().
+        $idx = $inline
+            ? ( isset( $_GET['view_pdf'] ) ? absint( $_GET['view_pdf'] ) : 0 )
+            : ( isset( $_GET['dl_pdf'] ) ? absint( $_GET['dl_pdf'] ) : 0 );
+        // phpcs:enable
         check_admin_referer( 'wpwe_dl_pdf_' . $entry_id );
 
         $entry = Database::get_entry( $entry_id );
         if ( ! $entry ) {
-            wp_die( esc_html__( 'Entry not found.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'Entry not found.', 'waiver-engine' ) );
         }
 
         $pdf_paths = json_decode( $entry->pdf_paths, true ) ?: [];
@@ -189,7 +195,7 @@ class Admin_Menu {
             exit;
         }
 
-        wp_die( esc_html__( 'PDF file not found on disk.', 'wp-waiver-engine' ) );
+        wp_die( esc_html__( 'PDF file not found on disk.', 'waiver-engine' ) );
     }
 
     // -----------------------------------------------------------------------
@@ -293,17 +299,17 @@ class Admin_Menu {
 
     public function page_template_list(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'Access denied.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'Access denied.', 'waiver-engine' ) );
         }
         $templates = Database::get_templates();
         $limit     = \WPWE\Plan::template_limit();
         $blocked   = \WPWE\Plan::is_template_creation_blocked();
         ?>
         <div class="wrap">
-            <h1 class="wp-heading-inline"><?php esc_html_e( 'Waiver Templates', 'wp-waiver-engine' ); ?></h1>
+            <h1 class="wp-heading-inline"><?php esc_html_e( 'Waiver Templates', 'waiver-engine' ); ?></h1>
             <?php if ( ! $blocked ) : ?>
                 <a href="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-new' ) ); ?>" class="page-title-action">
-                    <?php esc_html_e( 'Add New', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( 'Add New', 'waiver-engine' ); ?>
                 </a>
             <?php endif; ?>
             <hr class="wp-header-end">
@@ -314,46 +320,48 @@ class Admin_Menu {
                     <?php
                     printf(
                         /* translators: 1: current count, 2: limit */
-                        esc_html__( 'Free plan: %1$d of %2$d templates used.', 'wp-waiver-engine' ),
-                        count( $templates ),
-                        $limit
+                        esc_html__( 'Free plan: %1$d of %2$d templates used.', 'waiver-engine' ),
+                        absint( count( $templates ) ),
+                        absint( $limit )
                     );
                     ?>
                     <?php if ( $blocked ) : ?>
-                        <strong><?php esc_html_e( 'Template limit reached.', 'wp-waiver-engine' ); ?></strong>
+                        <strong><?php esc_html_e( 'Template limit reached.', 'waiver-engine' ); ?></strong>
                     <?php endif; ?>
                     <?php if ( \WPWE\Plan::get_upgrade_url() !== '#' ) : ?>
                         <a class="button button-secondary" href="<?php echo esc_url( \WPWE\Plan::get_upgrade_url() ); ?>" target="_blank" rel="noopener noreferrer" style="margin-left:8px;">
-                            <?php esc_html_e( 'Upgrade to Pro', 'wp-waiver-engine' ); ?>
+                            <?php esc_html_e( 'Upgrade to Pro', 'waiver-engine' ); ?>
                         </a>
                     <?php endif; ?>
                 </p>
             </div>
             <?php endif; ?>
 
+            <?php // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only admin notice query vars. ?>
             <?php if ( isset( $_GET['wpwe_saved'] ) ) : ?>
-            <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Template saved.', 'wp-waiver-engine' ); ?></p></div>
+            <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Template saved.', 'waiver-engine' ); ?></p></div>
             <?php endif; ?>
             <?php if ( isset( $_GET['wpwe_deleted'] ) ) : ?>
-            <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Template deleted.', 'wp-waiver-engine' ); ?></p></div>
+            <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Template deleted.', 'waiver-engine' ); ?></p></div>
             <?php endif; ?>
             <?php if ( isset( $_GET['wpwe_limit_reached'] ) ) : ?>
-            <div class="notice notice-warning is-dismissible"><p><?php esc_html_e( 'Template limit reached for the free plan. Upgrade to Pro to create more templates.', 'wp-waiver-engine' ); ?></p></div>
+            <div class="notice notice-warning is-dismissible"><p><?php esc_html_e( 'Template limit reached for the free plan. Upgrade to Pro to create more templates.', 'waiver-engine' ); ?></p></div>
             <?php endif; ?>
+            <?php // phpcs:enable ?>
 
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
-                        <th scope="col" style="width:60px"><?php esc_html_e( 'ID', 'wp-waiver-engine' ); ?></th>
-                        <th scope="col"><?php esc_html_e( 'Title', 'wp-waiver-engine' ); ?></th>
-                        <th scope="col" style="width:80px"><?php esc_html_e( 'Active', 'wp-waiver-engine' ); ?></th>
-                        <th scope="col" style="width:120px"><?php esc_html_e( 'Shortcode', 'wp-waiver-engine' ); ?></th>
-                        <th scope="col" style="width:160px"><?php esc_html_e( 'Last Updated', 'wp-waiver-engine' ); ?></th>
+                        <th scope="col" style="width:60px"><?php esc_html_e( 'ID', 'waiver-engine' ); ?></th>
+                        <th scope="col"><?php esc_html_e( 'Title', 'waiver-engine' ); ?></th>
+                        <th scope="col" style="width:80px"><?php esc_html_e( 'Active', 'waiver-engine' ); ?></th>
+                        <th scope="col" style="width:120px"><?php esc_html_e( 'Shortcode', 'waiver-engine' ); ?></th>
+                        <th scope="col" style="width:160px"><?php esc_html_e( 'Last Updated', 'waiver-engine' ); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php if ( empty( $templates ) ) : ?>
-                    <tr><td colspan="5"><?php esc_html_e( 'No templates found.', 'wp-waiver-engine' ); ?></td></tr>
+                    <tr><td colspan="5"><?php esc_html_e( 'No templates found.', 'waiver-engine' ); ?></td></tr>
                 <?php else : ?>
                     <?php foreach ( $templates as $tpl ) : ?>
                     <tr>
@@ -361,13 +369,13 @@ class Admin_Menu {
                         <td>
                             <strong>
                                 <a href="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-edit&id=' . $tpl->id ) ); ?>">
-                                    <?php echo esc_html( $tpl->title ?: __( '(no title)', 'wp-waiver-engine' ) ); ?>
+                                    <?php echo esc_html( $tpl->title ?: __( '(no title)', 'waiver-engine' ) ); ?>
                                 </a>
                             </strong>
                             <div class="row-actions">
                                 <span class="edit">
                                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-edit&id=' . $tpl->id ) ); ?>">
-                                        <?php esc_html_e( 'Edit', 'wp-waiver-engine' ); ?>
+                                        <?php esc_html_e( 'Edit', 'waiver-engine' ); ?>
                                     </a>
                                 </span>
                                 &nbsp;|&nbsp;
@@ -376,9 +384,9 @@ class Admin_Menu {
                                         admin_url( 'admin.php?page=wpwe&wpwe_action=delete_template&id=' . $tpl->id ),
                                         'wpwe_delete_template_' . $tpl->id
                                     ) ); ?>"
-                                    onclick="return confirm('<?php esc_attr_e( 'Delete this template?', 'wp-waiver-engine' ); ?>')"
+                                    onclick="return confirm('<?php esc_attr_e( 'Delete this template?', 'waiver-engine' ); ?>')"
                                     style="color:#d63638;">
-                                        <?php esc_html_e( 'Delete', 'wp-waiver-engine' ); ?>
+                                        <?php esc_html_e( 'Delete', 'waiver-engine' ); ?>
                                     </a>
                                 </span>
                             </div>
@@ -386,7 +394,7 @@ class Admin_Menu {
                         <td>
                             <?php echo $tpl->active
                                 ? '<span style="color:green">&#10003;</span>'
-                                : '<span style="color:#aaa">—</span>'; ?>
+                                : '<span style="color:#aaa">â€”</span>'; ?>
                         </td>
                         <td>
                             <code>[waiver_form id="<?php echo esc_attr( $tpl->id ); ?>"]</code>
@@ -407,9 +415,11 @@ class Admin_Menu {
 
     public function page_template_edit(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'Access denied.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'Access denied.', 'waiver-engine' ) );
         }
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only admin routing parameter.
         $id  = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
+        // phpcs:enable
         $tpl = $id ? Database::get_template( $id ) : null;
 
         ( new \WPWE\Template_Editor( $tpl ) )->render();
@@ -421,7 +431,7 @@ class Admin_Menu {
 
     public function page_entry_list(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'Access denied.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'Access denied.', 'waiver-engine' ) );
         }
         ( new Entry_List_Table() )->render();
     }
@@ -432,12 +442,14 @@ class Admin_Menu {
 
     public function page_entry_detail(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'Access denied.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'Access denied.', 'waiver-engine' ) );
         }
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only admin routing parameter.
         $id    = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
+        // phpcs:enable
         $entry = $id ? Database::get_entry( $id ) : null;
         if ( ! $entry ) {
-            wp_die( esc_html__( 'Entry not found.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'Entry not found.', 'waiver-engine' ) );
         }
         ( new Entry_Detail( $entry ) )->render();
     }
@@ -464,9 +476,18 @@ class Admin_Menu {
         update_option( 'wpwe_admin_email_enabled', $allow_email && ! empty( $_POST['wpwe_admin_email_enabled'] ) ? '1' : '' );
         update_option( 'wpwe_user_email_enabled', $allow_email && ! empty( $_POST['wpwe_user_email_enabled'] ) ? '1' : '' );
         update_option( 'wpwe_rate_limit_enabled',  ! empty( $_POST['wpwe_rate_limit_enabled'] )  ? '1' : '' );
-        update_option( 'wpwe_rate_limit_max',    max( 1, (int) ( $_POST['wpwe_rate_limit_max']    ?? 5  ) ) );
-        update_option( 'wpwe_rate_limit_window', max( 1, (int) ( $_POST['wpwe_rate_limit_window'] ?? 15 ) ) );
-        update_option( 'wpwe_pdf_retention_days', max( 1, (int) ( $_POST['wpwe_pdf_retention_days'] ?? 90 ) ) );
+        $rate_limit_max = isset( $_POST['wpwe_rate_limit_max'] )
+            ? max( 1, absint( wp_unslash( $_POST['wpwe_rate_limit_max'] ) ) )
+            : 5;
+        $rate_limit_window = isset( $_POST['wpwe_rate_limit_window'] )
+            ? max( 1, absint( wp_unslash( $_POST['wpwe_rate_limit_window'] ) ) )
+            : 15;
+        $retention_days = isset( $_POST['wpwe_pdf_retention_days'] )
+            ? max( 1, absint( wp_unslash( $_POST['wpwe_pdf_retention_days'] ) ) )
+            : 90;
+        update_option( 'wpwe_rate_limit_max', $rate_limit_max );
+        update_option( 'wpwe_rate_limit_window', $rate_limit_window );
+        update_option( 'wpwe_pdf_retention_days', $retention_days );
         $captcha_provider = isset( $_POST['wpwe_captcha_provider'] ) ? sanitize_text_field( wp_unslash( $_POST['wpwe_captcha_provider'] ) ) : 'none';
         if ( ! in_array( $captcha_provider, [ 'none', 'recaptcha_v3', 'hcaptcha' ], true ) ) {
             $captcha_provider = 'none';
@@ -486,7 +507,9 @@ class Admin_Menu {
         check_admin_referer( 'wpwe_cleanup_pdfs' );
 
         // Save chosen retention days before running cleanup.
-        $retention_days = max( 1, (int) ( $_POST['wpwe_pdf_retention_days'] ?? 90 ) );
+        $retention_days = isset( $_POST['wpwe_pdf_retention_days'] )
+            ? max( 1, absint( wp_unslash( $_POST['wpwe_pdf_retention_days'] ) ) )
+            : 90;
         update_option( 'wpwe_pdf_retention_days', $retention_days );
 
         $upload_dir = wp_upload_dir();
@@ -592,7 +615,7 @@ class Admin_Menu {
         check_admin_referer( 'wpwe_deactivate_free_plugin' );
 
         if ( ! current_user_can( 'activate_plugins' ) ) {
-            wp_die( esc_html__( 'You do not have permission to deactivate plugins.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'You do not have permission to deactivate plugins.', 'waiver-engine' ) );
         }
 
         $target = isset( $_GET['plugin'] ) ? sanitize_text_field( wp_unslash( $_GET['plugin'] ) ) : '';
@@ -602,7 +625,7 @@ class Admin_Menu {
         }
 
         $current = defined( 'WPWE_PLUGIN_BASENAME' ) ? (string) WPWE_PLUGIN_BASENAME : '';
-        if ( $target === $current || strpos( $target, 'wp-waiver-engine' ) === false ) {
+        if ( $target === $current || strpos( $target, 'waiver-engine' ) === false ) {
             wp_safe_redirect( admin_url( 'admin.php?page=wpwe-settings&wpwe_handoff_deactivated=0' ) );
             exit;
         }
@@ -632,13 +655,13 @@ class Admin_Menu {
     private function action_export_mappings(): void {
         $id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
         if ( ! $id ) {
-            wp_die( esc_html__( 'Invalid template.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'Invalid template.', 'waiver-engine' ) );
         }
         check_admin_referer( 'wpwe_export_mappings_' . $id );
 
         $tpl = Database::get_template( $id );
         if ( ! $tpl ) {
-            wp_die( esc_html__( 'Template not found.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'Template not found.', 'waiver-engine' ) );
         }
 
         $payload = [
@@ -670,7 +693,7 @@ class Admin_Menu {
 
         $id = isset( $_POST['wpwe_template_id'] ) ? absint( $_POST['wpwe_template_id'] ) : 0;
         if ( ! $id ) {
-            wp_die( esc_html__( 'Invalid template.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'Invalid template.', 'waiver-engine' ) );
         }
 
         // Validate file upload.
@@ -705,7 +728,7 @@ class Admin_Menu {
         // Fetch existing template to preserve all other fields (title, email, etc.).
         $tpl = Database::get_template( $id );
         if ( ! $tpl ) {
-            wp_die( esc_html__( 'Template not found.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'Template not found.', 'waiver-engine' ) );
         }
 
         $data                 = (array) $tpl;
@@ -718,3 +741,4 @@ class Admin_Menu {
         exit;
     }
 }
+

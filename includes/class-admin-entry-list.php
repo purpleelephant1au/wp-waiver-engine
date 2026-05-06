@@ -25,12 +25,12 @@ class Admin_Entry_List {
     public function columns( array $columns ): array {
         return [
             'cb'           => $columns['cb'],
-            'title'        => __( 'Entry', 'wp-waiver-engine' ),
-            'template'     => __( 'Template', 'wp-waiver-engine' ),
-            'submitter'    => __( 'Submitter', 'wp-waiver-engine' ),
-            'pdfs'         => __( 'PDFs', 'wp-waiver-engine' ),
-            'email_sent'   => __( 'Email Sent', 'wp-waiver-engine' ),
-            'date'         => __( 'Submitted', 'wp-waiver-engine' ),
+            'title'        => __( 'Entry', 'waiver-engine' ),
+            'template'     => __( 'Template', 'waiver-engine' ),
+            'submitter'    => __( 'Submitter', 'waiver-engine' ),
+            'pdfs'         => __( 'PDFs', 'waiver-engine' ),
+            'email_sent'   => __( 'Email Sent', 'waiver-engine' ),
+            'date'         => __( 'Submitted', 'waiver-engine' ),
         ];
     }
 
@@ -43,7 +43,7 @@ class Admin_Entry_List {
         switch ( $column ) {
             case 'template':
                 $tid = (int) get_post_meta( $post_id, 'template_id', true );
-                echo $tid ? esc_html( get_the_title( $tid ) ) : '—';
+                echo $tid ? esc_html( get_the_title( $tid ) ) : 'â€”';
                 break;
 
             case 'submitter':
@@ -51,7 +51,7 @@ class Admin_Entry_List {
                 // Try common signer fields
                 $name  = $this->find_field( $data, [ 'signer.full_name', 'signer.name', 'full_name' ] );
                 $email = $this->find_field( $data, [ 'signer.email', 'email' ] );
-                echo esc_html( $name ?: '—' );
+                echo esc_html( $name ?: 'â€”' );
                 if ( $email ) {
                     echo '<br><small>' . esc_html( $email ) . '</small>';
                 }
@@ -64,18 +64,19 @@ class Admin_Entry_List {
                         $url = wp_get_attachment_url( $att_id );
                         if ( $url ) {
                             echo '<a href="' . esc_url( $url ) . '" target="_blank">';
-                            printf( esc_html__( 'PDF %d', 'wp-waiver-engine' ), $i + 1 );
+                            /* translators: %d: PDF index number */
+                            printf( esc_html__( 'PDF %d', 'waiver-engine' ), absint( $i ) + 1 );
                             echo '</a> ';
                         }
                     }
                 } else {
-                    echo '—';
+                    echo 'â€”';
                 }
                 break;
 
             case 'email_sent':
                 $sent = (bool) get_post_meta( $post_id, 'email_sent', true );
-                echo $sent ? '<span style="color:green">&#10003;</span>' : '—';
+                echo $sent ? '<span style="color:green">&#10003;</span>' : 'â€”';
                 break;
         }
     }
@@ -87,7 +88,7 @@ class Admin_Entry_List {
     public function add_entry_meta_box(): void {
         add_meta_box(
             'wpwe_entry_detail',
-            __( 'Submission Data', 'wp-waiver-engine' ),
+            __( 'Submission Data', 'waiver-engine' ),
             [ $this, 'render_entry_meta_box' ],
             'waiver_entry',
             'normal',
@@ -103,19 +104,19 @@ class Admin_Entry_List {
         $email_sent  = (bool) get_post_meta( $post->ID, 'email_sent', true );
         ?>
         <p>
-            <strong><?php esc_html_e( 'Template:', 'wp-waiver-engine' ); ?></strong>
-            <?php echo $template_id ? esc_html( get_the_title( $template_id ) ) : '—'; ?>
+            <strong><?php esc_html_e( 'Template:', 'waiver-engine' ); ?></strong>
+            <?php echo $template_id ? esc_html( get_the_title( $template_id ) ) : 'â€”'; ?>
             &nbsp;|&nbsp;
-            <strong><?php esc_html_e( 'Submitter IP:', 'wp-waiver-engine' ); ?></strong>
-            <?php echo esc_html( $ip ?: '—' ); ?>
+            <strong><?php esc_html_e( 'Submitter IP:', 'waiver-engine' ); ?></strong>
+            <?php echo esc_html( $ip ?: 'â€”' ); ?>
             &nbsp;|&nbsp;
-            <strong><?php esc_html_e( 'Email Sent:', 'wp-waiver-engine' ); ?></strong>
-            <?php echo $email_sent ? esc_html__( 'Yes', 'wp-waiver-engine' ) : esc_html__( 'No', 'wp-waiver-engine' ); ?>
+            <strong><?php esc_html_e( 'Email Sent:', 'waiver-engine' ); ?></strong>
+            <?php echo $email_sent ? esc_html__( 'Yes', 'waiver-engine' ) : esc_html__( 'No', 'waiver-engine' ); ?>
         </p>
 
         <?php if ( is_array( $pdf_ids ) && count( $pdf_ids ) ) : ?>
         <p>
-            <strong><?php esc_html_e( 'Generated PDFs:', 'wp-waiver-engine' ); ?></strong>
+            <strong><?php esc_html_e( 'Generated PDFs:', 'waiver-engine' ); ?></strong>
         </p>
         <ul>
             <?php foreach ( $pdf_ids as $i => $att_id ) :
@@ -128,7 +129,7 @@ class Admin_Entry_List {
                         <?php echo esc_html( $name ?: 'PDF ' . ( $i + 1 ) ); ?>
                     </a>
                 <?php else : ?>
-                    <?php esc_html_e( '(attachment deleted)', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( '(attachment deleted)', 'waiver-engine' ); ?>
                 <?php endif; ?>
             </li>
             <?php endforeach; ?>
@@ -136,19 +137,19 @@ class Admin_Entry_List {
         <?php endif; ?>
 
         <hr>
-        <h4><?php esc_html_e( 'Field Values', 'wp-waiver-engine' ); ?></h4>
+        <h4><?php esc_html_e( 'Field Values', 'waiver-engine' ); ?></h4>
         <?php if ( $data ) : ?>
         <table class="widefat fixed striped">
             <thead><tr>
-                <th style="width:30%"><?php esc_html_e( 'Field', 'wp-waiver-engine' ); ?></th>
-                <th><?php esc_html_e( 'Value', 'wp-waiver-engine' ); ?></th>
+                <th style="width:30%"><?php esc_html_e( 'Field', 'waiver-engine' ); ?></th>
+                <th><?php esc_html_e( 'Value', 'waiver-engine' ); ?></th>
             </tr></thead>
             <tbody>
             <?php $this->render_data_rows( $data ); ?>
             </tbody>
         </table>
         <?php else : ?>
-        <p><?php esc_html_e( 'No submission data found.', 'wp-waiver-engine' ); ?></p>
+        <p><?php esc_html_e( 'No submission data found.', 'waiver-engine' ); ?></p>
         <?php endif; ?>
         <?php
     }
@@ -160,7 +161,7 @@ class Admin_Entry_List {
     public function block_new_entry(): void {
         global $post_type;
         if ( $post_type === 'waiver_entry' ) {
-            wp_die( esc_html__( 'Waiver entries are created by form submissions only.', 'wp-waiver-engine' ) );
+            wp_die( esc_html__( 'Waiver entries are created by form submissions only.', 'waiver-engine' ) );
         }
     }
 
@@ -211,7 +212,7 @@ class Admin_Entry_List {
                 }
             } else {
                 $display = (string) $value;
-                // Hide raw base64 signature – show placeholder
+                // Hide raw base64 signature â€“ show placeholder
                 if ( str_starts_with( $display, 'data:image/' ) ) {
                     $display = '[signature image]';
                 }
@@ -225,3 +226,4 @@ class Admin_Entry_List {
         }
     }
 }
+

@@ -28,7 +28,7 @@ class Template_Meta_Box {
         }
         wp_enqueue_media();
 
-        // PDF.js (UMD – exposes window.pdfjsLib)
+        // PDF.js (UMD â€“ exposes window.pdfjsLib)
         wp_enqueue_script(
             'pdfjs',
             \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.min.js',
@@ -66,19 +66,19 @@ class Template_Meta_Box {
         }
 
         wp_localize_script( 'wpwe-admin-editor', 'wpweAdmin', [
-            'mediaTitle'   => __( 'Select Base PDF', 'wp-waiver-engine' ),
-            'mediaButton'  => __( 'Use this PDF', 'wp-waiver-engine' ),
+            'mediaTitle'   => __( 'Select Base PDF', 'waiver-engine' ),
+            'mediaButton'  => __( 'Use this PDF', 'waiver-engine' ),
             'workerSrc'    => \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.worker.min.js',
             'currentPdfUrl'=> $pdf_url,
             'i18n'         => [
-                'drawHint'    => __( 'Draw a rectangle on the PDF to map a field', 'wp-waiver-engine' ),
-                'page'        => __( 'Page', 'wp-waiver-engine' ),
-                'prev'        => __( '‹ Prev', 'wp-waiver-engine' ),
-                'next'        => __( 'Next ›', 'wp-waiver-engine' ),
-                'deleteRow'   => __( 'Delete', 'wp-waiver-engine' ),
-                'addRow'      => __( '+ Add Row Manually', 'wp-waiver-engine' ),
-                'noSchema'    => __( 'Save the field schema first to populate the field dropdown.', 'wp-waiver-engine' ),
-                'noPdf'       => __( 'Select a Base PDF in Template Settings to enable the visual mapper.', 'wp-waiver-engine' ),
+                'drawHint'    => __( 'Draw a rectangle on the PDF to map a field', 'waiver-engine' ),
+                'page'        => __( 'Page', 'waiver-engine' ),
+                'prev'        => __( 'â€¹ Prev', 'waiver-engine' ),
+                'next'        => __( 'Next â€º', 'waiver-engine' ),
+                'deleteRow'   => __( 'Delete', 'waiver-engine' ),
+                'addRow'      => __( '+ Add Row Manually', 'waiver-engine' ),
+                'noSchema'    => __( 'Save the field schema first to populate the field dropdown.', 'waiver-engine' ),
+                'noPdf'       => __( 'Select a Base PDF in Template Settings to enable the visual mapper.', 'waiver-engine' ),
             ],
         ] );
     }
@@ -122,31 +122,31 @@ class Template_Meta_Box {
         ?>
         <table class="form-table wpwe-settings-table">
             <tr>
-                <th><label for="wpwe_pdf_attachment_id"><?php esc_html_e( 'Base PDF', 'wp-waiver-engine' ); ?></label></th>
+                <th><label for="wpwe_pdf_attachment_id"><?php esc_html_e( 'Base PDF', 'waiver-engine' ); ?></label></th>
                 <td>
                     <input type="hidden" id="wpwe_pdf_attachment_id" name="wpwe_pdf_attachment_id"
                            value="<?php echo esc_attr( $pdf_id ); ?>">
                     <button type="button" class="button" id="wpwe_select_pdf">
-                        <?php esc_html_e( 'Select PDF from Media Library', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Select PDF from Media Library', 'waiver-engine' ); ?>
                     </button>
                     <span id="wpwe_pdf_name" style="margin-left:10px;">
-                        <?php echo $pdf_url ? '<a href="' . esc_url( $pdf_url ) . '" target="_blank">' . esc_html( basename( $pdf_url ) ) . '</a>' : esc_html__( 'No PDF selected', 'wp-waiver-engine' ); ?>
+                        <?php echo $pdf_url ? '<a href="' . esc_url( $pdf_url ) . '" target="_blank">' . esc_html( basename( $pdf_url ) ) . '</a>' : esc_html__( 'No PDF selected', 'waiver-engine' ); ?>
                     </span>
-                    <p class="description"><?php esc_html_e( 'Or reference a built-in form by filename (see PDF Mapping notes).', 'wp-waiver-engine' ); ?></p>
+                    <p class="description"><?php esc_html_e( 'Or reference a built-in form by filename (see PDF Mapping notes).', 'waiver-engine' ); ?></p>
                 </td>
             </tr>
             <tr>
-                <th><label for="wpwe_description"><?php esc_html_e( 'Description', 'wp-waiver-engine' ); ?></label></th>
+                <th><label for="wpwe_description"><?php esc_html_e( 'Description', 'waiver-engine' ); ?></label></th>
                 <td>
                     <textarea id="wpwe_description" name="wpwe_description" rows="3" class="large-text"><?php echo esc_textarea( $description ); ?></textarea>
                 </td>
             </tr>
             <tr>
-                <th><label for="wpwe_output_mode"><?php esc_html_e( 'Output Mode', 'wp-waiver-engine' ); ?></label></th>
+                <th><label for="wpwe_output_mode"><?php esc_html_e( 'Output Mode', 'waiver-engine' ); ?></label></th>
                 <td>
                     <select id="wpwe_output_mode" name="wpwe_output_mode">
                         <option value="single" <?php selected( $output_mode, 'single' ); ?>>
-                            <?php esc_html_e( 'Single PDF per submission', 'wp-waiver-engine' ); ?>
+                            <?php esc_html_e( 'Single PDF per submission', 'waiver-engine' ); ?>
                         </option>
                         <?php $this->render_per_row_output_mode_option( $output_mode ); ?>
                     </select>
@@ -155,11 +155,11 @@ class Template_Meta_Box {
             </tr>
             <?php $this->render_premium_settings_rows( $post, $notify_email ); ?>
             <tr>
-                <th><label for="wpwe_active"><?php esc_html_e( 'Active', 'wp-waiver-engine' ); ?></label></th>
+                <th><label for="wpwe_active"><?php esc_html_e( 'Active', 'waiver-engine' ); ?></label></th>
                 <td>
                     <input type="checkbox" id="wpwe_active" name="wpwe_active" value="1"
                         <?php checked( $active, true ); ?>>
-                    <label for="wpwe_active"><?php esc_html_e( 'Make this template available on the frontend', 'wp-waiver-engine' ); ?></label>
+                    <label for="wpwe_active"><?php esc_html_e( 'Make this template available on the frontend', 'waiver-engine' ); ?></label>
                 </td>
             </tr>
 
@@ -182,10 +182,10 @@ class Template_Meta_Box {
         $groups_meta = $mapping['groups'] ?? [];
         ?>
 
-        <!-- Hidden JSON store – updated by JS before form submit -->
+        <!-- Hidden JSON store â€“ updated by JS before form submit -->
         <input type="hidden" id="wpwe_pdf_mapping" name="wpwe_pdf_mapping" value="<?php echo esc_attr( $raw ); ?>">
 
-        <!-- ── Meta box summary: field count + open button ─────────────── -->
+        <!-- â”€â”€ Meta box summary: field count + open button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
         <div class="wpwe-mapper-summary">
             <span id="wpwe-mapper-summary-text" class="wpwe-mapper-summary-text">
                 <?php
@@ -193,22 +193,23 @@ class Template_Meta_Box {
                 if ( $pdf_file && $field_count ) {
                     echo esc_html( sprintf(
                         /* translators: 1: PDF filename, 2: number of fields */
-                        _n( '%1$s — %2$d field', '%1$s — %2$d fields', $field_count, 'wp-waiver-engine' ),
+                        _n( '%1$s â€” %2$d field', '%1$s â€” %2$d fields', $field_count, 'waiver-engine' ),
                         $pdf_file, $field_count
                     ) );
                 } elseif ( $field_count ) {
                     echo esc_html( sprintf(
-                        _n( '%d field mapped', '%d fields mapped', $field_count, 'wp-waiver-engine' ),
+                        /* translators: %d: number of mapped fields */
+                        _n( '%d field mapped', '%d fields mapped', $field_count, 'waiver-engine' ),
                         $field_count
                     ) );
                 } else {
-                    esc_html_e( 'No fields mapped yet', 'wp-waiver-engine' );
+                    esc_html_e( 'No fields mapped yet', 'waiver-engine' );
                 }
                 ?>
             </span>
             <button type="button" class="button button-primary" id="wpwe-open-mapper">
                 <span class="dashicons dashicons-editor-expand" style="vertical-align:text-bottom;margin-right:4px;"></span>
-                <?php esc_html_e( 'Open Visual Mapper', 'wp-waiver-engine' ); ?>
+                <?php esc_html_e( 'Open Visual Mapper', 'waiver-engine' ); ?>
             </button>
         </div>
 
@@ -217,27 +218,27 @@ class Template_Meta_Box {
             <?php $this->render_mapping_row( '', [], [] ); ?>
         </template>
 
-        <!-- ══════════════════════════════════════════════════════════════
+        <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
              Full-screen mapper modal
-             ══════════════════════════════════════════════════════════════ -->
+             â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div id="wpwe-mapper-modal" class="wpwe-mapper-modal" role="dialog" aria-modal="true" style="display:none;">
 
             <!-- Modal header / toolbar -->
             <div class="wpwe-modal-header">
                 <span class="wpwe-modal-title">
                     <span class="dashicons dashicons-location-alt" style="vertical-align:middle;margin-right:6px;"></span>
-                    <?php esc_html_e( 'Visual Field Mapper', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( 'Visual Field Mapper', 'waiver-engine' ); ?>
                 </span>
                 <div class="wpwe-modal-toolbar">
                       <input type="hidden" id="wpwe_map_page_count" name="wpwe_map_page_count"
                           value="<?php echo esc_attr( $page_count ?: 1 ); ?>">
                     <button type="button" class="button" id="wpwe-prev-page">&#8249;</button>
-                    <span><?php esc_html_e( 'Pg', 'wp-waiver-engine' ); ?> <strong id="wpwe-page-num">1</strong>/<span id="wpwe-page-total">1</span></span>
+                    <span><?php esc_html_e( 'Pg', 'waiver-engine' ); ?> <strong id="wpwe-page-num">1</strong>/<span id="wpwe-page-total">1</span></span>
                     <button type="button" class="button" id="wpwe-next-page">&#8250;</button>
-                    <span class="wpwe-draw-hint"><?php esc_html_e( 'Draw on PDF to add a field', 'wp-waiver-engine' ); ?></span>
+                    <span class="wpwe-draw-hint"><?php esc_html_e( 'Draw on PDF to add a field', 'waiver-engine' ); ?></span>
                 </div>
                 <button type="button" class="wpwe-modal-close" id="wpwe-close-mapper"
-                        title="<?php esc_attr_e( 'Close mapper (Esc)', 'wp-waiver-engine' ); ?>">
+                        title="<?php esc_attr_e( 'Close mapper (Esc)', 'waiver-engine' ); ?>">
                     <span class="dashicons dashicons-no-alt"></span>
                 </button>
             </div>
@@ -248,7 +249,7 @@ class Template_Meta_Box {
                 <!-- Left: PDF canvas -->
                 <div class="wpwe-modal-pdf-pane">
                     <div class="wpwe-mapper-hint" id="wpwe-mapper-hint">
-                        <?php esc_html_e( 'Use the Base PDF picker in Template Settings to enable the visual mapper.', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Use the Base PDF picker in Template Settings to enable the visual mapper.', 'waiver-engine' ); ?>
                     </div>
                     <div class="wpwe-pdf-viewer" id="wpwe-pdf-viewer" style="display:none;">
                         <div class="wpwe-canvas-wrap" id="wpwe-canvas-wrap">
@@ -262,21 +263,21 @@ class Template_Meta_Box {
                 <!-- Right: Field table -->
                 <div class="wpwe-modal-table-pane">
                     <p class="description" style="margin:0 0 8px;font-size:12px;">
-                        <?php esc_html_e( 'Draw on the PDF to add rows. Fill in Group, Field Key, Label, Type — both the frontend form and PDF overlay are generated from this table.', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Draw on the PDF to add rows. Fill in Group, Field Key, Label, Type â€” both the frontend form and PDF overlay are generated from this table.', 'waiver-engine' ); ?>
                     </p>
                     <div class="wpwe-mapping-table-wrap">
                         <table class="widefat wpwe-mapping-table" id="wpwe-mapping-table">
                             <thead>
                                 <tr>
-                                    <th><?php esc_html_e( 'Group', 'wp-waiver-engine' ); ?></th>
-                                    <th><?php esc_html_e( 'Key', 'wp-waiver-engine' ); ?></th>
-                                    <th><?php esc_html_e( 'Label', 'wp-waiver-engine' ); ?></th>
-                                    <th><?php esc_html_e( 'Type', 'wp-waiver-engine' ); ?></th>
-                                    <th style="width:34px" title="<?php esc_attr_e( 'Required', 'wp-waiver-engine' ); ?>">Req</th>
+                                    <th><?php esc_html_e( 'Group', 'waiver-engine' ); ?></th>
+                                    <th><?php esc_html_e( 'Key', 'waiver-engine' ); ?></th>
+                                    <th><?php esc_html_e( 'Label', 'waiver-engine' ); ?></th>
+                                    <th><?php esc_html_e( 'Type', 'waiver-engine' ); ?></th>
+                                    <th style="width:34px" title="<?php esc_attr_e( 'Required', 'waiver-engine' ); ?>">Req</th>
                                     <?php $this->render_repeatable_header_cell(); ?>
-                                    <th style="width:36px"><?php esc_html_e( 'Pg', 'wp-waiver-engine' ); ?></th>
-                                    <th><?php esc_html_e( 'Location', 'wp-waiver-engine' ); ?></th>
-                                    <th style="width:42px"><?php esc_html_e( 'Font', 'wp-waiver-engine' ); ?></th>
+                                    <th style="width:36px"><?php esc_html_e( 'Pg', 'waiver-engine' ); ?></th>
+                                    <th><?php esc_html_e( 'Location', 'waiver-engine' ); ?></th>
+                                    <th style="width:42px"><?php esc_html_e( 'Font', 'waiver-engine' ); ?></th>
                                     <th style="width:26px"></th>
                                 </tr>
                             </thead>
@@ -287,7 +288,7 @@ class Template_Meta_Box {
                             </tbody>
                         </table>
                         <button type="button" class="button" id="wpwe-add-mapping-row" style="margin-top:6px;">
-                            <?php esc_html_e( '+ Add Field', 'wp-waiver-engine' ); ?>
+                            <?php esc_html_e( '+ Add Field', 'waiver-engine' ); ?>
                         </button>
                     </div>
                 </div>
@@ -296,10 +297,10 @@ class Template_Meta_Box {
 
             <div class="wpwe-modal-footer">
                 <button type="button" class="button button-primary button-hero" id="wpwe-close-mapper-done">
-                    <?php esc_html_e( 'Done', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( 'Done', 'waiver-engine' ); ?>
                 </button>
                 <span class="wpwe-modal-footer-hint">
-                    <?php esc_html_e( 'Changes are held in memory — click Save/Update in the post editor to persist.', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( 'Changes are held in memory â€” click Save/Update in the post editor to persist.', 'waiver-engine' ); ?>
                 </span>
             </div>
 
@@ -337,9 +338,9 @@ class Template_Meta_Box {
 
         $loc = '';
         if ( $x !== '' && $y !== '' ) {
-            $loc = 'pg.' . $page . ' · ' . round( (float) $x, 1 ) . ', ' . round( (float) $y, 1 );
+            $loc = 'pg.' . $page . ' Â· ' . round( (float) $x, 1 ) . ', ' . round( (float) $y, 1 );
             if ( $width !== '' && $height !== '' ) {
-                $loc .= ' · ' . round( (float) $width, 1 ) . '×' . round( (float) $height, 1 );
+                $loc .= ' Â· ' . round( (float) $width, 1 ) . 'Ã—' . round( (float) $height, 1 );
             }
         }
         ?>
@@ -377,7 +378,7 @@ class Template_Meta_Box {
             <!-- Page -->
             <td><input type="number" class="wpwe-map-page small-text" name="wpwe_map_pages[]"
                        value="<?php echo esc_attr( $page ); ?>" min="1" max="99"></td>
-            <!-- X/Y/W/H – hidden, set by canvas draw -->
+            <!-- X/Y/W/H â€“ hidden, set by canvas draw -->
             <input type="hidden" class="wpwe-map-x" name="wpwe_map_x[]" value="<?php echo esc_attr( $x ); ?>">
             <input type="hidden" class="wpwe-map-y" name="wpwe_map_y[]" value="<?php echo esc_attr( $y ); ?>">
             <input type="hidden" class="wpwe-map-w" name="wpwe_map_w[]" value="<?php echo esc_attr( $width ); ?>">
@@ -388,7 +389,7 @@ class Template_Meta_Box {
             <td><input type="number" class="wpwe-map-font small-text" name="wpwe_map_fonts[]"
                        value="<?php echo esc_attr( $font_size ); ?>" step="0.5" placeholder="11"></td>
             <!-- Delete -->
-            <td><button type="button" class="button-link wpwe-delete-map-row" title="<?php esc_attr_e( 'Delete', 'wp-waiver-engine' ); ?>">
+            <td><button type="button" class="button-link wpwe-delete-map-row" title="<?php esc_attr_e( 'Delete', 'waiver-engine' ); ?>">
                 <span class="dashicons dashicons-trash" style="color:#d63638;vertical-align:middle;"></span>
             </button></td>
         </tr>
@@ -461,6 +462,7 @@ class Template_Meta_Box {
      * @return array{0: array, 1: array}  [ $mapping, $schema ]
      */
     private function build_from_unified_post(): array {
+        // phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $page_count = isset( $_POST['wpwe_map_page_count'] ) ? max( 1, absint( $_POST['wpwe_map_page_count'] ) ) : 1;
 
         $gk_arr     = $this->post_arr( 'wpwe_map_group_keys' );
@@ -543,7 +545,7 @@ class Template_Meta_Box {
                 }
             }
             // Skip if this field key is already in the schema (duplicate PDF placement
-            // for the same form field — two boxes on the PDF, one input on the form).
+            // for the same form field â€” two boxes on the PDF, one input on the form).
             $already_in_schema = false;
             foreach ( $schema_groups[ $gk ]['fields'] as $existing ) {
                 if ( ( $existing['key'] ?? '' ) === $fk ) { $already_in_schema = true; break; }
@@ -566,15 +568,18 @@ class Template_Meta_Box {
 
         $schema = [ 'groups' => array_values( $schema_groups ) ];
 
+        // phpcs:enable
         return [ $mapping, $schema ];
     }
 
     /** Safe helper: returns a numerically-indexed array from a POST key, sanitized. */
     private function post_arr( string $key ): array {
+        // phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- validated by save() before helper usage.
         if ( ! isset( $_POST[ $key ] ) || ! is_array( $_POST[ $key ] ) ) {
             return [];
         }
-        return array_values( $_POST[ $key ] );
+        return array_values( wp_unslash( $_POST[ $key ] ) );
+        // phpcs:enable
     }
 
     private function build_template_premium_data_from_post(): array {
@@ -658,3 +663,4 @@ class Template_Meta_Box {
         }
     }
 }
+

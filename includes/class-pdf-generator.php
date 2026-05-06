@@ -64,7 +64,7 @@ class PDF_Generator {
      */
     public function generate( array $data, int $entry_id, ?object $booking = null ): array {
         if ( ! file_exists( $this->pdf_file_path ) ) {
-            throw new \RuntimeException( 'Base PDF not found: ' . $this->pdf_file_path );
+            throw new \RuntimeException( 'Base PDF not found.' );
         }
 
         if ( $this->can_use_repeatable_mapping() ) {
@@ -86,7 +86,7 @@ class PDF_Generator {
      */
     public function preview( array $data ): string {
         if ( ! file_exists( $this->pdf_file_path ) ) {
-            throw new \RuntimeException( 'Base PDF not found: ' . $this->pdf_file_path );
+            throw new \RuntimeException( 'Base PDF not found.' );
         }
 
         if ( $this->can_use_repeatable_mapping() ) {
@@ -245,7 +245,9 @@ class PDF_Generator {
         try {
             $pdf->Image( $tmp_path, $x, $y, $width, $height, strtoupper( $ext ) );
         } finally {
-            @unlink( $tmp_path );
+            if ( file_exists( $tmp_path ) ) {
+                wp_delete_file( $tmp_path );
+            }
         }
     }
 
@@ -270,7 +272,7 @@ class PDF_Generator {
         $pdf->Output( 'F', $filepath );
 
         if ( ! file_exists( $filepath ) ) {
-            throw new \RuntimeException( 'PDF was not written to disk: ' . $filepath );
+            throw new \RuntimeException( 'PDF was not written to disk.' );
         }
 
         return $filepath;
@@ -397,7 +399,7 @@ class PDF_Generator {
      */
     private function booking_slug( object $booking ): string {
         $slugify = fn( string $s ) => strtolower( trim( preg_replace( '/[^a-z0-9]+/i', '-', $s ), '-' ) );
-        $date    = date( 'Y-m-d', strtotime( $booking->bookingStart ) );
+        $date    = gmdate( 'Y-m-d', strtotime( $booking->bookingStart ) );
         return implode( '-', array_filter( [
             (string) $booking->appointment_id,
             $slugify( $booking->service_name ),

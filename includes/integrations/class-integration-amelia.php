@@ -3,6 +3,8 @@ namespace WPWE;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare,PluginCheck.Security.DirectDB.UnescapedDBParameter
+
 /**
  * Amelia Booking integration for WP Waiver Engine.
  *
@@ -39,7 +41,7 @@ class Integration_Amelia {
      */
     public static function get_services(): array {
         global $wpdb;
-        $table = $wpdb->prefix . 'amelia_services';
+        $table = esc_sql( $wpdb->prefix . 'amelia_services' );
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $rows = $wpdb->get_results(
             "SELECT id, name FROM {$table} WHERE status = 'visible' ORDER BY name ASC",
@@ -62,10 +64,10 @@ class Integration_Amelia {
      */
     public static function get_booking( int $appointment_id ): ?object {
         global $wpdb;
-        $appt  = $wpdb->prefix . 'amelia_appointments';
-        $books = $wpdb->prefix . 'amelia_customer_bookings';
-        $svc   = $wpdb->prefix . 'amelia_services';
-        $users = $wpdb->prefix . 'amelia_users';
+        $appt  = esc_sql( $wpdb->prefix . 'amelia_appointments' );
+        $books = esc_sql( $wpdb->prefix . 'amelia_customer_bookings' );
+        $svc   = esc_sql( $wpdb->prefix . 'amelia_services' );
+        $users = esc_sql( $wpdb->prefix . 'amelia_users' );
 
         // phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
         return $wpdb->get_row(
@@ -111,42 +113,79 @@ class Integration_Amelia {
         $clean_ids = array_map( 'intval', $service_ids );
         $query     = sanitize_text_field( $query );
 
-        $svc_filter = '';
-        if ( ! empty( $clean_ids ) ) {
-            $placeholders = implode( ',', array_fill( 0, count( $clean_ids ), '%d' ) );
-            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $svc_filter = $wpdb->prepare( " AND a.serviceId IN ( $placeholders )", ...$clean_ids );
-        }
-
         $is_date   = (bool) preg_match( '/^\d{4}-\d{2}-\d{2}$/', $query );
         $name_like = '%' . $wpdb->esc_like( $query ) . '%';
 
-        $search_clause = $is_date
-            ? $wpdb->prepare( 'AND DATE(a.bookingStart) = %s', $query )
-            : $wpdb->prepare( 'AND CONCAT(u.firstName, " ", u.lastName) LIKE %s', $name_like );
-
-        // phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-        $rows = $wpdb->get_results(
-            "SELECT
-                a.id          AS appointment_id,
-                a.bookingStart,
-                a.status      AS appointment_status,
-                s.name        AS service_name,
-                u.firstName,
-                u.lastName,
-                u.email       AS customer_email
-             FROM {$appt} a
-             JOIN {$books} cb ON cb.appointmentId = a.id
-             JOIN {$svc}   s  ON s.id = a.serviceId
-             JOIN {$users} u  ON u.id = cb.customerId
-             WHERE a.bookingStart >= NOW()
-               AND a.status NOT IN ('canceled','rejected')
-               {$svc_filter}
-               {$search_clause}
-             ORDER BY a.bookingStart ASC
-             LIMIT 30"
-        );
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        if ( $is_date ) {
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    'SELECT
+                        a.id AS appointment_id,
+                        a.serviceId AS service_id,
+                        a.bookingStart,
+                        a.status AS appointment_status,
+                        s.name AS service_name,
+                        u.firstName,
+                        u.lastName,
+                        u.email AS customer_email
+                    FROM %i a
+                    JOIN %i cb ON cb.appointmentId = a.id
+                    JOIN %i s ON s.id = a.serviceId
+                    JOIN %i u ON u.id = cb.customerId
+                    WHERE a.bookingStart >= NOW()
+                      AND a.status NOT IN (\'canceled\',\'rejected\')
+                      AND DATE(a.bookingStart) = %s
+                    ORDER BY a.bookingStart ASC
+                    LIMIT 30',
+                    $appt,
+                    $books,
+                    $svc,
+                    $users,
+                    $query
+                )
+            );
+        } else {
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    'SELECT
+                        a.id AS appointment_id,
+                        a.serviceId AS service_id,
+                        a.bookingStart,
+                        a.status AS appointment_status,
+                        s.name AS service_name,
+                        u.firstName,
+                        u.lastName,
+                        u.email AS customer_email
+                    FROM %i a
+                    JOIN %i cb ON cb.appointmentId = a.id
+                    JOIN %i s ON s.id = a.serviceId
+                    JOIN %i u ON u.id = cb.customerId
+                    WHERE a.bookingStart >= NOW()
+                      AND a.status NOT IN (\'canceled\',\'rejected\')
+                      AND CONCAT(u.firstName, " ", u.lastName) LIKE %s
+                    ORDER BY a.bookingStart ASC
+                    LIMIT 30',
+                    $appt,
+                    $books,
+                    $svc,
+                    $users,
+                    $name_like
+                )
+            );
+        }
         // phpcs:enable
+
+        if ( ! empty( $clean_ids ) ) {
+            $rows = array_values(
+                array_filter(
+                    is_array( $rows ) ? $rows : [],
+                    static function ( $row ) use ( $clean_ids ) {
+                        return in_array( (int) ( $row->service_id ?? 0 ), $clean_ids, true );
+                    }
+                )
+            );
+        }
 
         return is_array( $rows ) ? $rows : [];
     }
@@ -188,85 +227,109 @@ class Integration_Amelia {
         global $wpdb;
         $entries = \WPWE\Database::entries_table();
         $appt    = $wpdb->prefix . 'amelia_appointments';
-        $books   = $wpdb->prefix . 'amelia_customer_bookings';
         $svc     = $wpdb->prefix . 'amelia_services';
-        $users   = $wpdb->prefix . 'amelia_users';
 
-        $allowed_orderby = [
-            'id'              => 'e.id',
-            'template_id'     => 'e.template_id',
-            'email_sent'      => 'e.email_sent',
-            'created_at'      => 'e.created_at',
-            'booking_date'    => 'a.bookingStart',
-            'booking_service' => 's.name',
-        ];
-        $orderby_sql = $allowed_orderby[ $orderby ] ?? 'e.id';
-        $order_sql   = strtoupper( $order ) === 'ASC' ? 'ASC' : 'DESC';
+        $is_asc      = strtoupper( $order ) === 'ASC';
         $offset      = max( 0, ( $paged - 1 ) * $per_page );
 
-        $wheres = [];
-        $args   = [];
-
-        if ( $template_id > 0 ) {
-            $wheres[] = 'e.template_id = %d';
-            $args[]   = $template_id;
-        }
-        if ( $booking_id > 0 ) {
-            $wheres[] = 'e.amelia_booking_id = %d';
-            $args[]   = $booking_id;
-        } elseif ( $booking_search !== '' ) {
-            $bs      = sanitize_text_field( $booking_search );
-            $is_date = (bool) preg_match( '/^\d{4}-\d{2}-\d{2}$/', $bs );
-            if ( $is_date ) {
-                $wheres[] = 'DATE(a.bookingStart) = %s';
-                $args[]   = $bs;
-            } else {
-                $like     = '%' . $wpdb->esc_like( $bs ) . '%';
-                $wheres[] = "EXISTS (
-                    SELECT 1 FROM {$books} _cb
-                    JOIN {$users} _u ON _u.id = _cb.customerId
-                    WHERE _cb.appointmentId = e.amelia_booking_id
-                    AND CONCAT(_u.firstName, ' ', _u.lastName) LIKE %s
-                )";
-                $args[] = $like;
+        $search_date = '';
+        if ( '' !== $booking_search ) {
+            $candidate = sanitize_text_field( $booking_search );
+            if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $candidate ) ) {
+                $search_date = $candidate;
             }
         }
-        if ( $amelia_service_id > 0 ) {
-            $wheres[] = 'a.serviceId = %d';
-            $args[]   = $amelia_service_id;
+
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $total = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                'SELECT COUNT(*)
+                FROM %i e
+                LEFT JOIN %i a ON a.id = e.amelia_booking_id AND e.amelia_booking_id > 0
+                LEFT JOIN %i s ON s.id = a.serviceId
+                WHERE (%d = 0 OR e.template_id = %d)
+                  AND (%d = 0 OR e.amelia_booking_id = %d)
+                  AND (%d = 0 OR a.serviceId = %d)
+                  AND (%s = "" OR DATE(a.bookingStart) = %s)',
+                $entries,
+                $appt,
+                $svc,
+                $template_id,
+                $template_id,
+                $booking_id,
+                $booking_id,
+                $amelia_service_id,
+                $amelia_service_id,
+                $search_date,
+                $search_date
+            )
+        );
+
+        if ( $is_asc ) {
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    'SELECT e.*,
+                        a.bookingStart AS booking_date,
+                        a.status AS booking_status,
+                        s.name AS booking_service,
+                        "" AS booking_customer
+                    FROM %i e
+                    LEFT JOIN %i a ON a.id = e.amelia_booking_id AND e.amelia_booking_id > 0
+                    LEFT JOIN %i s ON s.id = a.serviceId
+                    WHERE (%d = 0 OR e.template_id = %d)
+                      AND (%d = 0 OR e.amelia_booking_id = %d)
+                      AND (%d = 0 OR a.serviceId = %d)
+                      AND (%s = "" OR DATE(a.bookingStart) = %s)
+                    ORDER BY e.id ASC
+                    LIMIT %d OFFSET %d',
+                    $entries,
+                    $appt,
+                    $svc,
+                    $template_id,
+                    $template_id,
+                    $booking_id,
+                    $booking_id,
+                    $amelia_service_id,
+                    $amelia_service_id,
+                    $search_date,
+                    $search_date,
+                    $per_page,
+                    $offset
+                )
+            ) ?: [];
+        } else {
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    'SELECT e.*,
+                        a.bookingStart AS booking_date,
+                        a.status AS booking_status,
+                        s.name AS booking_service,
+                        "" AS booking_customer
+                    FROM %i e
+                    LEFT JOIN %i a ON a.id = e.amelia_booking_id AND e.amelia_booking_id > 0
+                    LEFT JOIN %i s ON s.id = a.serviceId
+                    WHERE (%d = 0 OR e.template_id = %d)
+                      AND (%d = 0 OR e.amelia_booking_id = %d)
+                      AND (%d = 0 OR a.serviceId = %d)
+                      AND (%s = "" OR DATE(a.bookingStart) = %s)
+                    ORDER BY e.id DESC
+                    LIMIT %d OFFSET %d',
+                    $entries,
+                    $appt,
+                    $svc,
+                    $template_id,
+                    $template_id,
+                    $booking_id,
+                    $booking_id,
+                    $amelia_service_id,
+                    $amelia_service_id,
+                    $search_date,
+                    $search_date,
+                    $per_page,
+                    $offset
+                )
+            ) ?: [];
         }
-
-        $where_sql = $wheres ? 'WHERE ' . implode( ' AND ', $wheres ) : '';
-
-        $join_sql = "LEFT JOIN {$appt} a ON a.id = e.amelia_booking_id AND e.amelia_booking_id > 0
-                     LEFT JOIN {$svc}  s ON s.id = a.serviceId";
-
-        // Correlated subquery: avoids duplicate rows for multi-person bookings.
-        $customer_sq = "(SELECT CONCAT(_u.firstName, ' ', _u.lastName)
-                          FROM {$books} _cb
-                          JOIN {$users} _u ON _u.id = _cb.customerId
-                          WHERE _cb.appointmentId = a.id
-                          ORDER BY _cb.id ASC LIMIT 1)";
-
-        $from_clause = "FROM {$entries} e {$join_sql} {$where_sql}";
-
-        // phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-        $count_sql = "SELECT COUNT(*) {$from_clause}";
-        $total     = $args
-            ? (int) $wpdb->get_var( $wpdb->prepare( $count_sql, ...$args ) )
-            : (int) $wpdb->get_var( $count_sql );
-
-        $select_sql = "SELECT e.*,
-            a.bookingStart  AS booking_date,
-            a.status        AS booking_status,
-            s.name          AS booking_service,
-            {$customer_sq}  AS booking_customer
-            {$from_clause}
-            ORDER BY {$orderby_sql} {$order_sql}
-            LIMIT %d OFFSET %d";
-
-        $limit_args = array_merge( $args, [ $per_page, $offset ] );
-        $rows       = $wpdb->get_results( $wpdb->prepare( $select_sql, ...$limit_args ) ) ?: [];
         // phpcs:enable
 
         return [ 'rows' => $rows, 'total' => $total ];

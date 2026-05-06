@@ -30,13 +30,13 @@ class Entry_Handler {
     public function handle(): void {
         // ----- Security -----
         if ( ! isset( $_POST['wpwe_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpwe_nonce'] ) ), 'wpwe_submit_waiver' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'wp-waiver-engine' ) ], 403 );
+            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'waiver-engine' ) ], 403 );
         }
 
         // ----- Anti-bot: honeypot -----
         // The field must exist AND be empty. If a bot fills it, reject silently.
         if ( ! isset( $_POST['wpwe_hp'] ) || '' !== $_POST['wpwe_hp'] ) {
-            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'wp-waiver-engine' ) ], 403 );
+            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'waiver-engine' ) ], 403 );
         }
 
         // ----- Anti-bot: timing check -----
@@ -46,7 +46,7 @@ class Entry_Handler {
         $expected_sig = hash_hmac( 'sha256', (string) $ts, wp_salt( 'nonce' ) );
         $age   = time() - $ts;
         if ( ! hash_equals( $expected_sig, $ts_sig ) || $age < 3 || $age > 7200 ) {
-            wp_send_json_error( [ 'message' => __( 'Submission rejected. Please reload the page and try again.', 'wp-waiver-engine' ) ], 429 );
+            wp_send_json_error( [ 'message' => __( 'Submission rejected. Please reload the page and try again.', 'waiver-engine' ) ], 429 );
         }
 
         // ----- Anti-bot: IP rate limiting -----
@@ -57,7 +57,7 @@ class Entry_Handler {
                 $window = Settings::rate_limit_window() * \MINUTE_IN_SECONDS;
             $hits   = (int) get_transient( $key );
             if ( $hits >= $max ) {
-                wp_send_json_error( [ 'message' => __( 'Too many submissions. Please wait a few minutes and try again.', 'wp-waiver-engine' ) ], 429 );
+                wp_send_json_error( [ 'message' => __( 'Too many submissions. Please wait a few minutes and try again.', 'waiver-engine' ) ], 429 );
             }
             // Increment counter; set expiry only on first hit so the window is sliding.
             if ( $hits === 0 ) {
@@ -82,7 +82,7 @@ class Entry_Handler {
                         ? sanitize_text_field( wp_unslash( $_POST['wpwe_captcha_token'] ) )
                         : '';
                     if ( ! $this->verify_captcha( $captcha_token, $captcha_provider ) ) {
-                        wp_send_json_error( [ 'message' => __( 'CAPTCHA verification failed. Please reload the page and try again.', 'wp-waiver-engine' ) ], 403 );
+                        wp_send_json_error( [ 'message' => __( 'CAPTCHA verification failed. Please reload the page and try again.', 'waiver-engine' ) ], 403 );
                     }
                 }
             }
@@ -90,27 +90,31 @@ class Entry_Handler {
 
         $template_id = isset( $_POST['template_id'] ) ? absint( $_POST['template_id'] ) : 0;
         if ( ! $template_id ) {
-            wp_send_json_error( [ 'message' => __( 'Invalid template.', 'wp-waiver-engine' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Invalid template.', 'waiver-engine' ) ], 400 );
         }
 
         // Load template from custom table
         $template = Database::get_template( $template_id );
         if ( ! $template || ! $template->active ) {
-            wp_send_json_error( [ 'message' => __( 'Template unavailable.', 'wp-waiver-engine' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Template unavailable.', 'waiver-engine' ) ], 400 );
         }
 
         // ----- Parse schema from template row -----
         $schema = json_decode( $template->field_schema, true );
         if ( ! is_array( $schema ) || empty( $schema['groups'] ) ) {
-            wp_send_json_error( [ 'message' => __( 'Template configuration error.', 'wp-waiver-engine' ) ], 500 );
+            wp_send_json_error( [ 'message' => __( 'Template configuration error.', 'waiver-engine' ) ], 500 );
         }
 
         // ----- Parse + sanitize submission -----
-        $raw_data = isset( $_POST['wpwe_data'] ) && is_array( $_POST['wpwe_data'] ) ? $_POST['wpwe_data'] : [];
+        // phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- wpwe_data is unslashed then validated per-field in process_data().
+        $raw_data = isset( $_POST['wpwe_data'] ) && is_array( $_POST['wpwe_data'] )
+            ? wp_unslash( $_POST['wpwe_data'] )
+            : [];
+        // phpcs:enable
         [ $data, $errors ] = $this->process_data( $raw_data, $schema );
 
         if ( ! empty( $errors ) ) {
-            wp_send_json_error( [ 'message' => __( 'Please correct the errors below.', 'wp-waiver-engine' ), 'errors' => $errors ], 422 );
+            wp_send_json_error( [ 'message' => __( 'Please correct the errors below.', 'waiver-engine' ), 'errors' => $errors ], 422 );
         }
 
         // ----- Optional Amelia booking linkage (only when integration enabled) -----
@@ -129,7 +133,7 @@ class Entry_Handler {
         );
 
         if ( ! $entry_id ) {
-            wp_send_json_error( [ 'message' => __( 'Could not save submission.', 'wp-waiver-engine' ) ], 500 );
+            wp_send_json_error( [ 'message' => __( 'Could not save submission.', 'waiver-engine' ) ], 500 );
         }
 
         // ----- Generate PDFs -----
@@ -175,38 +179,42 @@ class Entry_Handler {
         do_action( 'wpwe_entry_created', $entry_id, $template, $data, $pdf_paths );
 
         wp_send_json_success( [
-            'message'  => __( 'Thank you! Your waiver has been submitted.', 'wp-waiver-engine' ),
+            'message'  => __( 'Thank you! Your waiver has been submitted.', 'waiver-engine' ),
             'entry_id' => $entry_id,
         ] );
     }
 
     // -----------------------------------------------------------------------
-    // PDF Preview (AJAX – no entry created, no email sent)
+    // PDF Preview (AJAX â€“ no entry created, no email sent)
     // -----------------------------------------------------------------------
 
     public function ajax_preview_pdf(): void {
         if ( ! isset( $_POST['nonce'] ) ||
              ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpwe_preview_pdf' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'wp-waiver-engine' ) ], 403 );
+            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'waiver-engine' ) ], 403 );
         }
 
         $template_id = isset( $_POST['template_id'] ) ? absint( $_POST['template_id'] ) : 0;
         if ( ! $template_id ) {
-            wp_send_json_error( [ 'message' => __( 'Invalid template.', 'wp-waiver-engine' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Invalid template.', 'waiver-engine' ) ], 400 );
         }
 
         $template = Database::get_template( $template_id );
         if ( ! $template ) {
-            wp_send_json_error( [ 'message' => __( 'Template not found.', 'wp-waiver-engine' ) ], 404 );
+            wp_send_json_error( [ 'message' => __( 'Template not found.', 'waiver-engine' ) ], 404 );
         }
 
         $schema = json_decode( $template->field_schema, true );
         if ( ! is_array( $schema ) || empty( $schema['groups'] ) ) {
-            wp_send_json_error( [ 'message' => __( 'Template configuration error.', 'wp-waiver-engine' ) ], 500 );
+            wp_send_json_error( [ 'message' => __( 'Template configuration error.', 'waiver-engine' ) ], 500 );
         }
 
         // Sanitise form data; ignore validation errors for preview.
-        $raw_data  = isset( $_POST['wpwe_data'] ) && is_array( $_POST['wpwe_data'] ) ? $_POST['wpwe_data'] : [];
+        // phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- wpwe_data is unslashed then validated per-field in process_data().
+        $raw_data  = isset( $_POST['wpwe_data'] ) && is_array( $_POST['wpwe_data'] )
+            ? wp_unslash( $_POST['wpwe_data'] )
+            : [];
+        // phpcs:enable
         $processed = $this->process_data( $raw_data, $schema );
         $data      = $processed[0];
 
@@ -237,7 +245,7 @@ class Entry_Handler {
 
     public function ajax_search_bookings(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Access denied.', 'wp-waiver-engine' ) ], 403 );
+            wp_send_json_error( [ 'message' => __( 'Access denied.', 'waiver-engine' ) ], 403 );
         }
 
         if ( class_exists( Premium_Bridge::class ) ) {
@@ -262,7 +270,7 @@ class Entry_Handler {
             return;
         }
 
-        wp_send_json_error( [ 'message' => __( 'Booking verification is unavailable.', 'wp-waiver-engine' ) ], 400 );
+        wp_send_json_error( [ 'message' => __( 'Booking verification is unavailable.', 'waiver-engine' ) ], 400 );
     }
 
     // -----------------------------------------------------------------------
@@ -322,7 +330,7 @@ class Entry_Handler {
             if ( $required && $value === '' ) {
                 $errors[ "{$gk}[{$idx}][{$fk}]" ] = sprintf(
                     /* translators: field label */
-                    __( '%s is required.', 'wp-waiver-engine' ),
+                    __( '%s is required.', 'waiver-engine' ),
                     $field['label'] ?? $fk
                 );
             }
@@ -427,7 +435,7 @@ class Entry_Handler {
         }
 
         if ( str_starts_with( $display, 'data:image/' ) ) {
-            return '<em>' . esc_html__( 'Signature captured (see PDF attachment)', 'wp-waiver-engine' ) . '</em>';
+            return '<em>' . esc_html__( 'Signature captured (see PDF attachment)', 'waiver-engine' ) . '</em>';
         }
 
         return nl2br( esc_html( $display ) );
@@ -448,7 +456,7 @@ class Entry_Handler {
             } else {
                 $display = (string) $value;
                 if ( str_starts_with( $display, 'data:image/' ) ) {
-                    $display = '[signature image – see PDF]';
+                    $display = '[signature image â€“ see PDF]';
                 }
                 $lines .= $label . ': ' . $display . "\n";
             }
@@ -482,7 +490,7 @@ class Entry_Handler {
 
         $secret = Settings::captcha_secret_key();
         if ( '' === $secret ) {
-            // No secret key configured – can't verify, fail open
+            // No secret key configured â€“ can't verify, fail open
             return true;
         }
 
@@ -530,3 +538,4 @@ class Entry_Handler {
         return true;
     }
 }
+

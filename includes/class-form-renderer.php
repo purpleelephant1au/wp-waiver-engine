@@ -21,7 +21,7 @@ class Form_Renderer {
     // -----------------------------------------------------------------------
 
     public function maybe_enqueue(): void {
-        // Always enqueue – shortcode usage can't always be detected early.
+        // Always enqueue â€“ shortcode usage can't always be detected early.
         // Scripts use defer so no cost if shortcode is absent.
         wp_enqueue_script(
             'signature-pad',
@@ -45,25 +45,25 @@ class Form_Renderer {
             'captchaProvider' => Settings::captcha_provider(),
             'captchaSiteKey'  => Settings::captcha_site_key(),
             'i18n'          => [
-                'submitting'          => __( 'Submitting…', 'wp-waiver-engine' ),
-                'success'             => __( 'Thank you! Your waiver has been submitted.', 'wp-waiver-engine' ),
-                'error'               => __( 'Submission failed. Please try again.', 'wp-waiver-engine' ),
-                'required'            => __( 'This field is required.', 'wp-waiver-engine' ),
-                'clearSig'            => __( 'Clear', 'wp-waiver-engine' ),
-                'addRow'              => __( '+ Add', 'wp-waiver-engine' ),
-                'removeRow'           => __( 'Remove', 'wp-waiver-engine' ),
-                'preview'             => __( 'Preview', 'wp-waiver-engine' ),
-                'previewHeading'      => __( 'PDF Preview', 'wp-waiver-engine' ),
-                'pdfLoading'          => __( 'Generating PDF preview…', 'wp-waiver-engine' ),
-                'editForm'            => __( '← Edit', 'wp-waiver-engine' ),
-                'confirmSubmit'       => __( 'Confirm & Submit', 'wp-waiver-engine' ),
-                'notSigned'           => __( 'Not signed', 'wp-waiver-engine' ),
-                'bookingSearchLabel'  => __( 'Find your booking', 'wp-waiver-engine' ),
-                'bookingSearchHint'   => __( 'Enter booking ID and booking email to verify.', 'wp-waiver-engine' ),
-                'bookingSearching'    => __( 'Verifying…', 'wp-waiver-engine' ),
-                'bookingNoResults'    => __( 'Booking not found or details do not match.', 'wp-waiver-engine' ),
-                'bookingSelected'     => __( 'Booking selected:', 'wp-waiver-engine' ),
-                'bookingClear'        => __( 'Change', 'wp-waiver-engine' ),
+                'submitting'          => __( 'Submittingâ€¦', 'waiver-engine' ),
+                'success'             => __( 'Thank you! Your waiver has been submitted.', 'waiver-engine' ),
+                'error'               => __( 'Submission failed. Please try again.', 'waiver-engine' ),
+                'required'            => __( 'This field is required.', 'waiver-engine' ),
+                'clearSig'            => __( 'Clear', 'waiver-engine' ),
+                'addRow'              => __( '+ Add', 'waiver-engine' ),
+                'removeRow'           => __( 'Remove', 'waiver-engine' ),
+                'preview'             => __( 'Preview', 'waiver-engine' ),
+                'previewHeading'      => __( 'PDF Preview', 'waiver-engine' ),
+                'pdfLoading'          => __( 'Generating PDF previewâ€¦', 'waiver-engine' ),
+                'editForm'            => __( 'â† Edit', 'waiver-engine' ),
+                'confirmSubmit'       => __( 'Confirm & Submit', 'waiver-engine' ),
+                'notSigned'           => __( 'Not signed', 'waiver-engine' ),
+                'bookingSearchLabel'  => __( 'Find your booking', 'waiver-engine' ),
+                'bookingSearchHint'   => __( 'Enter booking ID and booking email to verify.', 'waiver-engine' ),
+                'bookingSearching'    => __( 'Verifyingâ€¦', 'waiver-engine' ),
+                'bookingNoResults'    => __( 'Booking not found or details do not match.', 'waiver-engine' ),
+                'bookingSelected'     => __( 'Booking selected:', 'waiver-engine' ),
+                'bookingClear'        => __( 'Change', 'waiver-engine' ),
             ],
         ] );
         wp_enqueue_style(
@@ -105,21 +105,21 @@ class Form_Renderer {
         $template_id = absint( $atts['id'] ) ?: absint( $atts['template_id'] );
 
         if ( ! $template_id ) {
-            return $this->error( __( 'No waiver template specified.', 'wp-waiver-engine' ) );
+            return $this->error( __( 'No waiver template specified.', 'waiver-engine' ) );
         }
 
         // Load from custom DB table
         $template = Database::get_template( $template_id );
         if ( ! $template ) {
-            return $this->error( __( 'Waiver template not found.', 'wp-waiver-engine' ) );
+            return $this->error( __( 'Waiver template not found.', 'waiver-engine' ) );
         }
         if ( ! $template->active ) {
-            return $this->error( __( 'This waiver form is currently unavailable.', 'wp-waiver-engine' ) );
+            return $this->error( __( 'This waiver form is currently unavailable.', 'waiver-engine' ) );
         }
 
         $schema = json_decode( $template->field_schema, true );
         if ( ! is_array( $schema ) || empty( $schema['groups'] ) ) {
-            return $this->error( __( 'Waiver template has no valid field schema.', 'wp-waiver-engine' ) );
+            return $this->error( __( 'Waiver template has no valid field schema.', 'waiver-engine' ) );
         }
 
         ob_start();
@@ -137,49 +137,49 @@ class Form_Renderer {
     // -----------------------------------------------------------------------
 
     private function render_form( int $template_id, string $title, array $schema, string $output_mode = 'single', array $amelia_services = [], bool $allow_copy_email = true, bool $captcha_active = false ): void {
-        $uid             = esc_attr( $template_id );
-        $services_json   = esc_attr( wp_json_encode( $amelia_services ) );
+        $uid             = $template_id;
+        $services_json   = wp_json_encode( $amelia_services );
         $has_booking_svc = ! empty( $amelia_services );
         ?>
-        <div class="wpwe-form-wrap" id="wpwe-form-wrap-<?php echo $uid; ?>">
+        <div class="wpwe-form-wrap" id="wpwe-form-wrap-<?php echo esc_attr( $uid ); ?>">
             <?php if ( $title ) : ?>
             <h2 class="wpwe-form-title"><?php echo esc_html( $title ); ?></h2>
             <?php endif; ?>
 
             <?php if ( $has_booking_svc ) : ?>
             <!-- Booking search widget -->
-            <div class="wpwe-booking-search" data-amelia-services="<?php echo $services_json; ?>" data-template-id="<?php echo $uid; ?>">
+            <div class="wpwe-booking-search" data-amelia-services="<?php echo esc_attr( $services_json ); ?>" data-template-id="<?php echo esc_attr( $uid ); ?>">
                 <div class="wpwe-booking-search__header">
-                    <span class="wpwe-booking-search__label"><?php esc_html_e( 'Verify your booking', 'wp-waiver-engine' ); ?></span>
-                    <span class="wpwe-booking-search__hint"><?php esc_html_e( 'Enter your booking ID and the same email used in the booking.', 'wp-waiver-engine' ); ?></span>
+                    <span class="wpwe-booking-search__label"><?php esc_html_e( 'Verify your booking', 'waiver-engine' ); ?></span>
+                    <span class="wpwe-booking-search__hint"><?php esc_html_e( 'Enter your booking ID and the same email used in the booking.', 'waiver-engine' ); ?></span>
                 </div>
                 <div class="wpwe-booking-search__input-row">
                     <input type="number"
                            class="wpwe-booking-id-lookup"
-                           placeholder="<?php esc_attr_e( 'Booking ID (e.g. 123)', 'wp-waiver-engine' ); ?>"
+                           placeholder="<?php esc_attr_e( 'Booking ID (e.g. 123)', 'waiver-engine' ); ?>"
                            min="1"
                            step="1"
                            inputmode="numeric"
-                           aria-label="<?php esc_attr_e( 'Booking ID', 'wp-waiver-engine' ); ?>">
+                           aria-label="<?php esc_attr_e( 'Booking ID', 'waiver-engine' ); ?>">
                     <input type="email"
                            class="wpwe-booking-email-lookup"
-                           placeholder="<?php esc_attr_e( 'Booking email', 'wp-waiver-engine' ); ?>"
+                           placeholder="<?php esc_attr_e( 'Booking email', 'waiver-engine' ); ?>"
                            autocomplete="email"
-                           aria-label="<?php esc_attr_e( 'Booking email', 'wp-waiver-engine' ); ?>">
-                    <button type="button" class="wpwe-booking-verify-btn"><?php esc_html_e( 'Verify', 'wp-waiver-engine' ); ?></button>
-                    <span class="wpwe-booking-searching" hidden><?php esc_html_e( 'Verifying…', 'wp-waiver-engine' ); ?></span>
+                           aria-label="<?php esc_attr_e( 'Booking email', 'waiver-engine' ); ?>">
+                    <button type="button" class="wpwe-booking-verify-btn"><?php esc_html_e( 'Verify', 'waiver-engine' ); ?></button>
+                    <span class="wpwe-booking-searching" hidden><?php esc_html_e( 'Verifyingâ€¦', 'waiver-engine' ); ?></span>
                 </div>
                 <div class="wpwe-booking-search-error" hidden></div>
                 <div class="wpwe-booking-selected" hidden>
                     <span class="wpwe-booking-selected__badge"></span>
-                    <button type="button" class="wpwe-booking-clear-btn"><?php esc_html_e( 'Change', 'wp-waiver-engine' ); ?></button>
+                    <button type="button" class="wpwe-booking-clear-btn"><?php esc_html_e( 'Change', 'waiver-engine' ); ?></button>
                 </div>
             </div>
             <?php endif; ?>
 
-            <form class="wpwe-form" id="wpwe-form-<?php echo $uid; ?>"
+            <form class="wpwe-form" id="wpwe-form-<?php echo esc_attr( $uid ); ?>"
                   novalidate
-                  data-template-id="<?php echo $uid; ?>"
+                data-template-id="<?php echo esc_attr( $uid ); ?>"
                   data-output-mode="<?php echo esc_attr( $output_mode ); ?>">
 
                 <?php wp_nonce_field( 'wpwe_submit_waiver', 'wpwe_nonce', false ); ?>
@@ -198,8 +198,8 @@ class Form_Renderer {
 
                 <?php /* Anti-bot honeypot: hidden with CSS; bots fill it, humans leave it blank */ ?>
                 <div class="wpwe-hp-field" aria-hidden="true" style="position:absolute;left:-9999px;height:0;overflow:hidden;" tabindex="-1">
-                    <label for="wpwe_hp_<?php echo $uid; ?>"><?php esc_html_e( 'Leave this field empty', 'wp-waiver-engine' ); ?></label>
-                    <input type="text" id="wpwe_hp_<?php echo $uid; ?>" name="wpwe_hp" value="" autocomplete="off" tabindex="-1" aria-hidden="true">
+                    <label for="wpwe_hp_<?php echo esc_attr( $uid ); ?>"><?php esc_html_e( 'Leave this field empty', 'waiver-engine' ); ?></label>
+                    <input type="text" id="wpwe_hp_<?php echo esc_attr( $uid ); ?>" name="wpwe_hp" value="" autocomplete="off" tabindex="-1" aria-hidden="true">
                 </div>
 
                 <?php foreach ( $schema['groups'] as $group ) :
@@ -211,15 +211,15 @@ class Form_Renderer {
                 <div class="wpwe-email-copy-wrap">
                     <label class="wpwe-email-copy-toggle">
                         <input type="checkbox" class="wpwe-email-copy-check" name="wpwe_send_copy" value="1">
-                        <?php esc_html_e( 'Email me a copy of my waiver PDF', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Email me a copy of my waiver PDF', 'waiver-engine' ); ?>
                     </label>
                     <div class="wpwe-email-copy-input" hidden>
-                        <label for="wpwe-copy-email-<?php echo $uid; ?>" class="wpwe-label">
-                            <?php esc_html_e( 'Your email address', 'wp-waiver-engine' ); ?>
+                        <label for="wpwe-copy-email-<?php echo esc_attr( $uid ); ?>" class="wpwe-label">
+                            <?php esc_html_e( 'Your email address', 'waiver-engine' ); ?>
                             <span class="wpwe-required" aria-hidden="true">*</span>
                         </label>
                         <input type="email"
-                               id="wpwe-copy-email-<?php echo $uid; ?>"
+                               id="wpwe-copy-email-<?php echo esc_attr( $uid ); ?>"
                                name="wpwe_copy_email"
                                class="wpwe-input wpwe-copy-email-input"
                                autocomplete="email"
@@ -231,10 +231,10 @@ class Form_Renderer {
 
                 <div class="wpwe-submit-wrap">
                     <button type="button" class="wpwe-preview-btn">
-                        <?php esc_html_e( 'Preview', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Preview', 'waiver-engine' ); ?>
                     </button>
                     <button type="submit" class="wpwe-submit-btn">
-                        <?php esc_html_e( 'Submit Waiver', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Submit Waiver', 'waiver-engine' ); ?>
                     </button>
                     <span class="wpwe-spinner" style="display:none;" aria-hidden="true"></span>
                 </div>
@@ -254,7 +254,7 @@ class Form_Renderer {
         $min_rows    = max( 1, (int) ( $group['min_rows'] ?? 1 ) );
         $max_rows    = (int) ( $group['max_rows'] ?? 20 );
         $group_key   = sanitize_key( $group['key'] ?? '' );
-        $group_label = esc_html( $group['label'] ?? $group_key );
+        $group_label = (string) ( $group['label'] ?? $group_key );
         $fields      = $group['fields'] ?? [];
 
         if ( $repeatable ) : ?>
@@ -263,7 +263,7 @@ class Form_Renderer {
                   data-min-rows="<?php echo esc_attr( $min_rows ); ?>"
                   data-max-rows="<?php echo esc_attr( $max_rows ); ?>">
             <legend class="wpwe-group-legend">
-                <?php echo $group_label; ?>
+                <?php echo esc_html( $group_label ); ?>
             </legend>
 
             <div class="wpwe-table-wrap">
@@ -286,14 +286,14 @@ class Form_Renderer {
                         <?php for ( $i = 0; $i < $min_rows; $i++ ) : ?>
                         <tr class="wpwe-row" data-row-index="<?php echo esc_attr( $i ); ?>">
                             <td class="wpwe-cell wpwe-cell--rownum">
-                                <span class="wpwe-row-num"><?php echo $i + 1; ?></span>
+                                <span class="wpwe-row-num"><?php echo esc_html( (string) ( absint( $i ) + 1 ) ); ?></span>
                             </td>
                             <?php foreach ( $fields as $field ) :
                                 $this->render_field( $field, $group_key, $i, true );
                             endforeach; ?>
                             <td class="wpwe-cell wpwe-cell--action">
                                 <button type="button" class="wpwe-row-preview-btn"
-                                    title="<?php esc_attr_e( 'Preview PDF for this row', 'wp-waiver-engine' ); ?>">&#128065;</button>
+                                    title="<?php esc_attr_e( 'Preview PDF for this row', 'waiver-engine' ); ?>">&#128065;</button>
                                 <button type="button" class="wpwe-remove-row" style="display:none;">&times;</button>
                             </td>
                         </tr>
@@ -312,20 +312,23 @@ class Form_Renderer {
                     endforeach; ?>
                     <td class="wpwe-cell wpwe-cell--action">
                         <button type="button" class="wpwe-row-preview-btn"
-                            title="<?php esc_attr_e( 'Preview PDF for this row', 'wp-waiver-engine' ); ?>">&#128065;</button>
+                            title="<?php esc_attr_e( 'Preview PDF for this row', 'waiver-engine' ); ?>">&#128065;</button>
                         <button type="button" class="wpwe-remove-row">&times;</button>
                     </td>
                 </tr>
             </template>
 
             <button type="button" class="wpwe-add-row button">
-                <?php printf( esc_html__( '+ Add %s', 'wp-waiver-engine' ), $group_label ); ?>
+                <?php
+                /* translators: %s: repeatable group label */
+                printf( esc_html__( '+ Add %s', 'waiver-engine' ), esc_html( $group_label ) );
+                ?>
             </button>
         </fieldset>
         <?php else : ?>
         <fieldset class="wpwe-group"
                   data-group-key="<?php echo esc_attr( $group_key ); ?>">
-            <legend class="wpwe-group-legend"><?php echo $group_label; ?></legend>
+            <legend class="wpwe-group-legend"><?php echo esc_html( $group_label ); ?></legend>
             <div class="wpwe-rows">
                 <div class="wpwe-row" data-row-index="0">
                     <div class="wpwe-fields">
@@ -345,12 +348,11 @@ class Form_Renderer {
 
     private function render_field( array $field, string $group_key, int|string $row_index, bool $in_table = false ): void {
         $key      = sanitize_key( $field['key'] ?? '' );
-        $label    = esc_html( $field['label'] ?? $key );
+        $label    = (string) ( $field['label'] ?? $key );
         $type     = sanitize_key( $field['type'] ?? 'text' );
         $required = ! empty( $field['required'] );
         $name     = "wpwe_data[{$group_key}][{$row_index}][{$key}]";
         $id       = "wpwe_{$group_key}_{$row_index}_{$key}";
-        $req_attr = $required ? ' required aria-required="true"' : '';
         $options  = $field['options'] ?? [];
 
         if ( $in_table ) : ?>
@@ -360,7 +362,7 @@ class Form_Renderer {
         <div class="wpwe-field wpwe-field--<?php echo esc_attr( $type ); ?>"
              data-field-key="<?php echo esc_attr( $key ); ?>">
             <label for="<?php echo esc_attr( $id ); ?>" class="wpwe-label">
-                <?php echo $label; ?>
+                <?php echo esc_html( $label ); ?>
                 <?php if ( $required ) : ?>
                 <span class="wpwe-required" aria-hidden="true">*</span>
                 <?php endif; ?>
@@ -373,15 +375,15 @@ class Form_Renderer {
                           name="<?php echo esc_attr( $name ); ?>"
                           class="wpwe-input wpwe-textarea"
                           rows="<?php echo $in_table ? '2' : '4'; ?>"
-                          <?php echo $req_attr; ?>></textarea>
+                          <?php if ( $required ) : ?>required aria-required="true"<?php endif; ?>></textarea>
                 <?php break;
 
             case 'select': ?>
                 <select id="<?php echo esc_attr( $id ); ?>"
                         name="<?php echo esc_attr( $name ); ?>"
                         class="wpwe-input wpwe-select"
-                        <?php echo $req_attr; ?>>
-                    <option value=""><?php esc_html_e( '— Select —', 'wp-waiver-engine' ); ?></option>
+                    <?php if ( $required ) : ?>required aria-required="true"<?php endif; ?>>
+                    <option value=""><?php esc_html_e( 'â€” Select â€”', 'waiver-engine' ); ?></option>
                     <?php foreach ( $options as $opt ) : ?>
                     <option value="<?php echo esc_attr( $opt['value'] ?? $opt ); ?>">
                         <?php echo esc_html( $opt['label'] ?? $opt ); ?>
@@ -397,8 +399,8 @@ class Form_Renderer {
                            name="<?php echo esc_attr( $name ); ?>"
                            value="1"
                            class="wpwe-input wpwe-checkbox"
-                           <?php echo $req_attr; ?>>
-                    <?php if ( ! $in_table ) echo $label; ?>
+                              <?php if ( $required ) : ?>required aria-required="true"<?php endif; ?>>
+                          <?php if ( ! $in_table ) echo esc_html( $label ); ?>
                 </label>
                 <?php break;
 
@@ -411,9 +413,9 @@ class Form_Renderer {
                     <input type="hidden"
                            name="<?php echo esc_attr( $name ); ?>"
                            class="wpwe-signature-data"
-                           <?php echo $required ? 'data-required="1"' : ''; ?>>
+                              <?php if ( $required ) : ?>data-required="1"<?php endif; ?>>
                     <button type="button" class="wpwe-clear-signature">
-                        <?php esc_html_e( 'Clear', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Clear', 'waiver-engine' ); ?>
                     </button>
                 </div>
                 <?php break;
@@ -425,7 +427,7 @@ class Form_Renderer {
                        id="<?php echo esc_attr( $id ); ?>"
                        name="<?php echo esc_attr( $name ); ?>"
                        class="wpwe-input wpwe-input--<?php echo esc_attr( $html_type ); ?>"
-                       <?php echo $req_attr; ?>>
+                      <?php if ( $required ) : ?>required aria-required="true"<?php endif; ?>>
                 <?php break;
         endswitch; ?>
         <span class="wpwe-field-error" role="alert"></span>
@@ -469,3 +471,4 @@ class Form_Renderer {
         return false;
     }
 }
+

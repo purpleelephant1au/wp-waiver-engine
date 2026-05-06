@@ -3,7 +3,7 @@
     Build a single release ZIP for WP Waiver Engine.
 
 .DESCRIPTION
-    Outputs one ZIP file using plugin root folder `wp-waiver-engine/`.
+    Outputs one ZIP file using plugin root folder `waiver-engine/`.
     Freemius packaging strips premium-only code from the free build.
 
 .EXAMPLE
@@ -22,15 +22,15 @@ $PluginRoot = (Resolve-Path (Join-Path $ScriptDir '..')).Path
 # ---------------------------------------------------------------------------
 # Read version from plugin header
 # ---------------------------------------------------------------------------
-$MainFile = Join-Path $PluginRoot 'wp-waiver-engine.php'
+$MainFile = Join-Path $PluginRoot 'waiver-engine.php'
 if (-not (Test-Path $MainFile)) {
-    Write-Error "Cannot find wp-waiver-engine.php at $PluginRoot"
+    Write-Error "Cannot find waiver-engine.php at $PluginRoot"
     exit 1
 }
 
 $VersionLine = Select-String -Path $MainFile -Pattern '^\s*\*\s*Version:\s*(.+)$' | Select-Object -First 1
 if (-not $VersionLine) {
-    Write-Error "Could not parse Version from wp-waiver-engine.php"
+    Write-Error "Could not parse Version from waiver-engine.php"
     exit 1
 }
 
@@ -85,7 +85,7 @@ $ExcludePatterns = @(
     '.tmp-phpini*',
     '.release-stage*',
     'bin*',
-    'composer.*',
+    'composer.lock',
     'instructions*',
     '*.zip'
 )
@@ -135,7 +135,7 @@ function New-ReleaseZip {
     $fileCount = 0
     foreach ($file in $files) {
         $rel       = $file.FullName.Substring($PluginRoot.Length + 1) -replace '\\', '/'
-        $entryName = "wp-waiver-engine/$rel"
+        $entryName = "waiver-engine/$rel"
 
         $entry       = $archive.CreateEntry($entryName, [System.IO.Compression.CompressionLevel]::Optimal)
         $entryStream = $entry.Open()
@@ -179,10 +179,10 @@ function Test-ZipContainsEntry {
 # ---------------------------------------------------------------------------
 Write-Host "`n-- Building release ZIP ..."
 
-$ZipName = "wp-waiver-engine-$Version.zip"
+$ZipName = "waiver-engine-$Version.zip"
 New-ReleaseZip -ZipName $ZipName
 
-$FreemiusZipEntry = 'wp-waiver-engine/vendor/freemius/wordpress-sdk/start.php'
+$FreemiusZipEntry = 'waiver-engine/vendor/freemius/wordpress-sdk/start.php'
 $ZipPath = Join-Path $PluginRoot $ZipName
 
 if (-not (Test-ZipContainsEntry -ZipPath $ZipPath -EntryPath $FreemiusZipEntry)) {
@@ -193,5 +193,6 @@ if (-not (Test-ZipContainsEntry -ZipPath $ZipPath -EntryPath $FreemiusZipEntry))
 Write-Host "`n[OK] Release ZIP created:"
 Write-Host "  - $ZipName"
 Write-Host "  - Freemius SDK verified"
-Write-Host "`nPlugin folder slug: wp-waiver-engine"
+Write-Host "`nPlugin folder slug: waiver-engine"
+
 

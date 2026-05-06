@@ -48,10 +48,10 @@ jobs:
             gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
             print v
             exit
-          }' wp-waiver-engine.php)
+          }' waiver-engine.php)
 
           if [ -z "$VERSION" ]; then
-            echo "ERROR: Could not parse plugin version from wp-waiver-engine.php"
+            echo "ERROR: Could not parse plugin version from waiver-engine.php"
             exit 1
           fi
 
@@ -81,11 +81,11 @@ jobs:
       - name: Build ZIP
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          ZIP_NAME="wp-waiver-engine-${VERSION}.zip"
+          ZIP_NAME="waiver-engine-${VERSION}.zip"
 
-          # Stage into a folder named wp-waiver-engine/ so the ZIP
+          # Stage into a folder named waiver-engine/ so the ZIP
           # extracts with the correct slug as the top-level folder.
-          mkdir -p /tmp/stage/wp-waiver-engine
+          mkdir -p /tmp/stage/waiver-engine
           rsync -a \
             --exclude='.git*' \
             --exclude='bin/' \
@@ -93,10 +93,10 @@ jobs:
             --exclude='instructions/' \
             --exclude='*.zip' \
             --exclude='.github/' \
-            . /tmp/stage/wp-waiver-engine/
+            . /tmp/stage/waiver-engine/
 
           cd /tmp/stage
-          zip -r "$GITHUB_WORKSPACE/${ZIP_NAME}" wp-waiver-engine/
+          zip -r "$GITHUB_WORKSPACE/${ZIP_NAME}" waiver-engine/
 
           echo "ZIP_NAME=${ZIP_NAME}" >> "$GITHUB_ENV"
           echo "ZIP_PATH=${GITHUB_WORKSPACE}/${ZIP_NAME}" >> "$GITHUB_ENV"
@@ -163,5 +163,6 @@ jobs:
           PUBLIC_KEY: ${{ steps.freemius_creds.outputs.public_key }}
           SECRET_KEY: ${{ steps.freemius_creds.outputs.secret_key }}
           DEV_ID: ${{ steps.freemius_creds.outputs.dev_id }}
-          PLUGIN_SLUG: wp-waiver-engine
+          PLUGIN_SLUG: waiver-engine
           PLUGIN_ID: 28928
+

@@ -61,19 +61,19 @@ class Template_Editor {
         }
 
         wp_localize_script( 'wpwe-admin-editor', 'wpweAdmin', [
-            'mediaTitle'    => __( 'Select Base PDF', 'wp-waiver-engine' ),
-            'mediaButton'   => __( 'Use this PDF', 'wp-waiver-engine' ),
+            'mediaTitle'    => __( 'Select Base PDF', 'waiver-engine' ),
+            'mediaButton'   => __( 'Use this PDF', 'waiver-engine' ),
             'workerSrc'     => \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.worker.min.js',
             'currentPdfUrl' => $pdf_url,
             'i18n' => [
-                'drawHint'  => __( 'Draw a rectangle on the PDF to map a field', 'wp-waiver-engine' ),
-                'page'      => __( 'Page', 'wp-waiver-engine' ),
-                'prev'      => __( '‹ Prev', 'wp-waiver-engine' ),
-                'next'      => __( 'Next ›', 'wp-waiver-engine' ),
-                'deleteRow' => __( 'Delete', 'wp-waiver-engine' ),
-                'addRow'    => __( '+ Add Row Manually', 'wp-waiver-engine' ),
-                'noSchema'  => __( 'Save the field schema first to populate the field dropdown.', 'wp-waiver-engine' ),
-                'noPdf'     => __( 'Select a Base PDF in Template Settings to enable the visual mapper.', 'wp-waiver-engine' ),
+                'drawHint'  => __( 'Draw a rectangle on the PDF to map a field', 'waiver-engine' ),
+                'page'      => __( 'Page', 'waiver-engine' ),
+                'prev'      => __( 'â€¹ Prev', 'waiver-engine' ),
+                'next'      => __( 'Next â€º', 'waiver-engine' ),
+                'deleteRow' => __( 'Delete', 'waiver-engine' ),
+                'addRow'    => __( '+ Add Row Manually', 'waiver-engine' ),
+                'noSchema'  => __( 'Save the field schema first to populate the field dropdown.', 'waiver-engine' ),
+                'noPdf'     => __( 'Select a Base PDF in Template Settings to enable the visual mapper.', 'waiver-engine' ),
             ],
         ] );
     }
@@ -107,7 +107,7 @@ class Template_Editor {
         $page_count  = (int) ( $mapping['page_count'] ?? 1 );
 
         // Build a form-type lookup from field_schema so the mapper dropdown shows
-        // the real type (date, signature, number…) even for older templates whose
+        // the real type (date, signature, numberâ€¦) even for older templates whose
         // pdf_mapping only stored the collapsed 'text'/'image' pdf render type.
         $schema_raw         = $tpl ? $tpl->field_schema : '';
         $schema_data        = $schema_raw ? ( json_decode( $schema_raw, true ) ?: [] ) : [];
@@ -123,42 +123,48 @@ class Template_Editor {
         }
 
         $heading = $id
-            ? sprintf( __( 'Edit Template #%d', 'wp-waiver-engine' ), $id )
-            : __( 'Add New Template', 'wp-waiver-engine' );
+            ? sprintf(
+                /* translators: %d: template ID */
+                __( 'Edit Template #%d', 'waiver-engine' ),
+                $id
+            )
+            : __( 'Add New Template', 'waiver-engine' );
 
         $back_url = admin_url( 'admin.php?page=wpwe' );
         ?>
         <div class="wrap">
             <h1 class="wp-heading-inline"><?php echo esc_html( $heading ); ?></h1>
             <a href="<?php echo esc_url( $back_url ); ?>" class="page-title-action">
-                &larr; <?php esc_html_e( 'All Templates', 'wp-waiver-engine' ); ?>
+                &larr; <?php esc_html_e( 'All Templates', 'waiver-engine' ); ?>
             </a>
             <hr class="wp-header-end">
 
+            <?php // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only admin notice query vars. ?>
             <?php if ( isset( $_GET['wpwe_saved'] ) ) : ?>
             <div class="notice notice-success is-dismissible">
-                <p><?php esc_html_e( 'Template saved.', 'wp-waiver-engine' ); ?></p>
+                <p><?php esc_html_e( 'Template saved.', 'waiver-engine' ); ?></p>
             </div>
             <?php endif; ?>
+            <?php // phpcs:enable ?>
 
             <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . ( $id ? 'wpwe-edit' : 'wpwe-new' ) ) ); ?>">
                 <?php wp_nonce_field( 'wpwe_save_template' ); ?>
                 <input type="hidden" name="wpwe_action"      value="save_template">
                 <input type="hidden" name="wpwe_template_id" value="<?php echo esc_attr( $id ); ?>">
 
-                <!-- ── Core Settings ─────────────────────────────────────── -->
+                <!-- â”€â”€ Core Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
                 <div id="poststuff">
                 <div id="post-body" class="metabox-holder">
                 <div id="post-body-content">
 
                     <div class="postbox">
                         <div class="postbox-header">
-                            <h2><?php esc_html_e( 'Template Settings', 'wp-waiver-engine' ); ?></h2>
+                            <h2><?php esc_html_e( 'Template Settings', 'waiver-engine' ); ?></h2>
                         </div>
                         <div class="inside">
                             <table class="form-table wpwe-settings-table">
                                 <tr>
-                                    <th><label for="wpwe_title"><?php esc_html_e( 'Title', 'wp-waiver-engine' ); ?></label></th>
+                                    <th><label for="wpwe_title"><?php esc_html_e( 'Title', 'waiver-engine' ); ?></label></th>
                                     <td>
                                         <input type="text" id="wpwe_title" name="wpwe_title"
                                                value="<?php echo esc_attr( $title ); ?>"
@@ -166,33 +172,33 @@ class Template_Editor {
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th><label for="wpwe_pdf_attachment_id"><?php esc_html_e( 'Base PDF', 'wp-waiver-engine' ); ?></label></th>
+                                    <th><label for="wpwe_pdf_attachment_id"><?php esc_html_e( 'Base PDF', 'waiver-engine' ); ?></label></th>
                                     <td>
                                         <input type="hidden" id="wpwe_pdf_attachment_id" name="wpwe_pdf_attachment_id"
                                                value="<?php echo esc_attr( $pdf_id ); ?>">
                                         <button type="button" class="button" id="wpwe_select_pdf">
-                                            <?php esc_html_e( 'Select PDF from Media Library', 'wp-waiver-engine' ); ?>
+                                            <?php esc_html_e( 'Select PDF from Media Library', 'waiver-engine' ); ?>
                                         </button>
                                         <span id="wpwe_pdf_name" style="margin-left:10px;">
                                             <?php echo $pdf_url
                                                 ? '<a href="' . esc_url( $pdf_url ) . '" target="_blank">' . esc_html( basename( $pdf_url ) ) . '</a>'
-                                                : esc_html__( 'No PDF selected', 'wp-waiver-engine' ); ?>
+                                                : esc_html__( 'No PDF selected', 'waiver-engine' ); ?>
                                         </span>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th><label for="wpwe_description"><?php esc_html_e( 'Description', 'wp-waiver-engine' ); ?></label></th>
+                                    <th><label for="wpwe_description"><?php esc_html_e( 'Description', 'waiver-engine' ); ?></label></th>
                                     <td>
                                         <textarea id="wpwe_description" name="wpwe_description"
                                                   rows="3" class="large-text"><?php echo esc_textarea( $description ); ?></textarea>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th><label for="wpwe_output_mode"><?php esc_html_e( 'Output Mode', 'wp-waiver-engine' ); ?></label></th>
+                                    <th><label for="wpwe_output_mode"><?php esc_html_e( 'Output Mode', 'waiver-engine' ); ?></label></th>
                                     <td>
                                         <select id="wpwe_output_mode" name="wpwe_output_mode">
                                             <option value="single"  <?php selected( $output_mode, 'single' ); ?>>
-                                                <?php esc_html_e( 'Single PDF per submission', 'wp-waiver-engine' ); ?>
+                                                <?php esc_html_e( 'Single PDF per submission', 'waiver-engine' ); ?>
                                             </option>
                                             <?php $this->render_per_row_output_mode_option( $output_mode ); ?>
                                         </select>
@@ -202,21 +208,21 @@ class Template_Editor {
                                 <?php $this->render_premium_settings_rows( $tpl, (string) $notify, (bool) $send_admin_email, (bool) $send_user_email ); ?>
                                 <?php if ( Settings::captcha_provider() !== 'none' ) : ?>
                                 <tr>
-                                    <th><label for="wpwe_captcha_enabled"><?php esc_html_e( 'CAPTCHA', 'wp-waiver-engine' ); ?></label></th>
+                                    <th><label for="wpwe_captcha_enabled"><?php esc_html_e( 'CAPTCHA', 'waiver-engine' ); ?></label></th>
                                     <td>
                                         <input type="checkbox" id="wpwe_captcha_enabled" name="wpwe_captcha_enabled" value="1"
                                                <?php checked( $captcha_enabled ); ?>>
                                         <label for="wpwe_captcha_enabled">
-                                            <?php esc_html_e( 'Require CAPTCHA verification on this form', 'wp-waiver-engine' ); ?>
+                                            <?php esc_html_e( 'Require CAPTCHA verification on this form', 'waiver-engine' ); ?>
                                         </label>
                                         <p class="description">
                                             <?php
                                             $provider_label = Settings::captcha_provider() === 'recaptcha_v3'
-                                                ? __( 'Google reCAPTCHA v3', 'wp-waiver-engine' )
-                                                : __( 'hCaptcha', 'wp-waiver-engine' );
+                                                ? __( 'Google reCAPTCHA v3', 'waiver-engine' )
+                                                : __( 'hCaptcha', 'waiver-engine' );
                                             printf(
                                                 /* translators: CAPTCHA provider name */
-                                                esc_html__( 'When checked, %s will silently verify each submission. Global provider is configured in Settings.', 'wp-waiver-engine' ),
+                                                esc_html__( 'When checked, %s will silently verify each submission. Global provider is configured in Settings.', 'waiver-engine' ),
                                                 esc_html( $provider_label )
                                             );
                                             ?>
@@ -225,12 +231,12 @@ class Template_Editor {
                                 </tr>
                                 <?php endif; /* captcha_provider !== 'none' */ ?>
                                 <tr>
-                                    <th><label for="wpwe_active"><?php esc_html_e( 'Active', 'wp-waiver-engine' ); ?></label></th>
+                                    <th><label for="wpwe_active"><?php esc_html_e( 'Active', 'waiver-engine' ); ?></label></th>
                                     <td>
                                         <input type="checkbox" id="wpwe_active" name="wpwe_active" value="1"
                                                <?php checked( $active, true ); ?>>
                                         <label for="wpwe_active">
-                                            <?php esc_html_e( 'Make this template available on the frontend', 'wp-waiver-engine' ); ?>
+                                            <?php esc_html_e( 'Make this template available on the frontend', 'waiver-engine' ); ?>
                                         </label>
                                     </td>
                                 </tr>
@@ -239,13 +245,13 @@ class Template_Editor {
                         </div><!-- /.inside -->
                     </div><!-- /.postbox -->
 
-                    <!-- ── Fields & PDF Mapping ───────────────────────────── -->
+                    <!-- â”€â”€ Fields & PDF Mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
                     <div class="postbox">
                         <div class="postbox-header">
-                            <h2><?php esc_html_e( 'Fields & PDF Mapping', 'wp-waiver-engine' ); ?></h2>
+                            <h2><?php esc_html_e( 'Fields & PDF Mapping', 'waiver-engine' ); ?></h2>
                         </div>
                         <div class="inside">
-                            <!-- Hidden JSON store – JS updates this before form submit -->
+                            <!-- Hidden JSON store â€“ JS updates this before form submit -->
                             <input type="hidden" id="wpwe_pdf_mapping" name="wpwe_pdf_mapping"
                                    value="<?php echo esc_attr( $mapping_raw ); ?>">
 
@@ -256,22 +262,24 @@ class Template_Editor {
                                     $field_count = count( $rows );
                                     if ( $pdf_file && $field_count ) {
                                         echo esc_html( sprintf(
-                                            _n( '%1$s — %2$d field', '%1$s — %2$d fields', $field_count, 'wp-waiver-engine' ),
+                                            /* translators: 1: PDF filename, 2: number of mapped fields */
+                                            _n( '%1$s â€” %2$d field', '%1$s â€” %2$d fields', $field_count, 'waiver-engine' ),
                                             $pdf_file, $field_count
                                         ) );
                                     } elseif ( $field_count ) {
                                         echo esc_html( sprintf(
-                                            _n( '%d field mapped', '%d fields mapped', $field_count, 'wp-waiver-engine' ),
+                                            /* translators: %d: number of mapped fields */
+                                            _n( '%d field mapped', '%d fields mapped', $field_count, 'waiver-engine' ),
                                             $field_count
                                         ) );
                                     } else {
-                                        esc_html_e( 'No fields mapped yet', 'wp-waiver-engine' );
+                                        esc_html_e( 'No fields mapped yet', 'waiver-engine' );
                                     }
                                     ?>
                                 </span>
                                 <button type="button" class="button button-primary" id="wpwe-open-mapper">
                                     <span class="dashicons dashicons-editor-expand" style="vertical-align:text-bottom;margin-right:4px;"></span>
-                                    <?php esc_html_e( 'Open Visual Mapper', 'wp-waiver-engine' ); ?>
+                                    <?php esc_html_e( 'Open Visual Mapper', 'waiver-engine' ); ?>
                                 </button>
                             </div>
 
@@ -284,7 +292,7 @@ class Template_Editor {
 
                     <p class="submit">
                         <button type="submit" class="button button-primary button-large">
-                            <?php echo $id ? esc_html__( 'Update Template', 'wp-waiver-engine' ) : esc_html__( 'Save Template', 'wp-waiver-engine' ); ?>
+                            <?php echo $id ? esc_html__( 'Update Template', 'waiver-engine' ) : esc_html__( 'Save Template', 'waiver-engine' ); ?>
                         </button>
                     </p>
 
@@ -292,27 +300,27 @@ class Template_Editor {
                 </div><!-- /#post-body -->
                 </div><!-- /#poststuff -->
 
-        <!-- ══════════════════════════════════════════════════════════════
-             Full-screen mapper modal — kept INSIDE the form so that
+        <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+             Full-screen mapper modal â€” kept INSIDE the form so that
              all wpwe_map_*[] inputs are submitted with the form.
-             ══════════════════════════════════════════════════════════════ -->
+             â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div id="wpwe-mapper-modal" class="wpwe-mapper-modal" role="dialog" aria-modal="true" style="display:none;">
 
             <div class="wpwe-modal-header">
                 <span class="wpwe-modal-title">
                     <span class="dashicons dashicons-location-alt" style="vertical-align:middle;margin-right:6px;"></span>
-                    <?php esc_html_e( 'Visual Field Mapper', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( 'Visual Field Mapper', 'waiver-engine' ); ?>
                 </span>
                 <div class="wpwe-modal-toolbar">
                       <input type="hidden" id="wpwe_map_page_count" name="wpwe_map_page_count"
                           value="<?php echo esc_attr( $page_count ?: 1 ); ?>">
                     <button type="button" class="button" id="wpwe-prev-page">&#8249;</button>
-                    <span><?php esc_html_e( 'Pg', 'wp-waiver-engine' ); ?> <strong id="wpwe-page-num">1</strong>/<span id="wpwe-page-total">1</span></span>
+                    <span><?php esc_html_e( 'Pg', 'waiver-engine' ); ?> <strong id="wpwe-page-num">1</strong>/<span id="wpwe-page-total">1</span></span>
                     <button type="button" class="button" id="wpwe-next-page">&#8250;</button>
-                    <span class="wpwe-draw-hint"><?php esc_html_e( 'Draw on PDF to add a field', 'wp-waiver-engine' ); ?></span>
+                    <span class="wpwe-draw-hint"><?php esc_html_e( 'Draw on PDF to add a field', 'waiver-engine' ); ?></span>
                 </div>
                 <button type="button" class="wpwe-modal-close" id="wpwe-close-mapper"
-                        title="<?php esc_attr_e( 'Close mapper (Esc)', 'wp-waiver-engine' ); ?>">
+                        title="<?php esc_attr_e( 'Close mapper (Esc)', 'waiver-engine' ); ?>">
                     <span class="dashicons dashicons-no-alt"></span>
                 </button>
             </div>
@@ -320,7 +328,7 @@ class Template_Editor {
             <div class="wpwe-modal-body">
                 <div class="wpwe-modal-pdf-pane">
                     <div class="wpwe-mapper-hint" id="wpwe-mapper-hint">
-                        <?php esc_html_e( 'Use the Base PDF picker in Template Settings to enable the visual mapper.', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Use the Base PDF picker in Template Settings to enable the visual mapper.', 'waiver-engine' ); ?>
                     </div>
                     <div class="wpwe-pdf-viewer" id="wpwe-pdf-viewer" style="display:none;">
                         <div class="wpwe-canvas-wrap" id="wpwe-canvas-wrap">
@@ -333,23 +341,23 @@ class Template_Editor {
 
                 <div class="wpwe-modal-table-pane">
                     <p class="description" style="margin:0 0 8px;font-size:12px;">
-                        <?php esc_html_e( 'Draw on the PDF to add rows. Fill in Group, Field Key, Label, Type.', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Draw on the PDF to add rows. Fill in Group, Field Key, Label, Type.', 'waiver-engine' ); ?>
                     </p>
                     <div class="wpwe-mapping-table-wrap">
                         <table class="widefat wpwe-mapping-table" id="wpwe-mapping-table">
                             <thead>
                                 <tr>
-                                    <th><?php esc_html_e( 'Group', 'wp-waiver-engine' ); ?></th>
-                                    <th><?php esc_html_e( 'Key', 'wp-waiver-engine' ); ?></th>
-                                    <th><?php esc_html_e( 'Label', 'wp-waiver-engine' ); ?></th>
-                                    <th><?php esc_html_e( 'Type', 'wp-waiver-engine' ); ?></th>
-                                    <th style="width:34px" title="<?php esc_attr_e( 'Required', 'wp-waiver-engine' ); ?>">Req</th>
+                                    <th><?php esc_html_e( 'Group', 'waiver-engine' ); ?></th>
+                                    <th><?php esc_html_e( 'Key', 'waiver-engine' ); ?></th>
+                                    <th><?php esc_html_e( 'Label', 'waiver-engine' ); ?></th>
+                                    <th><?php esc_html_e( 'Type', 'waiver-engine' ); ?></th>
+                                    <th style="width:34px" title="<?php esc_attr_e( 'Required', 'waiver-engine' ); ?>">Req</th>
                                     <?php $this->render_repeatable_header_cell(); ?>
-                                    <th style="width:36px"><?php esc_html_e( 'Pg', 'wp-waiver-engine' ); ?></th>
-                                    <th><?php esc_html_e( 'Location', 'wp-waiver-engine' ); ?></th>
-                                    <th style="width:42px"><?php esc_html_e( 'Font', 'wp-waiver-engine' ); ?></th>
-                                    <th style="width:44px" title="<?php esc_attr_e( 'Character spacing in pt \u2014 use to spread text across letter-boxes', 'wp-waiver-engine' ); ?>"><?php esc_html_e( 'Spc', 'wp-waiver-engine' ); ?></th>
-                                    <th style="width:64px" title="<?php esc_attr_e( 'Date output format (PHP date format, e.g. d/m/Y). Only used when Type = date.', 'wp-waiver-engine' ); ?>"><?php esc_html_e( 'Date Fmt', 'wp-waiver-engine' ); ?></th>
+                                    <th style="width:36px"><?php esc_html_e( 'Pg', 'waiver-engine' ); ?></th>
+                                    <th><?php esc_html_e( 'Location', 'waiver-engine' ); ?></th>
+                                    <th style="width:42px"><?php esc_html_e( 'Font', 'waiver-engine' ); ?></th>
+                                    <th style="width:44px" title="<?php esc_attr_e( 'Character spacing in pt \u2014 use to spread text across letter-boxes', 'waiver-engine' ); ?>"><?php esc_html_e( 'Spc', 'waiver-engine' ); ?></th>
+                                    <th style="width:64px" title="<?php esc_attr_e( 'Date output format (PHP date format, e.g. d/m/Y). Only used when Type = date.', 'waiver-engine' ); ?>"><?php esc_html_e( 'Date Fmt', 'waiver-engine' ); ?></th>
                                     <th style="width:26px"></th>
                                 </tr>
                             </thead>
@@ -360,7 +368,7 @@ class Template_Editor {
                             </tbody>
                         </table>
                         <button type="button" class="button" id="wpwe-add-mapping-row" style="margin-top:6px;">
-                            <?php esc_html_e( '+ Add Field', 'wp-waiver-engine' ); ?>
+                            <?php esc_html_e( '+ Add Field', 'waiver-engine' ); ?>
                         </button>
                     </div>
                 </div>
@@ -368,10 +376,10 @@ class Template_Editor {
 
             <div class="wpwe-modal-footer">
                 <button type="button" class="button button-primary button-hero" id="wpwe-close-mapper-done">
-                    <?php esc_html_e( 'Done', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( 'Done', 'waiver-engine' ); ?>
                 </button>
                 <span class="wpwe-modal-footer-hint">
-                    <?php esc_html_e( 'Click Done, then Save/Update Template to persist changes.', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( 'Click Done, then Save/Update Template to persist changes.', 'waiver-engine' ); ?>
                 </span>
             </div>
         </div><!-- /#wpwe-mapper-modal -->
@@ -379,41 +387,43 @@ class Template_Editor {
             </form>
 
         <?php if ( $id ) : ?>
-        <!-- ══════════════════════════════════════════════════════════════
+        <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
              Export / Import Field Mappings (outside the main form)
-             ══════════════════════════════════════════════════════════════ -->
+             â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div id="poststuff" style="padding-top:0;">
         <div id="post-body" class="metabox-holder">
         <div id="post-body-content">
             <div class="postbox">
                 <div class="postbox-header">
-                    <h2><?php esc_html_e( 'Export / Import Field Mappings', 'wp-waiver-engine' ); ?></h2>
+                    <h2><?php esc_html_e( 'Export / Import Field Mappings', 'waiver-engine' ); ?></h2>
                 </div>
                 <div class="inside">
-                    <p><?php esc_html_e( 'Export the field schema and PDF coordinate mappings to migrate this template\'s configuration to another site. The Base PDF itself is not included — upload it separately on the destination site before importing.', 'wp-waiver-engine' ); ?></p>
+                    <p><?php esc_html_e( 'Export the field schema and PDF coordinate mappings to migrate this template\'s configuration to another site. The Base PDF itself is not included â€” upload it separately on the destination site before importing.', 'waiver-engine' ); ?></p>
 
-                    <h3 style="margin-top:0;"><?php esc_html_e( 'Export', 'wp-waiver-engine' ); ?></h3>
+                    <h3 style="margin-top:0;"><?php esc_html_e( 'Export', 'waiver-engine' ); ?></h3>
                     <a href="<?php echo esc_url( wp_nonce_url(
                         admin_url( 'admin.php?page=wpwe-edit&id=' . $id . '&wpwe_action=export_mappings' ),
                         'wpwe_export_mappings_' . $id
                     ) ); ?>" class="button">
                         <span class="dashicons dashicons-download" style="vertical-align:text-bottom;margin-right:4px;"></span>
-                        <?php esc_html_e( 'Download Mapping JSON', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Download Mapping JSON', 'waiver-engine' ); ?>
                     </a>
 
-                    <h3><?php esc_html_e( 'Import', 'wp-waiver-engine' ); ?></h3>
+                    <h3><?php esc_html_e( 'Import', 'waiver-engine' ); ?></h3>
 
+                    <?php // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only admin notice query vars. ?>
                     <?php if ( isset( $_GET['wpwe_imported'] ) ) : ?>
                     <div class="notice notice-success inline" style="margin-bottom:12px;">
-                        <p><?php esc_html_e( 'Mappings imported successfully. Review the fields and save to confirm.', 'wp-waiver-engine' ); ?></p>
+                        <p><?php esc_html_e( 'Mappings imported successfully. Review the fields and save to confirm.', 'waiver-engine' ); ?></p>
                     </div>
                     <?php endif; ?>
 
                     <?php if ( isset( $_GET['wpwe_import_error'] ) ) : ?>
                     <div class="notice notice-error inline" style="margin-bottom:12px;">
-                        <p><?php esc_html_e( 'Import failed. Please ensure the file is a valid waiver mapping export (.json).', 'wp-waiver-engine' ); ?></p>
+                        <p><?php esc_html_e( 'Import failed. Please ensure the file is a valid waiver mapping export (.json).', 'waiver-engine' ); ?></p>
                     </div>
                     <?php endif; ?>
+                    <?php // phpcs:enable ?>
 
                     <form method="post"
                           action="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-edit&id=' . $id ) ); ?>"
@@ -423,13 +433,13 @@ class Template_Editor {
                         <input type="hidden" name="wpwe_template_id" value="<?php echo esc_attr( $id ); ?>">
                         <input type="file" name="wpwe_import_file" accept=".json,application/json" required style="margin-right:8px;">
                         <button type="submit" class="button"
-                                onclick="return confirm('<?php esc_attr_e( 'This will overwrite the current field schema and PDF mapping. Continue?', 'wp-waiver-engine' ); ?>')">
+                                onclick="return confirm('<?php esc_attr_e( 'This will overwrite the current field schema and PDF mapping. Continue?', 'waiver-engine' ); ?>')">
                             <span class="dashicons dashicons-upload" style="vertical-align:text-bottom;margin-right:4px;"></span>
-                            <?php esc_html_e( 'Import', 'wp-waiver-engine' ); ?>
+                            <?php esc_html_e( 'Import', 'waiver-engine' ); ?>
                         </button>
                     </form>
                     <p class="description" style="margin-top:8px;">
-                        <?php esc_html_e( 'Importing replaces field definitions and PDF coordinate mappings only. Template title, notification email, and other settings are preserved.', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Importing replaces field definitions and PDF coordinate mappings only. Template title, notification email, and other settings are preserved.', 'waiver-engine' ); ?>
                     </p>
                 </div>
             </div>
@@ -472,9 +482,9 @@ class Template_Editor {
 
         $loc = '';
         if ( $x !== '' && $y !== '' ) {
-            $loc = 'pg.' . $page . ' · ' . round( (float) $x, 1 ) . ', ' . round( (float) $y, 1 );
+            $loc = 'pg.' . $page . ' Â· ' . round( (float) $x, 1 ) . ', ' . round( (float) $y, 1 );
             if ( $width !== '' && $height !== '' ) {
-                $loc .= ' · ' . round( (float) $width, 1 ) . '×' . round( (float) $height, 1 );
+                $loc .= ' Â· ' . round( (float) $width, 1 ) . 'Ã—' . round( (float) $height, 1 );
             }
         }
         ?>
@@ -516,12 +526,12 @@ class Template_Editor {
                        value="<?php echo esc_attr( $font_size ); ?>" step="0.5" placeholder="11"></td>
             <td><input type="number" class="wpwe-map-char-spacing small-text" name="wpwe_map_char_spacing[]"
                        value="<?php echo esc_attr( $char_spacing ); ?>" step="0.1" min="0" placeholder="0"
-                       title="<?php esc_attr_e( 'Extra character spacing in pt (e.g. 6 for date boxes)', 'wp-waiver-engine' ); ?>"></td>
+                       title="<?php esc_attr_e( 'Extra character spacing in pt (e.g. 6 for date boxes)', 'waiver-engine' ); ?>"></td>
             <td><input type="text" class="wpwe-map-date-format small-text" name="wpwe_map_date_format[]"
                        value="<?php echo esc_attr( $date_format ); ?>" placeholder="d/m/Y" maxlength="20"
-                       title="<?php esc_attr_e( 'PHP date() format string, e.g. d/m/Y or m-d-Y. Leave blank for default d/m/Y.', 'wp-waiver-engine' ); ?>"></td>
+                       title="<?php esc_attr_e( 'PHP date() format string, e.g. d/m/Y or m-d-Y. Leave blank for default d/m/Y.', 'waiver-engine' ); ?>"></td>
             <td><button type="button" class="button-link wpwe-delete-map-row"
-                        title="<?php esc_attr_e( 'Delete', 'wp-waiver-engine' ); ?>">
+                        title="<?php esc_attr_e( 'Delete', 'waiver-engine' ); ?>">
                 <span class="dashicons dashicons-trash" style="color:#d63638;vertical-align:middle;"></span>
             </button></td>
         </tr>
@@ -538,6 +548,7 @@ class Template_Editor {
      * @return array{0: array, 1: array}  [ $mapping, $schema ]
      */
     public static function build_from_post(): array {
+        // phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $page_count = isset( $_POST['wpwe_map_page_count'] )
             ? max( 1, absint( $_POST['wpwe_map_page_count'] ) ) : 1;
 
@@ -571,7 +582,7 @@ class Template_Editor {
 
             $path = $gk . '.' . $fk;
             // Allow multiple PDF locations for the same form field:
-            // append __2, __3, … suffix when the path already exists.
+            // append __2, __3, â€¦ suffix when the path already exists.
             $final_path = $path;
             $dup_count  = 2;
             while ( isset( $mapping_fields[ $final_path ] ) ) {
@@ -630,7 +641,7 @@ class Template_Editor {
                 }
             }
             // Skip if this field key is already in the schema (duplicate PDF placement
-            // for the same form field — two boxes on the PDF, one input on the form).
+            // for the same form field â€” two boxes on the PDF, one input on the form).
             $already_in_schema = false;
             foreach ( $schema_groups[ $gk ]['fields'] as $existing ) {
                 if ( ( $existing['key'] ?? '' ) === $fk ) { $already_in_schema = true; break; }
@@ -653,14 +664,17 @@ class Template_Editor {
 
         $schema = [ 'groups' => array_values( $schema_groups ) ];
 
+        // phpcs:enable
         return [ $mapping, $schema ];
     }
 
     private static function post_arr( string $key ): array {
+        // phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- validated by caller before build_from_post().
         if ( ! isset( $_POST[ $key ] ) || ! is_array( $_POST[ $key ] ) ) {
             return [];
         }
-        return array_values( $_POST[ $key ] );
+        return array_values( wp_unslash( $_POST[ $key ] ) );
+        // phpcs:enable
     }
 
     private static function can_use_repeatable_mapping(): bool {
@@ -708,3 +722,4 @@ class Template_Editor {
         }
     }
 }
+

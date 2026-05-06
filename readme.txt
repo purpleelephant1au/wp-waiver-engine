@@ -2,8 +2,8 @@
 Contributors: purpleelephant1au
 Donate link: https://github.com/sponsors/purpleelephant1au
 Tags: pdf, forms, contracts, signature, booking
-Requires at least: 6.0
-Tested up to: 6.7
+Requires at least: 6.2
+Tested up to: 6.9
 Requires PHP: 8.0
 Stable tag: 1.1.0
 License: GPL-2.0-or-later
@@ -55,7 +55,7 @@ when Amelia is not installed.
 
 == Installation ==
 
-1. Upload the `wp-waiver-engine` folder to `/wp-content/plugins/`.
+1. Upload the `waiver-engine` folder to `/wp-content/plugins/`.
 2. Activate through the **Plugins** screen in WordPress.
 3. Navigate to **Waivers > Templates** to create your first waiver template.
 4. Upload a PDF template file, map form fields to PDF coordinates, and
@@ -76,8 +76,8 @@ run locally.
 
 **Install dependencies after cloning:**
 
-    git clone https://github.com/purpleelephant1au/wp-waiver-engine.git
-    cd wp-waiver-engine
+    git clone https://github.com/purpleelephant1au/waiver-engine.git
+    cd waiver-engine
     composer install
 
 **Build a production-ready release ZIP:**
@@ -92,11 +92,11 @@ The script will:
 3. Read the version number automatically from the plugin header.
 4. Collect all plugin files (excluding `.git`, `bin/`, `composer.*`,
    and any previously generated ZIPs).
-5. Bundle them under a top-level `wp-waiver-engine/` folder and output
-   `wp-waiver-engine-<version>.zip` at the repository root.
+5. Bundle them under a top-level `waiver-engine/` folder and output
+   `waiver-engine-<version>.zip` at the repository root.
 
-The resulting ZIP is ready to upload via **WordPress Admin → Plugins →
-Add New → Upload Plugin**, or to submit to the WordPress.org plugin
+The resulting ZIP is ready to upload via **WordPress Admin â†’ Plugins â†’
+Add New â†’ Upload Plugin**, or to submit to the WordPress.org plugin
 directory.
 
 Generated ZIP files are excluded from version control via `.gitignore`.
@@ -132,9 +132,9 @@ Can be disabled independently if another rate-limiting layer exists.
 An invisible CAPTCHA challenge can be added to waiver forms for additional
 protection. Supported providers:
 
-* **Google reCAPTCHA v3** – invisible scoring model. A score of ≥ 0.5 is
+* **Google reCAPTCHA v3** â€“ invisible scoring model. A score of â‰¥ 0.5 is
   required. Register your keys at https://www.google.com/recaptcha/admin.
-* **hCaptcha (invisible)** – privacy-respecting alternative. Register at
+* **hCaptcha (invisible)** â€“ privacy-respecting alternative. Register at
   https://www.hcaptcha.com/signup-interstitial.
 
 Configuration steps:
@@ -283,3 +283,4 @@ Waiver Engine is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
+

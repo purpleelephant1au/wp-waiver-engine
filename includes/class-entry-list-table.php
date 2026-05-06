@@ -10,16 +10,20 @@ defined( 'ABSPATH' ) || exit;
 class Entry_List_Table {
 
     public function render(): void {
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only list filters.
         $amelia_enabled    = Settings::is_amelia_enabled();
         $per_page          = 20;
         $paged             = isset( $_GET['paged'] )       ? max( 1, absint( $_GET['paged'] ) )       : 1;
         $template_id       = isset( $_GET['template_id'] ) ? absint( $_GET['template_id'] )            : 0;
-        $orderby           = isset( $_GET['orderby'] )     ? sanitize_key( $_GET['orderby'] )           : 'id';
-        $order             = isset( $_GET['order'] ) && strtoupper( $_GET['order'] ) === 'ASC' ? 'ASC' : 'DESC';
+        $orderby_set       = isset( $_GET['orderby'] );
+        $orderby           = $orderby_set                    ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : 'id';
+        $order_raw         = isset( $_GET['order'] ) ? sanitize_text_field( wp_unslash( $_GET['order'] ) ) : 'DESC';
+        $order             = strtoupper( $order_raw ) === 'ASC' ? 'ASC' : 'DESC';
 
         // Amelia-specific filters (only collected when integration is enabled)
         $booking_search    = $amelia_enabled && isset( $_GET['booking_search'] )    ? sanitize_text_field( wp_unslash( $_GET['booking_search'] ) ) : '';
         $amelia_service_id = $amelia_enabled && isset( $_GET['amelia_service_id'] ) ? absint( $_GET['amelia_service_id'] )                         : 0;
+        // phpcs:enable
 
         if ( $amelia_enabled && class_exists( Premium_Bridge::class ) ) {
             $result = Premium_Bridge::get_entries_with_booking_data( $per_page, $paged, $template_id, $orderby, $order, $booking_search, $amelia_service_id );
@@ -54,20 +58,22 @@ class Entry_List_Table {
         $has_booking_filter = $amelia_enabled && ( $booking_search !== '' || $amelia_service_id > 0 );
         ?>
         <div class="wrap">
-            <h1 class="wp-heading-inline"><?php esc_html_e( 'Waiver Entries', 'wp-waiver-engine' ); ?></h1>
+            <h1 class="wp-heading-inline"><?php esc_html_e( 'Waiver Entries', 'waiver-engine' ); ?></h1>
             <hr class="wp-header-end">
 
+            <?php // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only admin notice query var. ?>
             <?php if ( isset( $_GET['wpwe_deleted'] ) ) : ?>
-            <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Entry deleted.', 'wp-waiver-engine' ); ?></p></div>
+            <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Entry deleted.', 'waiver-engine' ); ?></p></div>
             <?php endif; ?>
+            <?php // phpcs:enable ?>
 
             <!-- Filters -->
             <form method="get" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0;">
                 <input type="hidden" name="page" value="wpwe-entries">
 
-                <label for="wpwe-filter-template"><?php esc_html_e( 'Template:', 'wp-waiver-engine' ); ?></label>
+                <label for="wpwe-filter-template"><?php esc_html_e( 'Template:', 'waiver-engine' ); ?></label>
                 <select id="wpwe-filter-template" name="template_id">
-                    <option value="0"><?php esc_html_e( '&mdash; All &mdash;', 'wp-waiver-engine' ); ?></option>
+                    <option value="0"><?php esc_html_e( '&mdash; All &mdash;', 'waiver-engine' ); ?></option>
                     <?php foreach ( $templates as $tid => $ttitle ) : ?>
                     <option value="<?php echo esc_attr( $tid ); ?>" <?php selected( $template_id, $tid ); ?>>
                         <?php echo esc_html( $ttitle ?: '#' . $tid ); ?>
@@ -76,9 +82,9 @@ class Entry_List_Table {
                 </select>
 
                 <?php if ( $amelia_enabled && ! empty( $amelia_services ) ) : ?>
-                <label for="wpwe-filter-service"><?php esc_html_e( 'Service:', 'wp-waiver-engine' ); ?></label>
+                <label for="wpwe-filter-service"><?php esc_html_e( 'Service:', 'waiver-engine' ); ?></label>
                 <select id="wpwe-filter-service" name="amelia_service_id">
-                    <option value="0"><?php esc_html_e( '&mdash; All &mdash;', 'wp-waiver-engine' ); ?></option>
+                    <option value="0"><?php esc_html_e( '&mdash; All &mdash;', 'waiver-engine' ); ?></option>
                     <?php foreach ( $amelia_services as $svc ) : ?>
                     <option value="<?php echo esc_attr( $svc['id'] ); ?>" <?php selected( $amelia_service_id, (int) $svc['id'] ); ?>>
                         <?php echo esc_html( $svc['name'] ); ?>
@@ -88,47 +94,50 @@ class Entry_List_Table {
                 <?php endif; ?>
 
                 <?php if ( $amelia_enabled ) : ?>
-                <label for="wpwe-filter-booking"><?php esc_html_e( 'Booking:', 'wp-waiver-engine' ); ?></label>
+                <label for="wpwe-filter-booking"><?php esc_html_e( 'Booking:', 'waiver-engine' ); ?></label>
                 <input type="text"
                        id="wpwe-filter-booking"
                        name="booking_search"
                        value="<?php echo esc_attr( $booking_search ); ?>"
-                       placeholder="<?php esc_attr_e( 'Customer name or date (YYYY-MM-DD)', 'wp-waiver-engine' ); ?>"
+                       placeholder="<?php esc_attr_e( 'Customer name or date (YYYY-MM-DD)', 'waiver-engine' ); ?>"
                        style="width:260px;">
                 <?php endif; ?>
 
-                <button type="submit" class="button"><?php esc_html_e( 'Filter', 'wp-waiver-engine' ); ?></button>
+                <button type="submit" class="button"><?php esc_html_e( 'Filter', 'waiver-engine' ); ?></button>
 
                 <?php if ( $template_id || $has_booking_filter ) : ?>
                 <a href="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-entries' ) ); ?>" class="button">
-                    <?php esc_html_e( 'Clear', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( 'Clear', 'waiver-engine' ); ?>
                 </a>
                 <?php endif; ?>
             </form>
 
-            <p><?php printf( esc_html__( '%d entries', 'wp-waiver-engine' ), $total ); ?></p>
+            <p><?php
+            /* translators: %d: total number of entries */
+            printf( esc_html__( '%d entries', 'waiver-engine' ), absint( $total ) );
+            ?></p>
 
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
-                        <?php $this->sortable_th( '#',        'id',          $orderby, $order, $base_url ); ?>
-                        <?php $this->sortable_th( 'Template', 'template_id', $orderby, $order, $base_url ); ?>
-                        <th><?php esc_html_e( 'Submitter', 'wp-waiver-engine' ); ?></th>
+                        <?php $this->sortable_th( '#',        'id',          $orderby, $order, $base_url, $orderby_set ); ?>
+                        <?php $this->sortable_th( 'Template', 'template_id', $orderby, $order, $base_url, $orderby_set ); ?>
+                        <th><?php esc_html_e( 'Submitter', 'waiver-engine' ); ?></th>
                         <?php if ( $amelia_enabled ) : ?>
-                        <?php $this->sortable_th( 'Service',      'booking_service', $orderby, $order, $base_url ); ?>
-                        <?php $this->sortable_th( 'Booking Date', 'booking_date',    $orderby, $order, $base_url ); ?>
-                        <th><?php esc_html_e( 'Customer', 'wp-waiver-engine' ); ?></th>
+                        <?php $this->sortable_th( 'Service',      'booking_service', $orderby, $order, $base_url, $orderby_set ); ?>
+                        <?php $this->sortable_th( 'Booking Date', 'booking_date',    $orderby, $order, $base_url, $orderby_set ); ?>
+                        <th><?php esc_html_e( 'Customer', 'waiver-engine' ); ?></th>
                         <?php endif; ?>
-                        <th><?php esc_html_e( 'PDFs', 'wp-waiver-engine' ); ?></th>
-                        <?php $this->sortable_th( 'Email Sent', 'email_sent', $orderby, $order, $base_url ); ?>
-                        <?php $this->sortable_th( 'Submitted',  'created_at', $orderby, $order, $base_url ); ?>
+                        <th><?php esc_html_e( 'PDFs', 'waiver-engine' ); ?></th>
+                        <?php $this->sortable_th( 'Email Sent', 'email_sent', $orderby, $order, $base_url, $orderby_set ); ?>
+                        <?php $this->sortable_th( 'Submitted',  'created_at', $orderby, $order, $base_url, $orderby_set ); ?>
                         <th style="width:60px"></th>
                     </tr>
                 </thead>
                 <tbody>
                 <?php $col_count = $amelia_enabled ? 10 : 7; ?>
                 <?php if ( empty( $rows ) ) : ?>
-                    <tr><td colspan="<?php echo esc_attr( $col_count ); ?>"><?php esc_html_e( 'No entries found.', 'wp-waiver-engine' ); ?></td></tr>
+                    <tr><td colspan="<?php echo esc_attr( $col_count ); ?>"><?php esc_html_e( 'No entries found.', 'waiver-engine' ); ?></td></tr>
                 <?php else : ?>
                     <?php foreach ( $rows as $entry ) : ?>
                     <?php
@@ -139,7 +148,7 @@ class Entry_List_Table {
                         $pdf_paths = json_decode( $entry->pdf_paths, true ) ?: [];
                         $entry_id  = (int) $entry->id;
 
-                        // Booking columns (from LEFT JOIN – only populated when Amelia enabled)
+                        // Booking columns (from LEFT JOIN â€“ only populated when Amelia enabled)
                         $bk_service  = isset( $entry->booking_service )  ? $entry->booking_service  : null;
                         $bk_date     = isset( $entry->booking_date )      ? $entry->booking_date     : null;
                         $bk_customer = isset( $entry->booking_customer )  ? $entry->booking_customer : null;
@@ -196,7 +205,7 @@ class Entry_List_Table {
                         <td><?php echo esc_html( $entry->created_at ); ?></td>
                         <td>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-entry&id=' . $entry_id ) ); ?>">
-                                <?php esc_html_e( 'View', 'wp-waiver-engine' ); ?>
+                                <?php esc_html_e( 'View', 'waiver-engine' ); ?>
                             </a>
                         </td>
                     </tr>
@@ -229,14 +238,14 @@ class Entry_List_Table {
     // Helpers
     // -----------------------------------------------------------------------
 
-    private function sortable_th( string $label, string $col, string $current_orderby, string $current_order, string $base_url ): void {
+    private function sortable_th( string $label, string $col, string $current_orderby, string $current_order, string $base_url, bool $orderby_explicit = true ): void {
         $new_order = ( $current_orderby === $col && $current_order === 'ASC' ) ? 'DESC' : 'ASC';
-        $url   = add_query_arg( [ 'orderby' => $col, 'order' => $new_order ], $base_url );
-        $arrow = '';
-        if ( $current_orderby === $col ) {
-            $arrow = $current_order === 'ASC' ? ' ▲' : ' ▼';
+        $url       = add_query_arg( [ 'orderby' => $col, 'order' => $new_order ], $base_url );
+        echo '<th scope="col"><a href="' . esc_url( $url ) . '">' . esc_html( $label );
+        if ( $orderby_explicit && $current_orderby === $col ) {
+            echo $current_order === 'ASC' ? ' &#9650;' : ' &#9660;';
         }
-        echo '<th scope="col"><a href="' . esc_url( $url ) . '">' . esc_html( $label . $arrow ) . '</a></th>';
+        echo '</a></th>';
     }
 
     private function find_field( array $data, array $paths ): string {
@@ -252,3 +261,4 @@ class Entry_List_Table {
         return '';
     }
 }
+

@@ -32,12 +32,15 @@ class Premium_Bridge {
             return [];
         }
 
+        // phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce checked by the template save handlers before this helper is called.
         return isset( $_POST['wpwe_map_repeatable'] ) && is_array( $_POST['wpwe_map_repeatable'] )
-            ? array_map( 'absint', $_POST['wpwe_map_repeatable'] )
+            ? array_map( 'absint', wp_unslash( $_POST['wpwe_map_repeatable'] ) )
             : [];
+        // phpcs:enable
     }
 
     public static function build_template_premium_data_from_post(): array {
+        // phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce checked by the template save handlers before this helper is called.
         $output_mode = isset( $_POST['wpwe_output_mode'] )
             ? sanitize_text_field( wp_unslash( $_POST['wpwe_output_mode'] ) )
             : 'single';
@@ -65,6 +68,7 @@ class Premium_Bridge {
             'send_user_email'    => $send_user_email,
             'amelia_service_ids' => array_values( $raw_amelia_ids ),
         ];
+        // phpcs:enable
     }
 
     public static function build_form_premium_context( object $template ): array {
@@ -84,7 +88,7 @@ class Premium_Bridge {
     public static function render_per_row_output_mode_option( string $output_mode ): void {
         ?>
         <option value="per_row" <?php selected( $output_mode, 'per_row' ); ?>>
-            <?php esc_html_e( 'One PDF per row (repeatable group)', 'wp-waiver-engine' ); ?>
+            <?php esc_html_e( 'One PDF per row (repeatable group)', 'waiver-engine' ); ?>
         </option>
         <?php
     }
@@ -92,7 +96,7 @@ class Premium_Bridge {
     public static function render_output_group_key_control( string $output_mode, string $group_key ): void {
         ?>
         <div id="wpwe_group_key_wrap" style="margin-top:8px;<?php echo $output_mode !== 'per_row' ? 'display:none;' : ''; ?>">
-            <label for="wpwe_output_group_key"><?php esc_html_e( 'Repeatable Group Key:', 'wp-waiver-engine' ); ?></label>
+            <label for="wpwe_output_group_key"><?php esc_html_e( 'Repeatable Group Key:', 'waiver-engine' ); ?></label>
             <input type="text" id="wpwe_output_group_key" name="wpwe_output_group_key"
                    value="<?php echo esc_attr( $group_key ); ?>" class="regular-text"
                    placeholder="e.g. participants">
@@ -103,50 +107,50 @@ class Premium_Bridge {
     public static function render_template_editor_premium_rows( ?object $tpl, string $notify, bool $send_admin_email, bool $send_user_email ): void {
         ?>
         <tr>
-            <th><label for="wpwe_notification_email"><?php esc_html_e( 'Notification Email', 'wp-waiver-engine' ); ?></label></th>
+            <th><label for="wpwe_notification_email"><?php esc_html_e( 'Notification Email', 'waiver-engine' ); ?></label></th>
             <td>
                 <input type="email" id="wpwe_notification_email" name="wpwe_notification_email"
                        value="<?php echo esc_attr( $notify ); ?>" class="regular-text"
                        placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
-                <p class="description"><?php esc_html_e( 'Leave blank to use the site admin email.', 'wp-waiver-engine' ); ?></p>
+                <p class="description"><?php esc_html_e( 'Leave blank to use the site admin email.', 'waiver-engine' ); ?></p>
             </td>
         </tr>
         <?php if ( Settings::is_admin_email_enabled() ) : ?>
         <tr>
-            <th><label for="wpwe_send_admin_email"><?php esc_html_e( 'Admin Notification', 'wp-waiver-engine' ); ?></label></th>
+            <th><label for="wpwe_send_admin_email"><?php esc_html_e( 'Admin Notification', 'waiver-engine' ); ?></label></th>
             <td>
                 <input type="checkbox" id="wpwe_send_admin_email" name="wpwe_send_admin_email" value="1"
                        <?php checked( $send_admin_email ); ?>>
                 <label for="wpwe_send_admin_email">
-                    <?php esc_html_e( 'Send admin notification email on submission', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( 'Send admin notification email on submission', 'waiver-engine' ); ?>
                 </label>
-                <p class="description"><?php esc_html_e( 'If unchecked, no email is sent to the notification address when this template is submitted.', 'wp-waiver-engine' ); ?></p>
+                <p class="description"><?php esc_html_e( 'If unchecked, no email is sent to the notification address when this template is submitted.', 'waiver-engine' ); ?></p>
             </td>
         </tr>
         <?php endif; ?>
         <?php if ( Settings::is_user_email_enabled() ) : ?>
         <tr>
-            <th><label for="wpwe_send_user_email"><?php esc_html_e( 'Submitter Copy', 'wp-waiver-engine' ); ?></label></th>
+            <th><label for="wpwe_send_user_email"><?php esc_html_e( 'Submitter Copy', 'waiver-engine' ); ?></label></th>
             <td>
                 <input type="checkbox" id="wpwe_send_user_email" name="wpwe_send_user_email" value="1"
                        <?php checked( $send_user_email ); ?>>
                 <label for="wpwe_send_user_email">
-                    <?php esc_html_e( 'Allow submitters to request an email copy of their PDF', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( 'Allow submitters to request an email copy of their PDF', 'waiver-engine' ); ?>
                 </label>
-                <p class="description"><?php esc_html_e( 'If unchecked, the email copy opt-in is hidden for this template.', 'wp-waiver-engine' ); ?></p>
+                <p class="description"><?php esc_html_e( 'If unchecked, the email copy opt-in is hidden for this template.', 'waiver-engine' ); ?></p>
             </td>
         </tr>
         <?php endif; ?>
         <?php if ( Settings::is_amelia_enabled() ) : ?>
         <tr>
-            <th><?php esc_html_e( 'Linked Amelia Services', 'wp-waiver-engine' ); ?></th>
+            <th><?php esc_html_e( 'Linked Amelia Services', 'waiver-engine' ); ?></th>
             <td>
                 <?php
                 $saved_amelia_ids = json_decode( (string) ( $tpl->amelia_service_ids ?? '' ), true ) ?: [];
                 $saved_amelia_ids = array_map( 'intval', $saved_amelia_ids );
                 $amelia_svc = Integration_Amelia::get_services();
                 if ( empty( $amelia_svc ) ) : ?>
-                    <p class="description"><?php esc_html_e( 'No Amelia services found. Activate the Amelia plugin and create services first.', 'wp-waiver-engine' ); ?></p>
+                    <p class="description"><?php esc_html_e( 'No Amelia services found. Activate the Amelia plugin and create services first.', 'waiver-engine' ); ?></p>
                 <?php else : ?>
                     <fieldset>
                         <?php foreach ( $amelia_svc as $svc ) :
@@ -162,7 +166,7 @@ class Premium_Bridge {
                             </label>
                         <?php endforeach; ?>
                     </fieldset>
-                    <p class="description"><?php esc_html_e( 'When services are selected, a booking-search widget appears on the frontend form so submitters can link their waiver to an existing booking.', 'wp-waiver-engine' ); ?></p>
+                    <p class="description"><?php esc_html_e( 'When services are selected, a booking-search widget appears on the frontend form so submitters can link their waiver to an existing booking.', 'waiver-engine' ); ?></p>
                 <?php endif; ?>
             </td>
         </tr>
@@ -177,23 +181,23 @@ class Premium_Bridge {
 
         ?>
         <tr>
-            <th><label for="wpwe_notification_email"><?php esc_html_e( 'Notification Email', 'wp-waiver-engine' ); ?></label></th>
+            <th><label for="wpwe_notification_email"><?php esc_html_e( 'Notification Email', 'waiver-engine' ); ?></label></th>
             <td>
                 <input type="email" id="wpwe_notification_email" name="wpwe_notification_email"
                        value="<?php echo esc_attr( $notify_email ); ?>" class="regular-text"
                        placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
-                <p class="description"><?php esc_html_e( 'Leave blank to use the site admin email. PDF(s) will be attached to the notification.', 'wp-waiver-engine' ); ?></p>
+                <p class="description"><?php esc_html_e( 'Leave blank to use the site admin email. PDF(s) will be attached to the notification.', 'waiver-engine' ); ?></p>
             </td>
         </tr>
         <tr>
-            <th><?php esc_html_e( 'Linked Amelia Services', 'wp-waiver-engine' ); ?></th>
+            <th><?php esc_html_e( 'Linked Amelia Services', 'waiver-engine' ); ?></th>
             <td>
                 <?php
                 $saved_ids = json_decode( (string) get_post_meta( $post->ID, 'amelia_service_ids', true ), true ) ?: [];
                 $saved_ids = array_map( 'intval', $saved_ids );
                 $amelia_svc = Integration_Amelia::get_services();
                 if ( empty( $amelia_svc ) ) : ?>
-                    <p class="description"><?php esc_html_e( 'No Amelia services found. Activate the Amelia plugin and create services first.', 'wp-waiver-engine' ); ?></p>
+                    <p class="description"><?php esc_html_e( 'No Amelia services found. Activate the Amelia plugin and create services first.', 'waiver-engine' ); ?></p>
                 <?php else : ?>
                     <fieldset>
                         <?php foreach ( $amelia_svc as $svc ) :
@@ -209,18 +213,18 @@ class Premium_Bridge {
                             </label>
                         <?php endforeach; ?>
                     </fieldset>
-                    <p class="description"><?php esc_html_e( 'When services are selected, a booking-search widget appears on the frontend form so submitters can link their waiver to an existing booking.', 'wp-waiver-engine' ); ?></p>
+                    <p class="description"><?php esc_html_e( 'When services are selected, a booking-search widget appears on the frontend form so submitters can link their waiver to an existing booking.', 'waiver-engine' ); ?></p>
                 <?php endif; ?>
             </td>
         </tr>
         <?php if ( Settings::is_admin_email_enabled() ) : ?>
         <tr>
-            <th><label for="wpwe_send_admin_email"><?php esc_html_e( 'Admin Notification', 'wp-waiver-engine' ); ?></label></th>
+            <th><label for="wpwe_send_admin_email"><?php esc_html_e( 'Admin Notification', 'waiver-engine' ); ?></label></th>
             <td>
                 <input type="checkbox" id="wpwe_send_admin_email" name="wpwe_send_admin_email" value="1"
                        <?php checked( $send_admin_email ); ?>>
                 <label for="wpwe_send_admin_email">
-                    <?php esc_html_e( 'Send completed waiver PDF to admin email', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( 'Send completed waiver PDF to admin email', 'waiver-engine' ); ?>
                 </label>
             </td>
         </tr>
@@ -228,12 +232,12 @@ class Premium_Bridge {
 
         <?php if ( Settings::is_user_email_enabled() ) : ?>
         <tr>
-            <th><label for="wpwe_send_user_email"><?php esc_html_e( 'Submitter Copy', 'wp-waiver-engine' ); ?></label></th>
+            <th><label for="wpwe_send_user_email"><?php esc_html_e( 'Submitter Copy', 'waiver-engine' ); ?></label></th>
             <td>
                 <input type="checkbox" id="wpwe_send_user_email" name="wpwe_send_user_email" value="1"
                        <?php checked( $send_user_email ); ?>>
                 <label for="wpwe_send_user_email">
-                    <?php esc_html_e( 'Allow submitter to request an emailed copy', 'wp-waiver-engine' ); ?>
+                    <?php esc_html_e( 'Allow submitter to request an emailed copy', 'waiver-engine' ); ?>
                 </label>
             </td>
         </tr>
@@ -243,7 +247,7 @@ class Premium_Bridge {
 
     public static function render_repeatable_header_cell(): void {
         ?>
-        <th style="width:34px" title="<?php esc_attr_e( 'Repeatable group', 'wp-waiver-engine' ); ?>">Rpt</th>
+        <th style="width:34px" title="<?php esc_attr_e( 'Repeatable group', 'waiver-engine' ); ?>">Rpt</th>
         <?php
     }
 
@@ -261,6 +265,7 @@ class Premium_Bridge {
             return [ 0, null ];
         }
 
+        // phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce is verified in the calling AJAX handler before this helper runs.
         $amelia_booking_id = isset( $_POST['wpwe_booking_id'] ) ? absint( $_POST['wpwe_booking_id'] ) : 0;
         $booking_info = null;
 
@@ -271,6 +276,7 @@ class Premium_Bridge {
             }
         }
 
+        // phpcs:enable
         return [ $amelia_booking_id, $booking_info ];
     }
 
@@ -296,7 +302,7 @@ class Premium_Bridge {
         }
 
         if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpwe_search_bookings' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'wp-waiver-engine' ) ], 403 );
+            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'waiver-engine' ) ], 403 );
         }
 
         $template_id = isset( $_POST['template_id'] ) ? absint( $_POST['template_id'] ) : 0;
@@ -328,11 +334,11 @@ class Premium_Bridge {
 
     public static function ajax_get_booking(): void {
         if ( ! Settings::is_amelia_enabled() || ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Amelia integration not enabled.', 'wp-waiver-engine' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Amelia integration not enabled.', 'waiver-engine' ) ], 400 );
         }
 
         if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpwe_search_bookings' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'wp-waiver-engine' ) ], 403 );
+            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'waiver-engine' ) ], 403 );
         }
 
         $booking_id = isset( $_POST['booking_id'] ) ? absint( $_POST['booking_id'] ) : 0;
@@ -340,28 +346,28 @@ class Premium_Bridge {
         $customer_email = isset( $_POST['customer_email'] ) ? sanitize_email( wp_unslash( $_POST['customer_email'] ) ) : '';
 
         if ( ! $booking_id || ! $template_id || ! is_email( $customer_email ) ) {
-            wp_send_json_error( [ 'message' => __( 'Invalid request.', 'wp-waiver-engine' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Invalid request.', 'waiver-engine' ) ], 400 );
         }
 
         $template = Database::get_template( $template_id );
         if ( ! $template ) {
-            wp_send_json_error( [ 'message' => __( 'Template not found.', 'wp-waiver-engine' ) ], 404 );
+            wp_send_json_error( [ 'message' => __( 'Template not found.', 'waiver-engine' ) ], 404 );
         }
 
         $row = Integration_Amelia::get_booking( $booking_id );
         if ( ! $row ) {
-            wp_send_json_error( [ 'message' => __( 'Booking not found.', 'wp-waiver-engine' ) ], 404 );
+            wp_send_json_error( [ 'message' => __( 'Booking not found.', 'waiver-engine' ) ], 404 );
         }
 
         $service_ids = json_decode( $template->amelia_service_ids ?? '', true ) ?: [];
         $service_ids = array_map( 'intval', $service_ids );
         if ( $service_ids && ! in_array( (int) $row->service_id, $service_ids, true ) ) {
-            wp_send_json_error( [ 'message' => __( 'Booking not found.', 'wp-waiver-engine' ) ], 404 );
+            wp_send_json_error( [ 'message' => __( 'Booking not found.', 'waiver-engine' ) ], 404 );
         }
 
         $stored_email = isset( $row->customer_email ) ? sanitize_email( (string) $row->customer_email ) : '';
         if ( strtolower( $stored_email ) !== strtolower( $customer_email ) ) {
-            wp_send_json_error( [ 'message' => __( 'Booking not found.', 'wp-waiver-engine' ) ], 404 );
+            wp_send_json_error( [ 'message' => __( 'Booking not found.', 'waiver-engine' ) ], 404 );
         }
 
         wp_send_json_success( [
@@ -384,7 +390,8 @@ class Premium_Bridge {
 
         if ( count( $raw_group ) < $min_rows ) {
             $errors[ $group_key ] = sprintf(
-                __( '%1$s requires at least %2$d row(s).', 'wp-waiver-engine' ),
+                /* translators: 1: group label, 2: minimum required row count */
+                __( '%1$s requires at least %2$d row(s).', 'waiver-engine' ),
                 $group['label'] ?? $group_key,
                 $min_rows
             );
@@ -410,22 +417,29 @@ class Premium_Bridge {
             return;
         }
 
-        $subject = sprintf( __( 'Your copy: %s', 'wp-waiver-engine' ), $template->title );
-        $body  = sprintf( __( 'Thank you for completing: %s', 'wp-waiver-engine' ), $template->title ) . "\n\n";
+        /* translators: %s: template title */
+        $subject = sprintf( __( 'Your copy: %s', 'waiver-engine' ), $template->title );
+        /* translators: %s: template title */
+        $body  = sprintf( __( 'Thank you for completing: %s', 'waiver-engine' ), $template->title ) . "\n\n";
 
         if ( $booking_info ) {
-            $body .= __( 'Booking details:', 'wp-waiver-engine' ) . "\n";
-            $body .= sprintf( __( 'Booking ID: %d', 'wp-waiver-engine' ), (int) $booking_info->appointment_id ) . "\n";
-            $body .= sprintf( __( 'Service: %s', 'wp-waiver-engine' ), $booking_info->service_name ) . "\n";
-            $body .= sprintf( __( 'Booking date: %s', 'wp-waiver-engine' ), wp_date( 'F j, Y g:i a', strtotime( $booking_info->bookingStart ) ) ) . "\n";
-            $body .= sprintf( __( 'Customer: %s', 'wp-waiver-engine' ), $booking_info->firstName . ' ' . $booking_info->lastName ) . "\n\n";
+            $body .= __( 'Booking details:', 'waiver-engine' ) . "\n";
+            /* translators: %d: booking ID */
+            $body .= sprintf( __( 'Booking ID: %d', 'waiver-engine' ), (int) $booking_info->appointment_id ) . "\n";
+            /* translators: %s: service name */
+            $body .= sprintf( __( 'Service: %s', 'waiver-engine' ), $booking_info->service_name ) . "\n";
+            /* translators: %s: booking date */
+            $body .= sprintf( __( 'Booking date: %s', 'waiver-engine' ), wp_date( 'F j, Y g:i a', strtotime( $booking_info->bookingStart ) ) ) . "\n";
+            /* translators: %s: customer full name */
+            $body .= sprintf( __( 'Customer: %s', 'waiver-engine' ), $booking_info->firstName . ' ' . $booking_info->lastName ) . "\n\n";
         }
 
-        $body .= __( 'Please find your waiver PDF attached to this email.', 'wp-waiver-engine' ) . "\n";
+        $body .= __( 'Please find your waiver PDF attached to this email.', 'waiver-engine' ) . "\n";
 
         $sent = wp_mail( $to, $subject, $body, [ 'Content-Type: text/plain; charset=UTF-8' ], [ $attachment_path ] );
         if ( ! $sent ) {
-            error_log( '[WPWE] send_copy_email failed for: ' . $to . ' | last WP mail error: ' . print_r( $GLOBALS['phpmailer']->ErrorInfo ?? '', true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            $last_mail_error = isset( $GLOBALS['phpmailer']->ErrorInfo ) ? (string) $GLOBALS['phpmailer']->ErrorInfo : '';
+            error_log( '[WPWE] send_copy_email failed for: ' . $to . ' | last WP mail error: ' . $last_mail_error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
         }
     }
 
@@ -435,26 +449,29 @@ class Premium_Bridge {
             return false;
         }
 
-        $subject = sprintf( __( 'New Waiver Submission: %s', 'wp-waiver-engine' ), $template->title );
+        /* translators: %s: template title */
+        $subject = sprintf( __( 'New Waiver Submission: %s', 'waiver-engine' ), $template->title );
         $entry_url = admin_url( 'admin.php?page=wpwe-entry&id=' . $entry_id );
 
         $body  = '<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.45;color:#1d2327;">';
-        $body .= '<p>' . esc_html( sprintf( __( 'A new waiver was submitted for: %s', 'wp-waiver-engine' ), $template->title ) ) . '</p>';
-        $body .= '<p>' . esc_html( sprintf( __( 'Submission time: %s', 'wp-waiver-engine' ), wp_date( 'F j, Y g:i a' ) ) ) . '<br>';
-        $body .= esc_html( __( 'View entry:', 'wp-waiver-engine' ) ) . ' <a href="' . esc_url( $entry_url ) . '">' . esc_html( $entry_url ) . '</a></p>';
+        /* translators: %s: template title */
+        $body .= '<p>' . esc_html( sprintf( __( 'A new waiver was submitted for: %s', 'waiver-engine' ), $template->title ) ) . '</p>';
+        /* translators: %s: submission timestamp */
+        $body .= '<p>' . esc_html( sprintf( __( 'Submission time: %s', 'waiver-engine' ), wp_date( 'F j, Y g:i a' ) ) ) . '<br>';
+        $body .= esc_html( __( 'View entry:', 'waiver-engine' ) ) . ' <a href="' . esc_url( $entry_url ) . '">' . esc_html( $entry_url ) . '</a></p>';
 
         if ( $booking_info ) {
-            $body .= '<h3 style="margin:20px 0 8px 0;">' . esc_html__( 'Booking details', 'wp-waiver-engine' ) . '</h3>';
+            $body .= '<h3 style="margin:20px 0 8px 0;">' . esc_html__( 'Booking details', 'waiver-engine' ) . '</h3>';
             $body .= '<table cellpadding="6" cellspacing="0" border="1" style="border-collapse:collapse;border-color:#dcdcde;">';
-            $body .= '<tr><th align="left">' . esc_html__( 'Field', 'wp-waiver-engine' ) . '</th><th align="left">' . esc_html__( 'Value', 'wp-waiver-engine' ) . '</th></tr>';
-            $body .= '<tr><td>' . esc_html__( 'Booking ID', 'wp-waiver-engine' ) . '</td><td>' . esc_html( (string) (int) $booking_info->appointment_id ) . '</td></tr>';
-            $body .= '<tr><td>' . esc_html__( 'Service', 'wp-waiver-engine' ) . '</td><td>' . esc_html( (string) $booking_info->service_name ) . '</td></tr>';
-            $body .= '<tr><td>' . esc_html__( 'Booking date', 'wp-waiver-engine' ) . '</td><td>' . esc_html( wp_date( 'F j, Y g:i a', strtotime( $booking_info->bookingStart ) ) ) . '</td></tr>';
-            $body .= '<tr><td>' . esc_html__( 'Customer', 'wp-waiver-engine' ) . '</td><td>' . esc_html( (string) ( $booking_info->firstName . ' ' . $booking_info->lastName ) ) . '</td></tr>';
+            $body .= '<tr><th align="left">' . esc_html__( 'Field', 'waiver-engine' ) . '</th><th align="left">' . esc_html__( 'Value', 'waiver-engine' ) . '</th></tr>';
+            $body .= '<tr><td>' . esc_html__( 'Booking ID', 'waiver-engine' ) . '</td><td>' . esc_html( (string) (int) $booking_info->appointment_id ) . '</td></tr>';
+            $body .= '<tr><td>' . esc_html__( 'Service', 'waiver-engine' ) . '</td><td>' . esc_html( (string) $booking_info->service_name ) . '</td></tr>';
+            $body .= '<tr><td>' . esc_html__( 'Booking date', 'waiver-engine' ) . '</td><td>' . esc_html( wp_date( 'F j, Y g:i a', strtotime( $booking_info->bookingStart ) ) ) . '</td></tr>';
+            $body .= '<tr><td>' . esc_html__( 'Customer', 'waiver-engine' ) . '</td><td>' . esc_html( (string) ( $booking_info->firstName . ' ' . $booking_info->lastName ) ) . '</td></tr>';
             $body .= '</table>';
         }
 
-        $body .= '<h3 style="margin:20px 0 8px 0;">' . esc_html__( 'Submitted data', 'wp-waiver-engine' ) . '</h3>';
+        $body .= '<h3 style="margin:20px 0 8px 0;">' . esc_html__( 'Submitted data', 'waiver-engine' ) . '</h3>';
         $body .= self::build_submission_html_tables( $template, $data );
         $body .= '</body></html>';
 
@@ -565,7 +582,7 @@ class Premium_Bridge {
             $html .= '<table cellpadding="6" cellspacing="0" border="1" style="border-collapse:collapse;border-color:#dcdcde;width:100%;max-width:1000px;">';
 
             if ( $repeatable ) {
-                $html .= '<tr><th align="left" style="width:70px;">' . esc_html__( 'Row', 'wp-waiver-engine' ) . '</th>';
+                $html .= '<tr><th align="left" style="width:70px;">' . esc_html__( 'Row', 'waiver-engine' ) . '</th>';
                 foreach ( $fields as $field ) {
                     $field_label = (string) ( $field['label'] ?? ( $field['key'] ?? '' ) );
                     $html .= '<th align="left">' . esc_html( $field_label ) . '</th>';
@@ -573,7 +590,7 @@ class Premium_Bridge {
                 $html .= '</tr>';
 
                 if ( ! $rows ) {
-                    $html .= '<tr><td colspan="' . esc_attr( (string) max( 2, count( $fields ) + 1 ) ) . '"><em>' . esc_html__( 'No rows submitted.', 'wp-waiver-engine' ) . '</em></td></tr>';
+                    $html .= '<tr><td colspan="' . esc_attr( (string) max( 2, count( $fields ) + 1 ) ) . '"><em>' . esc_html__( 'No rows submitted.', 'waiver-engine' ) . '</em></td></tr>';
                 } else {
                     foreach ( $rows as $row_index => $row ) {
                         $html .= '<tr><td>' . esc_html( (string) ( $row_index + 1 ) ) . '</td>';
@@ -586,7 +603,7 @@ class Premium_Bridge {
                     }
                 }
             } else {
-                $html .= '<tr><th align="left" style="width:35%;">' . esc_html__( 'Field', 'wp-waiver-engine' ) . '</th><th align="left">' . esc_html__( 'Value', 'wp-waiver-engine' ) . '</th></tr>';
+                $html .= '<tr><th align="left" style="width:35%;">' . esc_html__( 'Field', 'waiver-engine' ) . '</th><th align="left">' . esc_html__( 'Value', 'waiver-engine' ) . '</th></tr>';
                 $row = $rows[0] ?? [];
                 foreach ( $fields as $field ) {
                     $field_key = sanitize_key( $field['key'] ?? '' );
@@ -601,9 +618,9 @@ class Premium_Bridge {
 
         $unknown = array_diff( array_keys( $data ), $rendered_groups );
         if ( ! empty( $unknown ) ) {
-            $html .= '<h4 style="margin:14px 0 6px 0;">' . esc_html__( 'Additional Data', 'wp-waiver-engine' ) . '</h4>';
+            $html .= '<h4 style="margin:14px 0 6px 0;">' . esc_html__( 'Additional Data', 'waiver-engine' ) . '</h4>';
             $html .= '<table cellpadding="6" cellspacing="0" border="1" style="border-collapse:collapse;border-color:#dcdcde;width:100%;max-width:900px;">';
-            $html .= '<tr><th align="left" style="width:35%;">' . esc_html__( 'Field', 'wp-waiver-engine' ) . '</th><th align="left">' . esc_html__( 'Value', 'wp-waiver-engine' ) . '</th></tr>';
+            $html .= '<tr><th align="left" style="width:35%;">' . esc_html__( 'Field', 'waiver-engine' ) . '</th><th align="left">' . esc_html__( 'Value', 'waiver-engine' ) . '</th></tr>';
             foreach ( $unknown as $unknown_key ) {
                 $raw_value = $data[ $unknown_key ];
                 $value = is_array( $raw_value ) ? ( wp_json_encode( $raw_value ) ?: '' ) : (string) $raw_value;
@@ -639,7 +656,7 @@ class Premium_Bridge {
         }
 
         if ( str_starts_with( $display, 'data:image/' ) ) {
-            return '<img src="' . esc_attr( $display ) . '" alt="' . esc_attr__( 'Signature', 'wp-waiver-engine' ) . '" style="display:block;max-width:100%;width:auto;height:auto;max-height:60px;border:1px solid #ddd;padding:2px;background:#fff;box-sizing:border-box;">';
+            return '<img src="' . esc_attr( $display ) . '" alt="' . esc_attr__( 'Signature', 'waiver-engine' ) . '" style="display:block;max-width:100%;width:auto;height:auto;max-height:60px;border:1px solid #ddd;padding:2px;background:#fff;box-sizing:border-box;">';
         }
 
         return nl2br( esc_html( $display ) );
@@ -677,3 +694,4 @@ class Premium_Bridge {
         return Integration_Amelia::get_booking( $booking_id );
     }
 }
+

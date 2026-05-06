@@ -32,26 +32,29 @@ class Entry_Detail {
         ?>
         <div class="wrap">
             <h1 class="wp-heading-inline">
-                <?php printf( esc_html__( 'Entry #%d', 'wp-waiver-engine' ), $id ); ?>
+                <?php
+                /* translators: %d: entry ID */
+                printf( esc_html__( 'Entry #%d', 'waiver-engine' ), absint( $id ) );
+                ?>
             </h1>
             <a href="<?php echo esc_url( $back_url ); ?>" class="page-title-action">
-                &larr; <?php esc_html_e( 'All Entries', 'wp-waiver-engine' ); ?>
+                &larr; <?php esc_html_e( 'All Entries', 'waiver-engine' ); ?>
             </a>
             &nbsp;
             <a href="<?php echo esc_url( wp_nonce_url(
                 admin_url( 'admin.php?page=wpwe-entries&wpwe_action=delete_entry&id=' . $id ),
                 'wpwe_delete_entry_' . $id
             ) ); ?>"
-               onclick="return confirm('<?php esc_attr_e( 'Permanently delete this entry?', 'wp-waiver-engine' ); ?>')"
+               onclick="return confirm('<?php esc_attr_e( 'Permanently delete this entry?', 'waiver-engine' ); ?>')"
                class="page-title-action" style="color:#d63638;border-color:#d63638;">
-                <?php esc_html_e( 'Delete Entry', 'wp-waiver-engine' ); ?>
+                <?php esc_html_e( 'Delete Entry', 'waiver-engine' ); ?>
             </a>
             <hr class="wp-header-end">
 
             <!-- Meta row -->
             <table class="form-table" style="max-width:700px;">
                 <tr>
-                    <th><?php esc_html_e( 'Template', 'wp-waiver-engine' ); ?></th>
+                    <th><?php esc_html_e( 'Template', 'waiver-engine' ); ?></th>
                     <td>
                         <?php if ( $template ) : ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-edit&id=' . $template->id ) ); ?>">
@@ -63,18 +66,18 @@ class Entry_Detail {
                     </td>
                 </tr>
                 <tr>
-                    <th><?php esc_html_e( 'Submitted', 'wp-waiver-engine' ); ?></th>
+                    <th><?php esc_html_e( 'Submitted', 'waiver-engine' ); ?></th>
                     <td><?php echo esc_html( $entry->created_at ); ?></td>
                 </tr>
                 <tr>
-                    <th><?php esc_html_e( 'Submitter IP', 'wp-waiver-engine' ); ?></th>
-                    <td><?php echo esc_html( $entry->submitter_ip ?: '—' ); ?></td>
+                    <th><?php esc_html_e( 'Submitter IP', 'waiver-engine' ); ?></th>
+                    <td><?php echo esc_html( $entry->submitter_ip ?: 'â€”' ); ?></td>
                 </tr>
                 <tr>
-                    <th><?php esc_html_e( 'Email Sent', 'wp-waiver-engine' ); ?></th>
+                    <th><?php esc_html_e( 'Email Sent', 'waiver-engine' ); ?></th>
                     <td><?php echo $entry->email_sent
-                        ? esc_html__( 'Yes', 'wp-waiver-engine' )
-                        : esc_html__( 'No', 'wp-waiver-engine' ); ?></td>
+                        ? esc_html__( 'Yes', 'waiver-engine' )
+                        : esc_html__( 'No', 'waiver-engine' ); ?></td>
                 </tr>
                 <?php if ( Settings::is_amelia_enabled() && class_exists( Premium_Bridge::class ) ) : ?>
                 <?php
@@ -84,23 +87,29 @@ class Entry_Detail {
                 endif;
                 if ( $bk_id && isset( $booking ) && $booking ) : ?>
                 <tr>
-                    <th><?php esc_html_e( 'Booking', 'wp-waiver-engine' ); ?></th>
+                    <th><?php esc_html_e( 'Booking', 'waiver-engine' ); ?></th>
                     <td>
                         <strong><?php echo esc_html( $booking->service_name ); ?></strong><br>
                         <?php echo esc_html( wp_date( 'F j, Y g:i a', strtotime( $booking->bookingStart ) ) ); ?><br>
                         <?php echo esc_html( $booking->firstName . ' ' . $booking->lastName ); ?>
-                        <small style="color:#6b7a8d;"> &mdash; <?php printf( esc_html__( 'Booking #%d', 'wp-waiver-engine' ), $bk_id ); ?></small>
+                        <small style="color:#6b7a8d;"> &mdash; <?php
+                        /* translators: %d: booking ID */
+                        printf( esc_html__( 'Booking #%d', 'waiver-engine' ), absint( $bk_id ) );
+                        ?></small>
                     </td>
                 </tr>
                 <?php elseif ( $bk_id ) : ?>                <tr>
-                    <th><?php esc_html_e( 'Booking', 'wp-waiver-engine' ); ?></th>
-                    <td><?php printf( esc_html__( 'Booking #%d (details unavailable)', 'wp-waiver-engine' ), $bk_id ); ?></td>
+                    <th><?php esc_html_e( 'Booking', 'waiver-engine' ); ?></th>
+                    <td><?php
+                    /* translators: %d: booking ID */
+                    printf( esc_html__( 'Booking #%d (details unavailable)', 'waiver-engine' ), absint( $bk_id ) );
+                    ?></td>
                 </tr>
                 <?php endif; ?>
                 <?php endif; /* Settings::is_amelia_enabled() */ ?>
                 <?php if ( $entry->pdf_error ) : ?>
                 <tr>
-                    <th><?php esc_html_e( 'PDF Error', 'wp-waiver-engine' ); ?></th>
+                    <th><?php esc_html_e( 'PDF Error', 'waiver-engine' ); ?></th>
                     <td><code style="color:#d63638;white-space:pre-wrap;"><?php echo esc_html( $entry->pdf_error ); ?></code></td>
                 </tr>
                 <?php endif; ?>
@@ -108,7 +117,7 @@ class Entry_Detail {
 
             <!-- PDFs -->
             <?php if ( $pdf_paths ) : ?>
-            <h3><?php esc_html_e( 'Generated PDFs', 'wp-waiver-engine' ); ?></h3>
+            <h3><?php esc_html_e( 'Generated PDFs', 'waiver-engine' ); ?></h3>
             <ul>
                 <?php foreach ( $pdf_paths as $i => $path ) :
                     $nonce_base = wp_create_nonce( 'wpwe_dl_pdf_' . $id );
@@ -118,10 +127,10 @@ class Entry_Detail {
                     $exists     = file_exists( $path );
                     $is_combined = strpos( $fname, '-combined-' ) !== false;
                     if ( $is_combined ) {
-                        $link_text = __( 'Combined PDF (all players)', 'wp-waiver-engine' );
+                        $link_text = __( 'Combined PDF (all players)', 'waiver-engine' );
                     } elseif ( preg_match( '/-row-(\d+)-/', $fname, $m ) ) {
                         /* translators: %d: player number */
-                        $link_text = sprintf( __( 'Player %d PDF', 'wp-waiver-engine' ), (int) $m[1] );
+                        $link_text = sprintf( __( 'Player %d PDF', 'waiver-engine' ), (int) $m[1] );
                     } else {
                         $link_text = $fname;
                     }
@@ -131,14 +140,14 @@ class Entry_Detail {
                     <?php if ( $exists ) : ?>
                     &nbsp;
                     <a href="<?php echo esc_url( $view_url ); ?>" target="_blank" rel="noopener">
-                        <?php esc_html_e( 'View', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'View', 'waiver-engine' ); ?>
                     </a>
                     &nbsp;&middot;&nbsp;
                     <a href="<?php echo esc_url( $dl_url ); ?>">
-                        <?php esc_html_e( 'Download', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Download', 'waiver-engine' ); ?>
                     </a>
                     <?php else : ?>
-                    &nbsp;<em style="color:#d63638;"><?php esc_html_e( '(file missing)', 'wp-waiver-engine' ); ?></em>
+                    &nbsp;<em style="color:#d63638;"><?php esc_html_e( '(file missing)', 'waiver-engine' ); ?></em>
                     <?php endif; ?>
                 </li>
                 <?php endforeach; ?>
@@ -146,7 +155,7 @@ class Entry_Detail {
             <?php endif; ?>
 
             <!-- Submission data -->
-            <h3><?php esc_html_e( 'Field Values', 'wp-waiver-engine' ); ?></h3>
+            <h3><?php esc_html_e( 'Field Values', 'waiver-engine' ); ?></h3>
             <?php if ( $data ) : ?>
             <?php if ( ! empty( $schema['groups'] ) && is_array( $schema['groups'] ) ) : ?>
             <?php $rendered_groups = []; ?>
@@ -167,7 +176,7 @@ class Entry_Detail {
             <table class="widefat fixed striped" style="max-width:1000px;">
                 <thead>
                     <tr>
-                        <th style="width:70px;"><?php esc_html_e( 'Row', 'wp-waiver-engine' ); ?></th>
+                        <th style="width:70px;"><?php esc_html_e( 'Row', 'waiver-engine' ); ?></th>
                         <?php foreach ( $fields as $field ) :
                             $field_label = (string) ( $field['label'] ?? ( $field['key'] ?? '' ) );
                         ?>
@@ -179,7 +188,7 @@ class Entry_Detail {
                     <?php if ( ! $rows ) : ?>
                     <tr>
                         <td colspan="<?php echo esc_attr( (string) ( count( $fields ) + 1 ) ); ?>">
-                            <em><?php esc_html_e( 'No rows submitted.', 'wp-waiver-engine' ); ?></em>
+                            <em><?php esc_html_e( 'No rows submitted.', 'waiver-engine' ); ?></em>
                         </td>
                     </tr>
                     <?php else : ?>
@@ -202,8 +211,8 @@ class Entry_Detail {
             <table class="widefat fixed striped" style="max-width:900px;">
                 <thead>
                     <tr>
-                        <th style="width:35%"><?php esc_html_e( 'Field', 'wp-waiver-engine' ); ?></th>
-                        <th><?php esc_html_e( 'Value', 'wp-waiver-engine' ); ?></th>
+                        <th style="width:35%"><?php esc_html_e( 'Field', 'waiver-engine' ); ?></th>
+                        <th><?php esc_html_e( 'Value', 'waiver-engine' ); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -226,12 +235,12 @@ class Entry_Detail {
             $unknown = array_diff( array_keys( $data ), $rendered_groups );
             if ( ! empty( $unknown ) ) :
             ?>
-            <h4 style="margin-top:20px;"><?php esc_html_e( 'Additional Data', 'wp-waiver-engine' ); ?></h4>
+            <h4 style="margin-top:20px;"><?php esc_html_e( 'Additional Data', 'waiver-engine' ); ?></h4>
             <table class="widefat fixed striped" style="max-width:900px;">
                 <thead>
                     <tr>
-                        <th style="width:35%"><?php esc_html_e( 'Field', 'wp-waiver-engine' ); ?></th>
-                        <th><?php esc_html_e( 'Value', 'wp-waiver-engine' ); ?></th>
+                        <th style="width:35%"><?php esc_html_e( 'Field', 'waiver-engine' ); ?></th>
+                        <th><?php esc_html_e( 'Value', 'waiver-engine' ); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -257,8 +266,8 @@ class Entry_Detail {
             <table class="widefat fixed striped" style="max-width:900px;">
                 <thead>
                     <tr>
-                        <th style="width:35%"><?php esc_html_e( 'Field', 'wp-waiver-engine' ); ?></th>
-                        <th><?php esc_html_e( 'Value', 'wp-waiver-engine' ); ?></th>
+                        <th style="width:35%"><?php esc_html_e( 'Field', 'waiver-engine' ); ?></th>
+                        <th><?php esc_html_e( 'Value', 'waiver-engine' ); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -267,7 +276,7 @@ class Entry_Detail {
             </table>
             <?php endif; ?>
             <?php else : ?>
-            <p><?php esc_html_e( 'No submission data found.', 'wp-waiver-engine' ); ?></p>
+            <p><?php esc_html_e( 'No submission data found.', 'waiver-engine' ); ?></p>
             <?php endif; ?>
         </div>
         <?php
@@ -309,7 +318,7 @@ class Entry_Detail {
         if ( str_starts_with( $display, 'data:image/' ) ) {
             ?>
             <img src="<?php echo esc_attr( $display ); ?>"
-                 alt="<?php esc_attr_e( 'Signature', 'wp-waiver-engine' ); ?>"
+                 alt="<?php esc_attr_e( 'Signature', 'waiver-engine' ); ?>"
                  style="display:block;max-width:100%;width:auto;height:auto;max-height:60px;border:1px solid #ddd;padding:2px;background:#fff;box-sizing:border-box;">
             <?php
             return;
@@ -338,7 +347,7 @@ class Entry_Detail {
                     <td>
                         <?php if ( $is_sig ) : ?>
                         <img src="<?php echo esc_attr( $display ); ?>"
-                             alt="<?php esc_attr_e( 'Signature', 'wp-waiver-engine' ); ?>"
+                             alt="<?php esc_attr_e( 'Signature', 'waiver-engine' ); ?>"
                              style="max-height:60px;border:1px solid #ddd;padding:2px;background:#fff;">
                         <?php else : ?>
                         <?php echo esc_html( $display ); ?>
@@ -350,3 +359,4 @@ class Entry_Detail {
         }
     }
 }
+

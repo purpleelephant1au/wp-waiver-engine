@@ -1,6 +1,6 @@
 {
-    "name": "wp-waiver-engine/wp-waiver-engine",
-    "description": "WordPress Waiver Engine – PDF overlay generation",
+    "name": "waiver-engine/waiver-engine",
+    "description": "WordPress Waiver Engine â€“ PDF overlay generation",
     "type": "wordpress-plugin",
     "require": {
         "php": ">=8.0",
@@ -36,3 +36,4 @@
         "optimize-autoloader": true
     }
 }
+

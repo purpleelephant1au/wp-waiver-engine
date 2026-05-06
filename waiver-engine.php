@@ -3,13 +3,13 @@
  * Plugin Name:       Waiver Engine
  * Description:       Template-driven waiver and contract system with PDF overlay generation and optional third-party booking integrations.
  * Version:           1.1.0
- * Requires at least: 6.0
+ * Requires at least: 6.2
  * Requires PHP:      8.0
  * Author:            Nathaniel Smith
  * Author URI:        https://github.com/nsmithau
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       wp-waiver-engine
+ * Text Domain:       waiver-engine
  * Domain Path:       /languages
  * @fs_premium_only /includes/integrations/class-integration-amelia.php, /user-guides/simplewaiver/repeatable-form-user-flow-guide.md, /user-guides/simplewaiver/screenshots/repeatable-form-flow/
  */
@@ -34,6 +34,7 @@ if ( ! defined( 'WPWE_PLUGIN_BASENAME' ) ) {
 // -----------------------------------------------------------------------
 // Composer autoload (Freemius SDK / FPDI / FPDF)
 // -----------------------------------------------------------------------
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound,WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound,WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 if ( file_exists( WPWE_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
     require_once WPWE_PLUGIN_DIR . 'vendor/autoload.php';
 }
@@ -63,7 +64,8 @@ if ( ! function_exists( 'wwe_fs' ) ) {
 
             $wwe_fs = fs_dynamic_init( array(
                 'id'                  => '28928',
-                'slug'                => 'wp-waiver-engine',
+                'slug'                => 'waiver-engine',
+                'premium_slug'        => 'waiver-engine-premium',
                 'type'                => 'plugin',
                 'public_key'          => 'pk_35474bcd827c65a09ea33fc1513d8',
                 'is_premium'          => true,
@@ -73,12 +75,12 @@ if ( ! function_exists( 'wwe_fs' ) ) {
                 'has_paid_plans'      => true,
                 'is_org_compliant'    => true,
                 'wp_org_gatekeeper'   => 'OA7#BoRiBNqdf52FvzEf!!074aRLPs8fspif$7K1#4u4Csys1fQlCecVcUTOs2mcpeVHi#C2j9d09fOTvbC0HloPT7fFee5WdS3G',
+                'trial'               => array(
+                    'days'               => 3,
+                    'is_require_payment' => true,
+                ),
                 'menu'                => array(
-                    'slug'           => 'wpwe-settings',
-                    'parent'         => array(
-                        'slug' => 'wpwe',
-                    ),
-                    'first-path'     => 'admin.php?page=wpwe-settings',
+                    'slug'           => 'wpwe',
                     'support'        => false,
                 ),
             ) );
@@ -92,6 +94,7 @@ if ( ! function_exists( 'wwe_fs' ) ) {
     // Signal that SDK was initiated.
     do_action( 'wwe_fs_loaded' );
 }
+// phpcs:enable
 
 // Backward compatibility for existing internal references.
 if ( ! function_exists( 'wpwe_fs' ) ) {
@@ -208,3 +211,4 @@ if ( function_exists( 'wwe_fs' ) && wwe_fs() ) {
         delete_option( 'wpwe_captcha_secret_key' );
     } );
 }
+

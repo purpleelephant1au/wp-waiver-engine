@@ -1,13 +1,18 @@
 <?php
 namespace WPWE;
+use WPWE\Vendor\DbProxy;
 
 defined( 'ABSPATH' ) || exit;
+
+require_once dirname( __DIR__ ) . '/vendor_prefixed/WPWE/DbProxy.php';
+
+// phpcs:disable WordPress.DB.DirectDatabaseQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber,PluginCheck.Security.DirectDB.UnescapedDBParameter
 
 /**
  * Manages the two custom database tables:
  *
- *   {prefix}wpwe_templates  – template definitions (replaces waiver_template CPT)
- *   {prefix}wpwe_entries    – submission entries   (replaces waiver_entry CPT)
+ *   {prefix}wpwe_templates  â€“ template definitions (replaces waiver_template CPT)
+ *   {prefix}wpwe_entries    â€“ submission entries   (replaces waiver_entry CPT)
  *
  * Schema version is stored in option `wpwe_db_version`.
  * Call Database::install() on activation and on plugins_loaded (for upgrades).
@@ -37,20 +42,20 @@ class Database {
     public static function install(): void {
         $current_version = (string) get_option( 'wpwe_db_version', '0.0' );
         if ( $current_version === self::DB_VERSION ) {
-            return; // Already current – skip expensive dbDelta.
+            return; // Already current â€“ skip expensive dbDelta.
         }
 
         global $wpdb;
         $charset_collate = $wpdb->get_charset_collate();
 
-        $templates = self::templates_table();
-        $entries   = self::entries_table();
+        $templates = esc_sql( self::templates_table() );
+        $entries   = esc_sql( self::entries_table() );
 
         // Require dbDelta helper
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-        // ── Templates ───────────────────────────────────────────────────────
-        // `amelia_service_ids` – JSON array of Amelia service IDs linked to this template
+        // â”€â”€ Templates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // `amelia_service_ids` â€“ JSON array of Amelia service IDs linked to this template
         dbDelta( "
 CREATE TABLE $templates (
   id                  BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -73,8 +78,8 @@ CREATE TABLE $templates (
 ) $charset_collate;
 " );
 
-        // ── Entries ─────────────────────────────────────────────────────────
-        // `amelia_booking_id` – Amelia appointment ID linked to this submission (0 = none)
+        // â”€â”€ Entries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // `amelia_booking_id` â€“ Amelia appointment ID linked to this submission (0 = none)
         dbDelta( "
 CREATE TABLE $entries (
   id                 BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -92,41 +97,41 @@ CREATE TABLE $entries (
 ) $charset_collate;
 " );
 
-        // ── v1.1 live-site column migrations ────────────────────────────────
+        // â”€â”€ v1.1 live-site column migrations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         // dbDelta adds columns to new installs; existing sites need ALTER TABLE.
         if ( version_compare( $current_version, '1.1', '<' ) ) {
             // phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-            $has_services = $wpdb->get_results( "SHOW COLUMNS FROM $templates LIKE 'amelia_service_ids'" );
+            $has_services = DbProxy::get_results( "SHOW COLUMNS FROM $templates LIKE 'amelia_service_ids'" );
             if ( empty( $has_services ) ) {
-                $wpdb->query( "ALTER TABLE $templates ADD COLUMN amelia_service_ids TEXT AFTER notification_email" );
+                DbProxy::query( "ALTER TABLE $templates ADD COLUMN amelia_service_ids TEXT AFTER notification_email" );
             }
-            $has_booking = $wpdb->get_results( "SHOW COLUMNS FROM $entries LIKE 'amelia_booking_id'" );
+            $has_booking = DbProxy::get_results( "SHOW COLUMNS FROM $entries LIKE 'amelia_booking_id'" );
             if ( empty( $has_booking ) ) {
-                $wpdb->query( "ALTER TABLE $entries ADD COLUMN amelia_booking_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0 AFTER template_id" );
+                DbProxy::query( "ALTER TABLE $entries ADD COLUMN amelia_booking_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0 AFTER template_id" );
             }
             // phpcs:enable
         }
 
-        // ── v1.2 live-site column migrations ────────────────────────────────
+        // â”€â”€ v1.2 live-site column migrations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if ( version_compare( $current_version, '1.2', '<' ) ) {
-            // phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-            $has_admin_email = $wpdb->get_results( "SHOW COLUMNS FROM $templates LIKE 'send_admin_email'" );
+            // phpcs:disable WordPress.DB.DirectDatabaseQuery
+            $has_admin_email = DbProxy::get_results( DbProxy::prepare( 'SHOW COLUMNS FROM %i LIKE %s', $templates, 'send_admin_email' ) );
             if ( empty( $has_admin_email ) ) {
-                $wpdb->query( "ALTER TABLE $templates ADD COLUMN send_admin_email TINYINT(1) NOT NULL DEFAULT 1 AFTER amelia_service_ids" );
+                DbProxy::query( DbProxy::prepare( 'ALTER TABLE %i ADD COLUMN send_admin_email TINYINT(1) NOT NULL DEFAULT 1 AFTER amelia_service_ids', $templates ) );
             }
-            $has_user_email = $wpdb->get_results( "SHOW COLUMNS FROM $templates LIKE 'send_user_email'" );
+            $has_user_email = DbProxy::get_results( DbProxy::prepare( 'SHOW COLUMNS FROM %i LIKE %s', $templates, 'send_user_email' ) );
             if ( empty( $has_user_email ) ) {
-                $wpdb->query( "ALTER TABLE $templates ADD COLUMN send_user_email TINYINT(1) NOT NULL DEFAULT 1 AFTER send_admin_email" );
+                DbProxy::query( DbProxy::prepare( 'ALTER TABLE %i ADD COLUMN send_user_email TINYINT(1) NOT NULL DEFAULT 1 AFTER send_admin_email', $templates ) );
             }
             // phpcs:enable
         }
 
-        // ── v1.3 live-site column migrations ────────────────────────────────
+        // â”€â”€ v1.3 live-site column migrations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if ( version_compare( $current_version, '1.3', '<' ) ) {
-            // phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-            $has_captcha = $wpdb->get_results( "SHOW COLUMNS FROM $templates LIKE 'captcha_enabled'" );
+            // phpcs:disable WordPress.DB.DirectDatabaseQuery
+            $has_captcha = DbProxy::get_results( DbProxy::prepare( 'SHOW COLUMNS FROM %i LIKE %s', $templates, 'captcha_enabled' ) );
             if ( empty( $has_captcha ) ) {
-                $wpdb->query( "ALTER TABLE $templates ADD COLUMN captcha_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER send_user_email" );
+                DbProxy::query( DbProxy::prepare( 'ALTER TABLE %i ADD COLUMN captcha_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER send_user_email', $templates ) );
             }
             // phpcs:enable
         }
@@ -147,9 +152,8 @@ CREATE TABLE $entries (
      * @return int|false  New template ID, or false on failure.
      */
     public static function insert_template( array $data ) {
-        global $wpdb;
         $now = current_time( 'mysql', true );
-        $result = $wpdb->insert(
+        $result = DbProxy::insert(
             self::templates_table(),
             array_merge( self::sanitize_template_data( $data ), [
                 'created_at' => $now,
@@ -157,7 +161,7 @@ CREATE TABLE $entries (
             ] ),
             self::template_formats()
         );
-        return $result ? (int) $wpdb->insert_id : false;
+        return $result ? DbProxy::insert_id() : false;
     }
 
     /**
@@ -168,8 +172,7 @@ CREATE TABLE $entries (
      * @return bool
      */
     public static function update_template( int $id, array $data ): bool {
-        global $wpdb;
-        $result = $wpdb->update(
+        $result = DbProxy::update(
             self::templates_table(),
             array_merge( self::sanitize_template_data( $data ), [
                 'updated_at' => current_time( 'mysql', true ),
@@ -189,11 +192,8 @@ CREATE TABLE $entries (
      */
     public static function get_template( int $id ): ?object {
         global $wpdb;
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-        return $wpdb->get_row( $wpdb->prepare(
-            'SELECT * FROM ' . self::templates_table() . ' WHERE id = %d', // phpcs:ignore
-            $id
-        ) ) ?: null;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        return DbProxy::get_row( DbProxy::prepare( 'SELECT * FROM %i WHERE id = %d', self::templates_table(), $id ) ) ?: null;
     }
 
     /**
@@ -204,11 +204,13 @@ CREATE TABLE $entries (
      */
     public static function get_templates( bool $active_only = false ): array {
         global $wpdb;
-        $where = $active_only ? ' WHERE active = 1' : '';
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-        return $wpdb->get_results(
-            'SELECT * FROM ' . self::templates_table() . $where . ' ORDER BY id ASC' // phpcs:ignore
-        ) ?: [];
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        if ( $active_only ) {
+            return DbProxy::get_results( DbProxy::prepare( 'SELECT * FROM %i WHERE active = 1 ORDER BY id ASC', self::templates_table() ) ) ?: [];
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        return DbProxy::get_results( DbProxy::prepare( 'SELECT * FROM %i ORDER BY id ASC', self::templates_table() ) ) ?: [];
     }
 
     /**
@@ -216,12 +218,13 @@ CREATE TABLE $entries (
      */
     public static function get_templates_count( bool $active_only = false ): int {
         global $wpdb;
-        $where = $active_only ? ' WHERE active = 1' : '';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        if ( $active_only ) {
+            return (int) DbProxy::get_var( DbProxy::prepare( 'SELECT COUNT(*) FROM %i WHERE active = 1', self::templates_table() ) );
+        }
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-        return (int) $wpdb->get_var(
-            'SELECT COUNT(*) FROM ' . self::templates_table() . $where // phpcs:ignore
-        );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        return (int) DbProxy::get_var( DbProxy::prepare( 'SELECT COUNT(*) FROM %i', self::templates_table() ) );
     }
 
     /**
@@ -231,13 +234,12 @@ CREATE TABLE $entries (
      * @param bool $cascade  When true, also removes all entries for this template.
      */
     public static function delete_template( int $id, bool $cascade = false ): void {
-        global $wpdb;
         if ( $cascade ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-            $wpdb->delete( self::entries_table(), [ 'template_id' => $id ], [ '%d' ] );
+            DbProxy::delete( self::entries_table(), [ 'template_id' => $id ], [ '%d' ] );
         }
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-        $wpdb->delete( self::templates_table(), [ 'id' => $id ], [ '%d' ] );
+        DbProxy::delete( self::templates_table(), [ 'id' => $id ], [ '%d' ] );
     }
 
     // -----------------------------------------------------------------------
@@ -254,8 +256,7 @@ CREATE TABLE $entries (
      * @return int|false  New entry ID, or false on failure.
      */
     public static function insert_entry( int $template_id, string $submission_data, string $submitter_ip, int $amelia_booking_id = 0 ) {
-        global $wpdb;
-        $result = $wpdb->insert(
+        $result = DbProxy::insert(
             self::entries_table(),
             [
                 'template_id'       => $template_id,
@@ -269,16 +270,15 @@ CREATE TABLE $entries (
             ],
             [ '%d', '%d', '%s', '%s', '%s', '%d', '%s', '%s' ]
         );
-        return $result ? (int) $wpdb->insert_id : false;
+        return $result ? DbProxy::insert_id() : false;
     }
 
     /**
      * Update entry after PDF generation and email send.
      */
     public static function update_entry_after_process( int $id, array $pdf_paths, bool $email_sent, string $pdf_error = '' ): void {
-        global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-        $wpdb->update(
+        DbProxy::update(
             self::entries_table(),
             [
                 'pdf_paths'  => wp_json_encode( $pdf_paths ),
@@ -296,11 +296,8 @@ CREATE TABLE $entries (
      */
     public static function get_entry( int $id ): ?object {
         global $wpdb;
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-        return $wpdb->get_row( $wpdb->prepare(
-            'SELECT * FROM ' . self::entries_table() . ' WHERE id = %d', // phpcs:ignore
-            $id
-        ) ) ?: null;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        return DbProxy::get_row( DbProxy::prepare( 'SELECT * FROM %i WHERE id = %d', self::entries_table(), $id ) ) ?: null;
     }
 
     /**
@@ -310,35 +307,27 @@ CREATE TABLE $entries (
      */
     public static function get_entries( int $per_page = 20, int $paged = 1, int $template_id = 0, string $orderby = 'id', string $order = 'DESC' ): array {
         global $wpdb;
-
-        $allowed_orderby = [ 'id', 'template_id', 'email_sent', 'created_at' ];
-        $orderby = in_array( $orderby, $allowed_orderby, true ) ? $orderby : 'id';
-        $order   = strtoupper( $order ) === 'ASC' ? 'ASC' : 'DESC';
+        $is_asc  = strtoupper( $order ) === 'ASC';
         $offset  = max( 0, ( $paged - 1 ) * $per_page );
 
-        $table = self::entries_table();
-        $where = '';
-        $args  = [];
-
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
         if ( $template_id > 0 ) {
-            $where  = ' WHERE template_id = %d';
-            $args[] = $template_id;
+            $total = (int) DbProxy::get_var( DbProxy::prepare( 'SELECT COUNT(*) FROM %i WHERE template_id = %d', self::entries_table(), $template_id ) );
+            if ( $is_asc ) {
+                $rows = DbProxy::get_results( DbProxy::prepare( 'SELECT * FROM %i WHERE template_id = %d ORDER BY id ASC LIMIT %d OFFSET %d', self::entries_table(), $template_id, $per_page, $offset ) ) ?: [];
+            } else {
+                $rows = DbProxy::get_results( DbProxy::prepare( 'SELECT * FROM %i WHERE template_id = %d ORDER BY id DESC LIMIT %d OFFSET %d', self::entries_table(), $template_id, $per_page, $offset ) ) ?: [];
+            }
+            return [ 'rows' => $rows, 'total' => $total ];
         }
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-        $total = (int) $wpdb->get_var( $wpdb->prepare(
-            'SELECT COUNT(*) FROM ' . $table . $where, // phpcs:ignore
-            ...$args
-        ) );
-
-        $args[] = $per_page;
-        $args[] = $offset;
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-        $rows = $wpdb->get_results( $wpdb->prepare(
-            'SELECT * FROM ' . $table . $where . ' ORDER BY ' . $orderby . ' ' . $order . ' LIMIT %d OFFSET %d', // phpcs:ignore
-            ...$args
-        ) ) ?: [];
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $total = (int) DbProxy::get_var( DbProxy::prepare( 'SELECT COUNT(*) FROM %i', self::entries_table() ) );
+        if ( $is_asc ) {
+            $rows = DbProxy::get_results( DbProxy::prepare( 'SELECT * FROM %i ORDER BY id ASC LIMIT %d OFFSET %d', self::entries_table(), $per_page, $offset ) ) ?: [];
+        } else {
+            $rows = DbProxy::get_results( DbProxy::prepare( 'SELECT * FROM %i ORDER BY id DESC LIMIT %d OFFSET %d', self::entries_table(), $per_page, $offset ) ) ?: [];
+        }
 
         return [ 'rows' => $rows, 'total' => $total ];
     }
@@ -347,9 +336,8 @@ CREATE TABLE $entries (
      * Delete an entry.
      */
     public static function delete_entry( int $id ): void {
-        global $wpdb;
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-        $wpdb->delete( self::entries_table(), [ 'id' => $id ], [ '%d' ] );
+        DbProxy::delete( self::entries_table(), [ 'id' => $id ], [ '%d' ] );
     }
 
     // -----------------------------------------------------------------------
@@ -361,11 +349,10 @@ CREATE TABLE $entries (
      */
     public static function export_data_package(): array {
         global $wpdb;
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-        $templates = $wpdb->get_results( 'SELECT * FROM ' . self::templates_table() . ' ORDER BY id ASC', ARRAY_A ) ?: [];
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-        $entries   = $wpdb->get_results( 'SELECT * FROM ' . self::entries_table() . ' ORDER BY id ASC', ARRAY_A ) ?: [];
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $templates = DbProxy::get_results( DbProxy::prepare( 'SELECT * FROM %i ORDER BY id ASC', self::templates_table() ), ARRAY_A ) ?: [];
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $entries   = DbProxy::get_results( DbProxy::prepare( 'SELECT * FROM %i ORDER BY id ASC', self::entries_table() ), ARRAY_A ) ?: [];
 
         $option_keys = [
             'wpwe_db_version',
@@ -390,7 +377,7 @@ CREATE TABLE $entries (
             'export_version' => 1,
             'generated_at'   => gmdate( 'c' ),
             'plugin'         => [
-                'slug'    => 'wp-waiver-engine',
+                'slug'    => 'waiver-engine',
                 'version' => defined( 'WPWE_VERSION' ) ? WPWE_VERSION : '',
             ],
             'tables'         => [
@@ -420,9 +407,9 @@ CREATE TABLE $entries (
             : [];
 
         if ( $replace_existing ) {
-            // phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-            $wpdb->query( 'DELETE FROM ' . self::entries_table() );
-            $wpdb->query( 'DELETE FROM ' . self::templates_table() );
+            // phpcs:disable WordPress.DB.DirectDatabaseQuery
+            DbProxy::query( DbProxy::prepare( 'DELETE FROM %i', self::entries_table() ) );
+            DbProxy::query( DbProxy::prepare( 'DELETE FROM %i', self::templates_table() ) );
             // phpcs:enable
         }
 
@@ -454,9 +441,9 @@ CREATE TABLE $entries (
 
             if ( $payload['id'] <= 0 ) {
                 unset( $payload['id'] );
-                $ok = $wpdb->insert( self::templates_table(), $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+                $ok = DbProxy::insert( self::templates_table(), $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             } else {
-                $ok = $wpdb->replace( self::templates_table(), $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+                $ok = DbProxy::replace( self::templates_table(), $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             }
 
             if ( false !== $ok ) {
@@ -488,9 +475,9 @@ CREATE TABLE $entries (
 
             if ( $payload['id'] <= 0 ) {
                 unset( $payload['id'] );
-                $ok = $wpdb->insert( self::entries_table(), $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+                $ok = DbProxy::insert( self::entries_table(), $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             } else {
-                $ok = $wpdb->replace( self::entries_table(), $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+                $ok = DbProxy::replace( self::entries_table(), $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             }
 
             if ( false !== $ok ) {
@@ -558,3 +545,4 @@ CREATE TABLE $entries (
         return [ '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%s', '%s' ];
     }
 }
+
