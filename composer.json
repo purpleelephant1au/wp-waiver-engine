@@ -10,7 +10,25 @@
     },
     "autoload": {
         "classmap": [
-            "includes/"
+            "includes/class-core.php",
+            "includes/class-cpt-registration.php",
+            "includes/class-database.php",
+            "includes/class-admin-menu.php",
+            "includes/class-admin-entry-list.php",
+            "includes/class-entry-list-table.php",
+            "includes/class-entry-detail.php",
+            "includes/class-entry-handler.php",
+            "includes/class-template-editor.php",
+            "includes/class-template-meta-box.php",
+            "includes/class-form-renderer.php",
+            "includes/class-pdf-generator.php",
+            "includes/class-settings.php",
+            "includes/class-license.php",
+            "includes/class-license-provider-interface.php",
+            "includes/class-license-provider-null.php",
+            "includes/class-license-provider-freemius.php",
+            "includes/class-plan.php",
+            "includes/class-integration-manager.php"
         ]
     },
     "config": {
