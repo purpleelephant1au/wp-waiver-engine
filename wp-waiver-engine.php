@@ -11,6 +11,7 @@
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       wp-waiver-engine
  * Domain Path:       /languages
+ * @fs_premium_only /includes/integrations/class-integration-amelia.php, /user-guides/simplewaiver/repeatable-form-user-flow-guide.md, /user-guides/simplewaiver/screenshots/repeatable-form-flow/
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

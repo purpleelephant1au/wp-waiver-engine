@@ -67,8 +67,10 @@ class PDF_Generator {
             throw new \RuntimeException( 'Base PDF not found: ' . $this->pdf_file_path );
         }
 
-        if ( $this->output_mode === 'per_row' && $this->output_group_key ) {
-            return $this->generate_per_row( $data, $entry_id, $booking );
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+            if ( $this->output_mode === 'per_row' && $this->output_group_key ) {
+                return $this->generate_per_row( $data, $entry_id, $booking );
+            }
         }
 
         return [ $this->generate_single( $data, $entry_id, 0, $booking ) ];
@@ -87,8 +89,10 @@ class PDF_Generator {
             throw new \RuntimeException( 'Base PDF not found: ' . $this->pdf_file_path );
         }
 
-        if ( $this->output_mode === 'per_row' && $this->output_group_key ) {
-            return $this->build_combined_pdf( $data )->Output( 'S' );
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+            if ( $this->output_mode === 'per_row' && $this->output_group_key ) {
+                return $this->build_combined_pdf( $data )->Output( 'S' );
+            }
         }
 
         return $this->build_pdf( $data )->Output( 'S' );

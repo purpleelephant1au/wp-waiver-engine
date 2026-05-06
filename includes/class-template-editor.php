@@ -127,6 +127,7 @@ class Template_Editor {
             : __( 'Add New Template', 'wp-waiver-engine' );
 
         $back_url = admin_url( 'admin.php?page=wpwe' );
+        $has_premium_editor = function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only();
         ?>
         <div class="wrap">
             <h1 class="wp-heading-inline"><?php echo esc_html( $heading ); ?></h1>
@@ -194,18 +195,23 @@ class Template_Editor {
                                             <option value="single"  <?php selected( $output_mode, 'single' ); ?>>
                                                 <?php esc_html_e( 'Single PDF per submission', 'wp-waiver-engine' ); ?>
                                             </option>
+                                            <?php if ( $has_premium_editor ) : ?>
                                             <option value="per_row" <?php selected( $output_mode, 'per_row' ); ?>>
                                                 <?php esc_html_e( 'One PDF per row (repeatable group)', 'wp-waiver-engine' ); ?>
                                             </option>
+                                            <?php endif; ?>
                                         </select>
+                                        <?php if ( $has_premium_editor ) : ?>
                                         <div id="wpwe_group_key_wrap" style="margin-top:8px;<?php echo $output_mode !== 'per_row' ? 'display:none;' : ''; ?>">
                                             <label for="wpwe_output_group_key"><?php esc_html_e( 'Repeatable Group Key:', 'wp-waiver-engine' ); ?></label>
                                             <input type="text" id="wpwe_output_group_key" name="wpwe_output_group_key"
                                                    value="<?php echo esc_attr( $group_key ); ?>" class="regular-text"
                                                    placeholder="e.g. participants">
                                         </div>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
+                                <?php if ( $has_premium_editor ) : ?>
                                 <tr>
                                     <th><label for="wpwe_notification_email"><?php esc_html_e( 'Notification Email', 'wp-waiver-engine' ); ?></label></th>
                                     <td>
@@ -241,6 +247,7 @@ class Template_Editor {
                                     </td>
                                 </tr>
                                 <?php endif; /* Settings::is_user_email_enabled() */ ?>
+                                <?php endif; ?>
                                 <?php if ( Settings::captcha_provider() !== 'none' ) : ?>
                                 <tr>
                                     <th><label for="wpwe_captcha_enabled"><?php esc_html_e( 'CAPTCHA', 'wp-waiver-engine' ); ?></label></th>
@@ -275,7 +282,7 @@ class Template_Editor {
                                         </label>
                                     </td>
                                 </tr>
-                                <?php if ( Settings::is_amelia_enabled() ) : ?>
+                                <?php if ( $has_premium_editor && Settings::is_amelia_enabled() ) : ?>
                                 <tr>
                                     <th><?php esc_html_e( 'Linked Amelia Services', 'wp-waiver-engine' ); ?></th>
                                     <td>
@@ -414,7 +421,9 @@ class Template_Editor {
                                     <th><?php esc_html_e( 'Label', 'wp-waiver-engine' ); ?></th>
                                     <th><?php esc_html_e( 'Type', 'wp-waiver-engine' ); ?></th>
                                     <th style="width:34px" title="<?php esc_attr_e( 'Required', 'wp-waiver-engine' ); ?>">Req</th>
+                                    <?php if ( $has_premium_editor ) : ?>
                                     <th style="width:34px" title="<?php esc_attr_e( 'Repeatable group', 'wp-waiver-engine' ); ?>">Rpt</th>
+                                    <?php endif; ?>
                                     <th style="width:36px"><?php esc_html_e( 'Pg', 'wp-waiver-engine' ); ?></th>
                                     <th><?php esc_html_e( 'Location', 'wp-waiver-engine' ); ?></th>
                                     <th style="width:42px"><?php esc_html_e( 'Font', 'wp-waiver-engine' ); ?></th>
@@ -539,6 +548,7 @@ class Template_Editor {
         $font_size    = $cfg['font_size']    ?? '';
         $char_spacing = $cfg['char_spacing'] ?? '';
         $date_format  = $cfg['date_format']  ?? '';
+        $has_premium_editor = function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only();
 
         $loc = '';
         if ( $x !== '' && $y !== '' ) {
@@ -574,11 +584,13 @@ class Template_Editor {
                        value="<?php echo $required ? '1' : '0'; ?>">
                 <input type="checkbox" class="wpwe-map-required" <?php checked( $required ); ?>>
             </td>
+            <?php if ( $has_premium_editor ) : ?>
             <td style="text-align:center">
                 <input type="hidden" class="wpwe-rep-hidden" name="wpwe_map_repeatable[]"
                        value="<?php echo $repeatable ? '1' : '0'; ?>">
                 <input type="checkbox" class="wpwe-map-repeatable" <?php checked( $repeatable ); ?>>
             </td>
+            <?php endif; ?>
             <td><input type="number" class="wpwe-map-page small-text" name="wpwe_map_pages[]"
                        value="<?php echo esc_attr( $page ); ?>" min="1" max="99"></td>
             <input type="hidden" class="wpwe-map-x" name="wpwe_map_x[]" value="<?php echo esc_attr( $x ); ?>">
@@ -629,8 +641,11 @@ class Template_Editor {
         $date_format_arr  = self::post_arr( 'wpwe_map_date_format' );
         $req_map   = isset( $_POST['wpwe_map_required'] )   && is_array( $_POST['wpwe_map_required'] )
             ? array_map( 'absint', $_POST['wpwe_map_required'] )   : [];
-        $rep_map   = isset( $_POST['wpwe_map_repeatable'] ) && is_array( $_POST['wpwe_map_repeatable'] )
-            ? array_map( 'absint', $_POST['wpwe_map_repeatable'] ) : [];
+        $rep_map   = [];
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+            $rep_map = isset( $_POST['wpwe_map_repeatable'] ) && is_array( $_POST['wpwe_map_repeatable'] )
+                ? array_map( 'absint', $_POST['wpwe_map_repeatable'] ) : [];
+        }
 
         $allowed_types = [ 'text', 'email', 'number', 'date', 'tel', 'textarea', 'select', 'checkbox', 'signature', 'image' ];
 

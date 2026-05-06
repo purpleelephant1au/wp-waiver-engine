@@ -116,12 +116,14 @@ class Entry_Handler {
         // ----- Optional Amelia booking linkage (only when integration enabled) -----
         $amelia_booking_id = 0;
         $booking_info      = null;
-        if ( Settings::is_amelia_enabled() && Plan::is_feature_enabled( 'amelia_integration' ) ) {
-            $amelia_booking_id = isset( $_POST['wpwe_booking_id'] ) ? absint( $_POST['wpwe_booking_id'] ) : 0;
-            if ( $amelia_booking_id ) {
-                $booking_info = Integration_Amelia::get_booking( $amelia_booking_id );
-                if ( ! $booking_info ) {
-                    $amelia_booking_id = 0; // booking not found – ignore silently
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+            if ( Settings::is_amelia_enabled() && Plan::is_feature_enabled( 'amelia_integration' ) ) {
+                $amelia_booking_id = isset( $_POST['wpwe_booking_id'] ) ? absint( $_POST['wpwe_booking_id'] ) : 0;
+                if ( $amelia_booking_id ) {
+                    $booking_info = Integration_Amelia::get_booking( $amelia_booking_id );
+                    if ( ! $booking_info ) {
+                        $amelia_booking_id = 0; // booking not found – ignore silently
+                    }
                 }
             }
         }
@@ -153,9 +155,12 @@ class Entry_Handler {
         }
 
         // ----- Send notification email -----
-        $should_notify = Plan::is_feature_enabled( 'email_sending' )
-            && Settings::is_admin_email_enabled()
-            && ! empty( $template->send_admin_email );
+        $should_notify = false;
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+            $should_notify = Plan::is_feature_enabled( 'email_sending' )
+                && Settings::is_admin_email_enabled()
+                && ! empty( $template->send_admin_email );
+        }
         $email_sent    = $should_notify
             ? $this->send_notification( $template, $entry_id, $data, $pdf_paths, $booking_info )
             : false;
@@ -164,12 +169,14 @@ class Entry_Handler {
         Database::update_entry_after_process( $entry_id, $pdf_paths, $email_sent, $pdf_error );
 
         // ----- Optional copy email to submitter (not saved) -----
-           if ( Plan::is_feature_enabled( 'email_sending' )
-               && Settings::is_user_email_enabled() && ! empty( $template->send_user_email )
-             && ! empty( $_POST['wpwe_send_copy'] ) && ! empty( $_POST['wpwe_copy_email'] ) ) {
-            $copy_to = sanitize_email( wp_unslash( $_POST['wpwe_copy_email'] ) );
-            if ( is_email( $copy_to ) ) {
-                $this->send_copy_email( $template, $copy_to, $pdf_paths, $booking_info );
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+            if ( Plan::is_feature_enabled( 'email_sending' )
+                && Settings::is_user_email_enabled() && ! empty( $template->send_user_email )
+                && ! empty( $_POST['wpwe_send_copy'] ) && ! empty( $_POST['wpwe_copy_email'] ) ) {
+                $copy_to = sanitize_email( wp_unslash( $_POST['wpwe_copy_email'] ) );
+                if ( is_email( $copy_to ) ) {
+                    $this->send_copy_email( $template, $copy_to, $pdf_paths, $booking_info );
+                }
             }
         }
 
@@ -249,6 +256,19 @@ class Entry_Handler {
             wp_send_json_error( [ 'message' => __( 'Access denied.', 'wp-waiver-engine' ) ], 403 );
         }
 
+        if ( ! function_exists( 'wwe_fs' ) || ! wwe_fs() ) {
+            wp_send_json_success( [] );
+        }
+
+        if ( wwe_fs()->can_use_premium_code__premium_only() ) {
+            $this->ajax_search_bookings__premium_only();
+            return;
+        }
+
+        wp_send_json_success( [] );
+    }
+
+    private function ajax_search_bookings__premium_only(): void {
         if ( ! Settings::is_amelia_enabled() || ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
             wp_send_json_success( [] ); // Amelia integration is disabled
         }
@@ -298,6 +318,19 @@ class Entry_Handler {
      * Nonce: reuses `wpwe_search_bookings` so no extra localised nonce is needed.
      */
     public function ajax_get_booking(): void {
+        if ( ! function_exists( 'wwe_fs' ) || ! wwe_fs() ) {
+            wp_send_json_error( [ 'message' => __( 'Booking verification is unavailable.', 'wp-waiver-engine' ) ], 400 );
+        }
+
+        if ( wwe_fs()->can_use_premium_code__premium_only() ) {
+            $this->ajax_get_booking__premium_only();
+            return;
+        }
+
+        wp_send_json_error( [ 'message' => __( 'Booking verification is unavailable.', 'wp-waiver-engine' ) ], 400 );
+    }
+
+    private function ajax_get_booking__premium_only(): void {
         if ( ! Settings::is_amelia_enabled() || ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
             wp_send_json_error( [ 'message' => __( 'Amelia integration not enabled.', 'wp-waiver-engine' ) ], 400 );
         }
@@ -361,10 +394,14 @@ class Entry_Handler {
 
         foreach ( $schema['groups'] as $group ) {
             $gk         = sanitize_key( $group['key'] ?? '' );
-            $repeatable = ! empty( $group['repeatable'] );
+            $repeatable = false;
             $fields     = $group['fields'] ?? [];
             $min_rows   = max( 1, (int) ( $group['min_rows'] ?? 1 ) );
             $max_rows   = (int) ( $group['max_rows'] ?? 20 );
+
+            if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only() ) {
+                $repeatable = ! empty( $group['repeatable'] );
+            }
 
             $raw_group = isset( $raw[ $gk ] ) && is_array( $raw[ $gk ] ) ? $raw[ $gk ] : [];
 

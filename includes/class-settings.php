@@ -134,7 +134,7 @@ class Settings {
         <div class="wrap">
             <h1><?php esc_html_e( 'Waiver Engine Settings', 'wp-waiver-engine' ); ?></h1>
 
-            <?php if ( ! \WPWE\Plan::is_pro() ) : ?>
+            <?php if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only() && ! \WPWE\Plan::is_pro() ) : ?>
             <div class="notice notice-info">
                 <p>
                     <?php esc_html_e( 'You are on the Free plan. Email sending, repeating rows, and Amelia integration require Pro.', 'wp-waiver-engine' ); ?>
@@ -219,6 +219,7 @@ class Settings {
                 <input type="hidden" name="wpwe_action" value="save_settings">
 
                 <table class="form-table" role="presentation">
+                    <?php if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only() ) : ?>
                     <tr>
                         <th scope="row">
                             <?php esc_html_e( 'Amelia Integration', 'wp-waiver-engine' ); ?>
@@ -294,6 +295,7 @@ class Settings {
                             <?php endif; ?>
                         </td>
                     </tr>
+                    <?php endif; ?>
 
                     <!-- ── Submission rate limiting ── -->
                     <tr>

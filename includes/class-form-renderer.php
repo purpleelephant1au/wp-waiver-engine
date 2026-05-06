@@ -123,17 +123,26 @@ class Form_Renderer {
         }
 
         $amelia_services = [];
-        if ( Settings::is_amelia_enabled() && Plan::is_feature_enabled( 'amelia_integration' ) ) {
-            $amelia_services = json_decode( $template->amelia_service_ids ?? '', true ) ?: [];
-            $amelia_services = array_map( 'intval', $amelia_services );
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+            if ( Settings::is_amelia_enabled() && Plan::is_feature_enabled( 'amelia_integration' ) ) {
+                $amelia_services = json_decode( $template->amelia_service_ids ?? '', true ) ?: [];
+                $amelia_services = array_map( 'intval', $amelia_services );
+            }
         }
 
         ob_start();
-        $allow_copy_email = Plan::is_feature_enabled( 'email_sending' )
-            && Settings::is_user_email_enabled()
-            && ! empty( $template->send_user_email );
+        $allow_copy_email = false;
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+            $allow_copy_email = Plan::is_feature_enabled( 'email_sending' )
+                && Settings::is_user_email_enabled()
+                && ! empty( $template->send_user_email );
+        }
         $captcha_active   = Settings::captcha_provider() !== 'none' && ! empty( $template->captcha_enabled );
-        $this->render_form( $template_id, $template->title, $schema, $template->output_mode ?? 'single', $amelia_services, $allow_copy_email, $captcha_active );
+        $output_mode      = 'single';
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+            $output_mode = $template->output_mode ?? 'single';
+        }
+        $this->render_form( $template_id, $template->title, $schema, $output_mode, $amelia_services, $allow_copy_email, $captcha_active );
         return ob_get_clean();
     }
 
@@ -255,12 +264,16 @@ class Form_Renderer {
     // -----------------------------------------------------------------------
 
     private function render_group( array $group ): void {
-        $repeatable  = ! empty( $group['repeatable'] );
+        $repeatable  = false;
         $min_rows    = max( 1, (int) ( $group['min_rows'] ?? 1 ) );
         $max_rows    = (int) ( $group['max_rows'] ?? 20 );
         $group_key   = sanitize_key( $group['key'] ?? '' );
         $group_label = esc_html( $group['label'] ?? $group_key );
         $fields      = $group['fields'] ?? [];
+
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only() ) {
+            $repeatable = ! empty( $group['repeatable'] );
+        }
 
         if ( $repeatable ) : ?>
         <fieldset class="wpwe-group wpwe-group--repeatable wpwe-group--table"

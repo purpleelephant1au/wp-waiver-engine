@@ -119,6 +119,7 @@ class Template_Meta_Box {
         $active       = (bool)   get_post_meta( $post->ID, 'active', true );
         $notify_email = (string) get_post_meta( $post->ID, 'notification_email', true );
         $pdf_url      = $pdf_id ? wp_get_attachment_url( $pdf_id ) : '';
+        $has_premium_editor = function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only();
         ?>
         <table class="form-table wpwe-settings-table">
             <tr>
@@ -148,18 +149,23 @@ class Template_Meta_Box {
                         <option value="single" <?php selected( $output_mode, 'single' ); ?>>
                             <?php esc_html_e( 'Single PDF per submission', 'wp-waiver-engine' ); ?>
                         </option>
+                        <?php if ( $has_premium_editor ) : ?>
                         <option value="per_row" <?php selected( $output_mode, 'per_row' ); ?>>
                             <?php esc_html_e( 'One PDF per row (repeatable group)', 'wp-waiver-engine' ); ?>
                         </option>
+                        <?php endif; ?>
                     </select>
+                    <?php if ( $has_premium_editor ) : ?>
                     <div id="wpwe_group_key_wrap" style="margin-top:8px; <?php echo $output_mode !== 'per_row' ? 'display:none;' : ''; ?>">
                         <label for="wpwe_output_group_key"><?php esc_html_e( 'Repeatable Group Key:', 'wp-waiver-engine' ); ?></label>
                         <input type="text" id="wpwe_output_group_key" name="wpwe_output_group_key"
                                value="<?php echo esc_attr( $group_key ); ?>" class="regular-text"
                                placeholder="e.g. participants">
                     </div>
+                    <?php endif; ?>
                 </td>
             </tr>
+            <?php if ( $has_premium_editor ) : ?>
             <tr>
                 <th><label for="wpwe_notification_email"><?php esc_html_e( 'Notification Email', 'wp-waiver-engine' ); ?></label></th>
                 <td>
@@ -169,6 +175,7 @@ class Template_Meta_Box {
                     <p class="description"><?php esc_html_e( 'Leave blank to use the site admin email. PDF(s) will be attached to the notification.', 'wp-waiver-engine' ); ?></p>
                 </td>
             </tr>
+            <?php endif; ?>
             <tr>
                 <th><label for="wpwe_active"><?php esc_html_e( 'Active', 'wp-waiver-engine' ); ?></label></th>
                 <td>
@@ -177,6 +184,7 @@ class Template_Meta_Box {
                     <label for="wpwe_active"><?php esc_html_e( 'Make this template available on the frontend', 'wp-waiver-engine' ); ?></label>
                 </td>
             </tr>
+            <?php if ( $has_premium_editor ) : ?>
             <tr>
                 <th><?php esc_html_e( 'Linked Amelia Services', 'wp-waiver-engine' ); ?></th>
                 <td>
@@ -205,6 +213,7 @@ class Template_Meta_Box {
                     <?php endif; ?>
                 </td>
             </tr>
+            <?php endif; ?>
         </table>
         <?php
     }
@@ -220,6 +229,7 @@ class Template_Meta_Box {
                    ? $mapping['fields'] : [];
         $pdf_file   = $mapping['pdf_file']   ?? '';
         $page_count = (int) ( $mapping['page_count'] ?? 1 );
+        $has_premium_editor = function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only();
 
         // Load group metadata stored alongside fields
         $groups_meta = $mapping['groups'] ?? [];
@@ -316,7 +326,9 @@ class Template_Meta_Box {
                                     <th><?php esc_html_e( 'Label', 'wp-waiver-engine' ); ?></th>
                                     <th><?php esc_html_e( 'Type', 'wp-waiver-engine' ); ?></th>
                                     <th style="width:34px" title="<?php esc_attr_e( 'Required', 'wp-waiver-engine' ); ?>">Req</th>
+                                    <?php if ( $has_premium_editor ) : ?>
                                     <th style="width:34px" title="<?php esc_attr_e( 'Repeatable group', 'wp-waiver-engine' ); ?>">Rpt</th>
+                                    <?php endif; ?>
                                     <th style="width:36px"><?php esc_html_e( 'Pg', 'wp-waiver-engine' ); ?></th>
                                     <th><?php esc_html_e( 'Location', 'wp-waiver-engine' ); ?></th>
                                     <th style="width:42px"><?php esc_html_e( 'Font', 'wp-waiver-engine' ); ?></th>
@@ -377,6 +389,7 @@ class Template_Meta_Box {
         $width     = $cfg['width']     ?? '';
         $height    = $cfg['height']    ?? '';
         $font_size = $cfg['font_size'] ?? '';
+        $has_premium_editor = function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only();
 
         $loc = '';
         if ( $x !== '' && $y !== '' ) {
@@ -416,11 +429,13 @@ class Template_Meta_Box {
                 <input type="hidden" class="wpwe-req-hidden" name="wpwe_map_required[]" value="<?php echo $required ? '1' : '0'; ?>">
                 <input type="checkbox" class="wpwe-map-required" <?php checked( $required ); ?>>
             </td>
+            <?php if ( $has_premium_editor ) : ?>
             <!-- Repeatable group -->
             <td style="text-align:center">
                 <input type="hidden" class="wpwe-rep-hidden" name="wpwe_map_repeatable[]" value="<?php echo $repeatable ? '1' : '0'; ?>">
                 <input type="checkbox" class="wpwe-map-repeatable" <?php checked( $repeatable ); ?>>
             </td>
+            <?php endif; ?>
             <!-- Page -->
             <td><input type="number" class="wpwe-map-page small-text" name="wpwe_map_pages[]"
                        value="<?php echo esc_attr( $page ); ?>" min="1" max="99"></td>
@@ -474,6 +489,9 @@ class Template_Meta_Box {
         $output_mode   = isset( $_POST['wpwe_output_mode'] ) && in_array( $_POST['wpwe_output_mode'], $allowed_modes, true )
             ? sanitize_text_field( wp_unslash( $_POST['wpwe_output_mode'] ) )
             : 'single';
+        if ( ! \WPWE\Plan::is_feature_enabled( 'repeating_rows' ) ) {
+            $output_mode = 'single';
+        }
         update_post_meta( $post_id, 'output_mode', $output_mode );
 
         // output_group_key
@@ -492,6 +510,9 @@ class Template_Meta_Box {
         $raw_svc_ids = isset( $_POST['wpwe_amelia_service_ids'] ) && is_array( $_POST['wpwe_amelia_service_ids'] )
             ? array_map( 'absint', $_POST['wpwe_amelia_service_ids'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
             : [];
+        if ( ! \WPWE\Plan::is_feature_enabled( 'amelia_integration' ) ) {
+            $raw_svc_ids = [];
+        }
         update_post_meta( $post_id, 'amelia_service_ids', wp_json_encode( array_values( $raw_svc_ids ) ) );
 
         // Build both pdf_mapping and field_schema from the unified table POST data
@@ -533,7 +554,10 @@ class Template_Meta_Box {
         $fonts_arr  = $this->post_arr( 'wpwe_map_fonts' );
         // Checkboxes: posted as associative array with row index as key
         $req_map    = isset( $_POST['wpwe_map_required'] )   && is_array( $_POST['wpwe_map_required'] )   ? array_map( 'absint', $_POST['wpwe_map_required'] )   : [];
-        $rep_map    = isset( $_POST['wpwe_map_repeatable'] ) && is_array( $_POST['wpwe_map_repeatable'] ) ? array_map( 'absint', $_POST['wpwe_map_repeatable'] ) : [];
+        $rep_map    = [];
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+            $rep_map = isset( $_POST['wpwe_map_repeatable'] ) && is_array( $_POST['wpwe_map_repeatable'] ) ? array_map( 'absint', $_POST['wpwe_map_repeatable'] ) : [];
+        }
 
         $allowed_types = [ 'text', 'email', 'number', 'date', 'tel', 'textarea', 'select', 'checkbox', 'signature', 'image' ];
 

@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     Outputs one ZIP file using plugin root folder `wp-waiver-engine/`.
-    Feature access is controlled at runtime through Freemius entitlement checks.
+    Freemius packaging strips premium-only code from the free build.
 
 .EXAMPLE
     .\bin\build-release.ps1

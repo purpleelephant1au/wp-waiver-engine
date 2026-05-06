@@ -58,12 +58,14 @@ class Plan {
     public static function is_feature_enabled( string $feature ): bool {
         $enabled = false;
 
-        switch ( $feature ) {
-            case 'email_sending':
-            case 'repeating_rows':
-            case 'amelia_integration':
-                $enabled = self::is_pro();
-                break;
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+            switch ( $feature ) {
+                case 'email_sending':
+                case 'repeating_rows':
+                case 'amelia_integration':
+                    $enabled = self::is_pro();
+                    break;
+            }
         }
 
         return (bool) apply_filters( 'wpwe_feature_enabled', $enabled, $feature );

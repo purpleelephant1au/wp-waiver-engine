@@ -33,8 +33,10 @@ class Integration_Manager {
      * integration whose host plugin is currently active.
      */
     public static function register(): void {
-        if ( \WPWE\Plan::is_feature_enabled( 'amelia_integration' ) && self::is_amelia_active() ) {
-            ( new Integration_Amelia() )->register();
+        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+            if ( \WPWE\Plan::is_feature_enabled( 'amelia_integration' ) && self::is_amelia_active() ) {
+                ( new Integration_Amelia() )->register();
+            }
         }
     }
 

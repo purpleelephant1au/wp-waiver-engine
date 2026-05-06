@@ -25,7 +25,7 @@ and automatically generate filled PDFs when visitors submit the form.
 * Admin entry list with pagination, filtering, sorting, and PDF download
 * Import / export template field-to-PDF mappings for easy site migration
 
-**Free vs Pro features:**
+**Free vs Pro:**
 
 **Free**
 
@@ -43,7 +43,7 @@ and automatically generate filled PDFs when visitors submit the form.
 * Submitter email copies with PDF attachments
 * Amelia Booking integration and booking-linked waiver flows
 
-Feature access is controlled at runtime through Freemius licensing.
+The distributed free package contains the Free feature set only. Pro builds add premium functionality through Freemius packaging.
 
 **Integration architecture:**
 
@@ -170,7 +170,7 @@ footprint and limits the blast radius of any hypothetical file-disclosure issue.
 
 = Does this plugin require Amelia Booking? =
 
-No. Amelia integration is entirely optional and available on Pro plans.
+No. Amelia integration is entirely optional and is included in Pro builds.
 If the Amelia Booking plugin is active and Pro is enabled, an
 "Amelia Integration" toggle appears under **Waivers > Settings**.
 Without Amelia (or on Free), the plugin still works for standalone waivers.
@@ -199,7 +199,7 @@ parameter. Example links for inclusion in booking confirmation emails:
     https://yoursite.com/waiver-page/?booking_id=42
   https://yoursite.com/waiver-page/?booking_id=42&booking_email=customer@example.com
 
-This requires the Amelia integration to be enabled in **Waivers > Settings**
+This requires the Pro Amelia integration to be enabled in **Waivers > Settings**
 and the template to have at least one linked Amelia service.
 
 == WordPress.org Submission Checklist (One Pass) ==
