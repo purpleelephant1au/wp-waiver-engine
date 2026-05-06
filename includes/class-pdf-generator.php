@@ -67,9 +67,9 @@ class PDF_Generator {
             throw new \RuntimeException( 'Base PDF not found: ' . $this->pdf_file_path );
         }
 
-        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+        if ( $this->can_use_repeatable_mapping() ) {
             if ( $this->output_mode === 'per_row' && $this->output_group_key ) {
-                return $this->generate_per_row( $data, $entry_id, $booking );
+                return $this->generate_per_row_via_bridge( $data, $entry_id, $booking );
             }
         }
 
@@ -89,9 +89,9 @@ class PDF_Generator {
             throw new \RuntimeException( 'Base PDF not found: ' . $this->pdf_file_path );
         }
 
-        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
+        if ( $this->can_use_repeatable_mapping() ) {
             if ( $this->output_mode === 'per_row' && $this->output_group_key ) {
-                return $this->build_combined_pdf( $data )->Output( 'S' );
+                return $this->preview_per_row_via_bridge( $data );
             }
         }
 
@@ -112,26 +112,29 @@ class PDF_Generator {
     }
 
     private function generate_per_row( array $data, int $entry_id, ?object $booking = null ): array {
-        $group_key = $this->output_group_key;
-        $rows      = $data[ $group_key ] ?? [];
-        $paths     = [];
-        $ts        = time();
-        $booking_slug = $booking ? $this->booking_slug( $booking ) : '';
-        $prefix   = $booking_slug ?: ( 'waiver-' . $entry_id );
+        return $this->generate_per_row_via_bridge( $data, $entry_id, $booking );
+    }
 
-        // One PDF per row.
-        foreach ( $rows as $i => $row ) {
-            $row_data               = $data;
-            $row_data[ $group_key ] = [ $row ];
-            $filename = sanitize_file_name( $prefix . '-row-' . ( $i + 1 ) . '-' . $ts . '.pdf' );
-            $paths[]  = $this->save_pdf( $this->build_pdf( $row_data ), $filename );
+    private function can_use_repeatable_mapping(): bool {
+        return class_exists( Premium_Bridge::class )
+            && method_exists( Premium_Bridge::class, 'can_use_repeatable_mapping' )
+            && Premium_Bridge::can_use_repeatable_mapping();
+    }
+
+    private function generate_per_row_via_bridge( array $data, int $entry_id, ?object $booking = null ): array {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'generate_per_row_pdfs' ) ) {
+            return Premium_Bridge::generate_per_row_pdfs( $this, $data, $entry_id, $booking );
         }
 
-        // Combined PDF – all rows together in one file.
-        $combined_filename = sanitize_file_name( $prefix . '-combined-' . $ts . '.pdf' );
-        $paths[] = $this->save_pdf( $this->build_combined_pdf( $data ), $combined_filename );
+        return [ $this->generate_single( $data, $entry_id, 0, $booking ) ];
+    }
 
-        return $paths;
+    private function preview_per_row_via_bridge( array $data ): string {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'preview_per_row_pdf' ) ) {
+            return Premium_Bridge::preview_per_row_pdf( $this, $data );
+        }
+
+        return $this->build_pdf( $data )->Output( 'S' );
     }
 
     // -----------------------------------------------------------------------
@@ -185,51 +188,7 @@ class PDF_Generator {
      * own copy of the base PDF pages. Used for per_row preview.
      */
     private function build_combined_pdf( array $data ): Fpdi {
-        $group_key = $this->output_group_key;
-        $rows      = $data[ $group_key ] ?? [];
-
-        if ( empty( $rows ) ) {
-            // Nothing to combine – fall back to normal single render.
-            return $this->build_pdf( $data );
-        }
-
-        $pdf = new Wpwe_Fpdi( 'P', 'pt' );
-        $pdf->SetAutoPageBreak( false );
-        $pdf->SetMargins( 0, 0, 0 );
-
-        // Open the source file once — all rows use the same base PDF.
-        $page_count = $pdf->setSourceFile( $this->pdf_file_path ) ?: (int) ( $this->mapping['page_count'] ?? 1 );
-
-        foreach ( $rows as $row ) {
-            $row_data               = $data;
-            $row_data[ $group_key ] = [ $row ];
-
-            for ( $page = 1; $page <= $page_count; $page++ ) {
-                $tpl_id = $pdf->importPage( $page );
-                $size   = $pdf->getTemplateSize( $tpl_id );
-                $pdf->AddPage( $size['orientation'], [ $size['width'], $size['height'] ] );
-                $pdf->useTemplate( $tpl_id, 0, 0, $size['width'], $size['height'] );
-
-                foreach ( $this->mapping['fields'] ?? [] as $path => $config ) {
-                    if ( (int) ( $config['page'] ?? 1 ) !== $page ) {
-                        continue;
-                    }
-                    $lookup_path = preg_replace( '/__\d+$/', '', $path );
-                    $value = $this->resolve_path( $row_data, $lookup_path );
-                    if ( $value === '' ) {
-                        continue;
-                    }
-                    $field_type = $config['type'] ?? 'text';
-                    if ( $field_type === 'image' || $field_type === 'signature' ) {
-                        $this->place_image( $pdf, $value, $config );
-                    } else {
-                        $this->place_text( $pdf, $value, $config );
-                    }
-                }
-            }
-        }
-
-        return $pdf;
+        return $this->build_pdf( $data );
     }
 
     // -----------------------------------------------------------------------
@@ -383,6 +342,53 @@ class PDF_Generator {
             return sanitize_file_name( $this->booking_slug( $booking ) . $suffix . '-' . time() . '.pdf' );
         }
         return sanitize_file_name( 'waiver-' . $entry_id . $suffix . '-' . time() . '.pdf' );
+    }
+
+    public function get_output_group_key(): string {
+        return $this->output_group_key;
+    }
+
+    public function get_mapping_for_premium(): array {
+        return $this->mapping;
+    }
+
+    public function get_pdf_file_path_for_premium(): string {
+        return $this->pdf_file_path;
+    }
+
+    public function build_pdf_for_premium( array $data ): Fpdi {
+        return $this->build_pdf( $data );
+    }
+
+    public function build_combined_pdf_for_premium( array $data ): Fpdi {
+        return $this->build_combined_pdf( $data );
+    }
+
+    public function save_pdf_for_premium( Fpdi $pdf, string $filename ): string {
+        return $this->save_pdf( $pdf, $filename );
+    }
+
+    public function booking_slug_for_premium( object $booking ): string {
+        return $this->booking_slug( $booking );
+    }
+
+    public function resolve_path_for_premium( array $data, string $path ): string {
+        return $this->resolve_path( $data, $path );
+    }
+
+    public function place_text_for_premium( Fpdi $pdf, string $text, array $cfg ): void {
+        $this->place_text( $pdf, $text, $cfg );
+    }
+
+    public function place_image_for_premium( Fpdi $pdf, string $data_uri, array $cfg ): void {
+        $this->place_image( $pdf, $data_uri, $cfg );
+    }
+
+    public function new_pdf_document_for_premium(): Wpwe_Fpdi {
+        $pdf = new Wpwe_Fpdi( 'P', 'pt' );
+        $pdf->SetAutoPageBreak( false );
+        $pdf->SetMargins( 0, 0, 0 );
+        return $pdf;
     }
 
     /**

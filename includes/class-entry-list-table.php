@@ -21,8 +21,8 @@ class Entry_List_Table {
         $booking_search    = $amelia_enabled && isset( $_GET['booking_search'] )    ? sanitize_text_field( wp_unslash( $_GET['booking_search'] ) ) : '';
         $amelia_service_id = $amelia_enabled && isset( $_GET['amelia_service_id'] ) ? absint( $_GET['amelia_service_id'] )                         : 0;
 
-        if ( $amelia_enabled ) {
-            $result = Integration_Amelia::get_entries_with_booking_data( $per_page, $paged, $template_id, $orderby, $order, 0, $booking_search, $amelia_service_id );
+        if ( $amelia_enabled && class_exists( Premium_Bridge::class ) ) {
+            $result = Premium_Bridge::get_entries_with_booking_data( $per_page, $paged, $template_id, $orderby, $order, $booking_search, $amelia_service_id );
         } else {
             $result = Database::get_entries( $per_page, $paged, $template_id, $orderby, $order );
         }
@@ -38,7 +38,9 @@ class Entry_List_Table {
         }
 
         // Amelia services for filter dropdown (only fetched when Amelia is enabled)
-        $amelia_services = $amelia_enabled ? Integration_Amelia::get_services() : [];
+        $amelia_services = ( $amelia_enabled && class_exists( Premium_Bridge::class ) )
+            ? Premium_Bridge::get_amelia_services()
+            : [];
 
         // Build base URL carrying all active filters (orderby/order/paged are added per link)
         $active_filters = array_filter( [

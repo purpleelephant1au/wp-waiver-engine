@@ -119,7 +119,6 @@ class Template_Meta_Box {
         $active       = (bool)   get_post_meta( $post->ID, 'active', true );
         $notify_email = (string) get_post_meta( $post->ID, 'notification_email', true );
         $pdf_url      = $pdf_id ? wp_get_attachment_url( $pdf_id ) : '';
-        $has_premium_editor = function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only();
         ?>
         <table class="form-table wpwe-settings-table">
             <tr>
@@ -149,33 +148,12 @@ class Template_Meta_Box {
                         <option value="single" <?php selected( $output_mode, 'single' ); ?>>
                             <?php esc_html_e( 'Single PDF per submission', 'wp-waiver-engine' ); ?>
                         </option>
-                        <?php if ( $has_premium_editor ) : ?>
-                        <option value="per_row" <?php selected( $output_mode, 'per_row' ); ?>>
-                            <?php esc_html_e( 'One PDF per row (repeatable group)', 'wp-waiver-engine' ); ?>
-                        </option>
-                        <?php endif; ?>
+                        <?php $this->render_per_row_output_mode_option( $output_mode ); ?>
                     </select>
-                    <?php if ( $has_premium_editor ) : ?>
-                    <div id="wpwe_group_key_wrap" style="margin-top:8px; <?php echo $output_mode !== 'per_row' ? 'display:none;' : ''; ?>">
-                        <label for="wpwe_output_group_key"><?php esc_html_e( 'Repeatable Group Key:', 'wp-waiver-engine' ); ?></label>
-                        <input type="text" id="wpwe_output_group_key" name="wpwe_output_group_key"
-                               value="<?php echo esc_attr( $group_key ); ?>" class="regular-text"
-                               placeholder="e.g. participants">
-                    </div>
-                    <?php endif; ?>
+                    <?php $this->render_output_group_key_control( $output_mode, $group_key ); ?>
                 </td>
             </tr>
-            <?php if ( $has_premium_editor ) : ?>
-            <tr>
-                <th><label for="wpwe_notification_email"><?php esc_html_e( 'Notification Email', 'wp-waiver-engine' ); ?></label></th>
-                <td>
-                    <input type="email" id="wpwe_notification_email" name="wpwe_notification_email"
-                           value="<?php echo esc_attr( $notify_email ); ?>" class="regular-text"
-                           placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
-                    <p class="description"><?php esc_html_e( 'Leave blank to use the site admin email. PDF(s) will be attached to the notification.', 'wp-waiver-engine' ); ?></p>
-                </td>
-            </tr>
-            <?php endif; ?>
+            <?php $this->render_premium_settings_rows( $post, $notify_email ); ?>
             <tr>
                 <th><label for="wpwe_active"><?php esc_html_e( 'Active', 'wp-waiver-engine' ); ?></label></th>
                 <td>
@@ -184,36 +162,7 @@ class Template_Meta_Box {
                     <label for="wpwe_active"><?php esc_html_e( 'Make this template available on the frontend', 'wp-waiver-engine' ); ?></label>
                 </td>
             </tr>
-            <?php if ( $has_premium_editor ) : ?>
-            <tr>
-                <th><?php esc_html_e( 'Linked Amelia Services', 'wp-waiver-engine' ); ?></th>
-                <td>
-                    <?php
-                    $saved_ids     = json_decode( (string) get_post_meta( $post->ID, 'amelia_service_ids', true ), true ) ?: [];
-                    $saved_ids     = array_map( 'intval', $saved_ids );
-                    $amelia_svc    = Integration_Amelia::get_services();
-                    if ( empty( $amelia_svc ) ) : ?>
-                        <p class="description"><?php esc_html_e( 'No Amelia services found. Activate the Amelia plugin and create services first.', 'wp-waiver-engine' ); ?></p>
-                    <?php else : ?>
-                        <fieldset>
-                            <?php foreach ( $amelia_svc as $svc ) :
-                                $svc_id = (int) $svc['id'];
-                                $checked = in_array( $svc_id, $saved_ids, true );
-                                ?>
-                                <label style="display:block;margin-bottom:4px;">
-                                    <input type="checkbox"
-                                           name="wpwe_amelia_service_ids[]"
-                                           value="<?php echo esc_attr( $svc_id ); ?>"
-                                           <?php checked( $checked ); ?>>
-                                    <?php echo esc_html( $svc['name'] ); ?>
-                                </label>
-                            <?php endforeach; ?>
-                        </fieldset>
-                        <p class="description"><?php esc_html_e( 'When services are selected, a booking-search widget appears on the frontend form so submitters can link their waiver to an existing booking.', 'wp-waiver-engine' ); ?></p>
-                    <?php endif; ?>
-                </td>
-            </tr>
-            <?php endif; ?>
+
         </table>
         <?php
     }
@@ -229,8 +178,6 @@ class Template_Meta_Box {
                    ? $mapping['fields'] : [];
         $pdf_file   = $mapping['pdf_file']   ?? '';
         $page_count = (int) ( $mapping['page_count'] ?? 1 );
-        $has_premium_editor = function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only();
-
         // Load group metadata stored alongside fields
         $groups_meta = $mapping['groups'] ?? [];
         ?>
@@ -326,9 +273,7 @@ class Template_Meta_Box {
                                     <th><?php esc_html_e( 'Label', 'wp-waiver-engine' ); ?></th>
                                     <th><?php esc_html_e( 'Type', 'wp-waiver-engine' ); ?></th>
                                     <th style="width:34px" title="<?php esc_attr_e( 'Required', 'wp-waiver-engine' ); ?>">Req</th>
-                                    <?php if ( $has_premium_editor ) : ?>
-                                    <th style="width:34px" title="<?php esc_attr_e( 'Repeatable group', 'wp-waiver-engine' ); ?>">Rpt</th>
-                                    <?php endif; ?>
+                                    <?php $this->render_repeatable_header_cell(); ?>
                                     <th style="width:36px"><?php esc_html_e( 'Pg', 'wp-waiver-engine' ); ?></th>
                                     <th><?php esc_html_e( 'Location', 'wp-waiver-engine' ); ?></th>
                                     <th style="width:42px"><?php esc_html_e( 'Font', 'wp-waiver-engine' ); ?></th>
@@ -389,7 +334,6 @@ class Template_Meta_Box {
         $width     = $cfg['width']     ?? '';
         $height    = $cfg['height']    ?? '';
         $font_size = $cfg['font_size'] ?? '';
-        $has_premium_editor = function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only();
 
         $loc = '';
         if ( $x !== '' && $y !== '' ) {
@@ -429,13 +373,7 @@ class Template_Meta_Box {
                 <input type="hidden" class="wpwe-req-hidden" name="wpwe_map_required[]" value="<?php echo $required ? '1' : '0'; ?>">
                 <input type="checkbox" class="wpwe-map-required" <?php checked( $required ); ?>>
             </td>
-            <?php if ( $has_premium_editor ) : ?>
-            <!-- Repeatable group -->
-            <td style="text-align:center">
-                <input type="hidden" class="wpwe-rep-hidden" name="wpwe_map_repeatable[]" value="<?php echo $repeatable ? '1' : '0'; ?>">
-                <input type="checkbox" class="wpwe-map-repeatable" <?php checked( $repeatable ); ?>>
-            </td>
-            <?php endif; ?>
+            <?php $this->render_repeatable_row_cell( $repeatable ); ?>
             <!-- Page -->
             <td><input type="number" class="wpwe-map-page small-text" name="wpwe_map_pages[]"
                        value="<?php echo esc_attr( $page ); ?>" min="1" max="99"></td>
@@ -484,36 +422,17 @@ class Template_Meta_Box {
         $desc = isset( $_POST['wpwe_description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['wpwe_description'] ) ) : '';
         update_post_meta( $post_id, 'description', $desc );
 
-        // output_mode
-        $allowed_modes = [ 'single', 'per_row' ];
-        $output_mode   = isset( $_POST['wpwe_output_mode'] ) && in_array( $_POST['wpwe_output_mode'], $allowed_modes, true )
-            ? sanitize_text_field( wp_unslash( $_POST['wpwe_output_mode'] ) )
-            : 'single';
-        if ( ! \WPWE\Plan::is_feature_enabled( 'repeating_rows' ) ) {
-            $output_mode = 'single';
-        }
-        update_post_meta( $post_id, 'output_mode', $output_mode );
+        $premium_data = $this->build_template_premium_data_from_post();
 
-        // output_group_key
-        $group_key = isset( $_POST['wpwe_output_group_key'] ) ? sanitize_text_field( wp_unslash( $_POST['wpwe_output_group_key'] ) ) : '';
-        update_post_meta( $post_id, 'output_group_key', $group_key );
-
-        // notification_email
-        $email = isset( $_POST['wpwe_notification_email'] ) ? sanitize_email( wp_unslash( $_POST['wpwe_notification_email'] ) ) : '';
-        update_post_meta( $post_id, 'notification_email', $email );
+        update_post_meta( $post_id, 'output_mode', (string) ( $premium_data['output_mode'] ?? 'single' ) );
+        update_post_meta( $post_id, 'output_group_key', (string) ( $premium_data['output_group_key'] ?? '' ) );
+        update_post_meta( $post_id, 'notification_email', (string) ( $premium_data['notification_email'] ?? '' ) );
 
         // active
         $active = isset( $_POST['wpwe_active'] ) ? true : false;
         update_post_meta( $post_id, 'active', $active );
 
-        // amelia_service_ids
-        $raw_svc_ids = isset( $_POST['wpwe_amelia_service_ids'] ) && is_array( $_POST['wpwe_amelia_service_ids'] )
-            ? array_map( 'absint', $_POST['wpwe_amelia_service_ids'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-            : [];
-        if ( ! \WPWE\Plan::is_feature_enabled( 'amelia_integration' ) ) {
-            $raw_svc_ids = [];
-        }
-        update_post_meta( $post_id, 'amelia_service_ids', wp_json_encode( array_values( $raw_svc_ids ) ) );
+        update_post_meta( $post_id, 'amelia_service_ids', wp_json_encode( array_values( (array) ( $premium_data['amelia_service_ids'] ?? [] ) ) ) );
 
         // Build both pdf_mapping and field_schema from the unified table POST data
         [ $mapping, $schema ] = $this->build_from_unified_post();
@@ -554,10 +473,7 @@ class Template_Meta_Box {
         $fonts_arr  = $this->post_arr( 'wpwe_map_fonts' );
         // Checkboxes: posted as associative array with row index as key
         $req_map    = isset( $_POST['wpwe_map_required'] )   && is_array( $_POST['wpwe_map_required'] )   ? array_map( 'absint', $_POST['wpwe_map_required'] )   : [];
-        $rep_map    = [];
-        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
-            $rep_map = isset( $_POST['wpwe_map_repeatable'] ) && is_array( $_POST['wpwe_map_repeatable'] ) ? array_map( 'absint', $_POST['wpwe_map_repeatable'] ) : [];
-        }
+        $rep_map    = self::repeatable_map_from_premium();
 
         $allowed_types = [ 'text', 'email', 'number', 'date', 'tel', 'textarea', 'select', 'checkbox', 'signature', 'image' ];
 
@@ -657,5 +573,84 @@ class Template_Meta_Box {
             return [];
         }
         return array_values( $_POST[ $key ] );
+    }
+
+    private function build_template_premium_data_from_post(): array {
+        $defaults = [
+            'output_mode'        => 'single',
+            'output_group_key'   => '',
+            'notification_email' => '',
+            'amelia_service_ids' => [],
+        ];
+
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'build_template_premium_data_from_post' ) ) {
+            $premium = Premium_Bridge::build_template_premium_data_from_post();
+            if ( is_array( $premium ) ) {
+                return array_merge( $defaults, $premium );
+            }
+        }
+
+        return $defaults;
+    }
+
+    private static function can_use_repeatable_mapping(): bool {
+        return class_exists( Premium_Bridge::class )
+            && method_exists( Premium_Bridge::class, 'can_use_repeatable_mapping' )
+            && Premium_Bridge::can_use_repeatable_mapping();
+    }
+
+    private static function repeatable_map_from_premium(): array {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'build_repeatable_map_from_post' ) ) {
+            $map = Premium_Bridge::build_repeatable_map_from_post();
+            return is_array( $map ) ? $map : [];
+        }
+
+        return [];
+    }
+
+    private static function sanitize_template_output_mode( string $requested_mode ): string {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'sanitize_template_output_mode' ) ) {
+            return Premium_Bridge::sanitize_template_output_mode( $requested_mode );
+        }
+
+        if ( ! in_array( $requested_mode, [ 'single', 'per_row' ], true ) ) {
+            return 'single';
+        }
+
+        if ( ! \WPWE\Plan::is_feature_enabled( 'repeating_rows' ) ) {
+            return 'single';
+        }
+
+        return $requested_mode;
+    }
+
+    private function render_per_row_output_mode_option( string $output_mode ): void {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_per_row_output_mode_option' ) ) {
+            Premium_Bridge::render_per_row_output_mode_option( $output_mode );
+        }
+    }
+
+    private function render_output_group_key_control( string $output_mode, string $group_key ): void {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_output_group_key_control' ) ) {
+            Premium_Bridge::render_output_group_key_control( $output_mode, $group_key );
+        }
+    }
+
+    private function render_premium_settings_rows( \WP_Post $post, string $notify_email ): void {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_template_meta_box_premium_rows' ) ) {
+            Premium_Bridge::render_template_meta_box_premium_rows( $post, $notify_email );
+        }
+    }
+
+    private function render_repeatable_header_cell(): void {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_repeatable_header_cell' ) ) {
+            Premium_Bridge::render_repeatable_header_cell();
+        }
+    }
+
+    private function render_repeatable_row_cell( bool $repeatable ): void {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_repeatable_row_cell' ) ) {
+            Premium_Bridge::render_repeatable_row_cell( $repeatable );
+        }
     }
 }

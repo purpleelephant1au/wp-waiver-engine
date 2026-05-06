@@ -116,16 +116,8 @@ class Entry_Handler {
         // ----- Optional Amelia booking linkage (only when integration enabled) -----
         $amelia_booking_id = 0;
         $booking_info      = null;
-        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
-            if ( Settings::is_amelia_enabled() && Plan::is_feature_enabled( 'amelia_integration' ) ) {
-                $amelia_booking_id = isset( $_POST['wpwe_booking_id'] ) ? absint( $_POST['wpwe_booking_id'] ) : 0;
-                if ( $amelia_booking_id ) {
-                    $booking_info = Integration_Amelia::get_booking( $amelia_booking_id );
-                    if ( ! $booking_info ) {
-                        $amelia_booking_id = 0; // booking not found – ignore silently
-                    }
-                }
-            }
+        if ( class_exists( Premium_Bridge::class ) ) {
+            [ $amelia_booking_id, $booking_info ] = Premium_Bridge::resolve_booking_submission_from_request();
         }
 
         // ----- Insert entry into custom table -----
@@ -155,12 +147,8 @@ class Entry_Handler {
         }
 
         // ----- Send notification email -----
-        $should_notify = false;
-        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
-            $should_notify = Plan::is_feature_enabled( 'email_sending' )
-                && Settings::is_admin_email_enabled()
-                && ! empty( $template->send_admin_email );
-        }
+        $should_notify = class_exists( Premium_Bridge::class )
+            && Premium_Bridge::should_send_admin_notification( $template );
         $email_sent    = $should_notify
             ? $this->send_notification( $template, $entry_id, $data, $pdf_paths, $booking_info )
             : false;
@@ -169,14 +157,10 @@ class Entry_Handler {
         Database::update_entry_after_process( $entry_id, $pdf_paths, $email_sent, $pdf_error );
 
         // ----- Optional copy email to submitter (not saved) -----
-        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
-            if ( Plan::is_feature_enabled( 'email_sending' )
-                && Settings::is_user_email_enabled() && ! empty( $template->send_user_email )
-                && ! empty( $_POST['wpwe_send_copy'] ) && ! empty( $_POST['wpwe_copy_email'] ) ) {
-                $copy_to = sanitize_email( wp_unslash( $_POST['wpwe_copy_email'] ) );
-                if ( is_email( $copy_to ) ) {
-                    $this->send_copy_email( $template, $copy_to, $pdf_paths, $booking_info );
-                }
+        if ( class_exists( Premium_Bridge::class ) && Premium_Bridge::should_offer_submitter_copy( $template ) ) {
+            $copy_to = ! empty( $_POST['wpwe_copy_email'] ) ? sanitize_email( wp_unslash( $_POST['wpwe_copy_email'] ) ) : '';
+            if ( ! empty( $_POST['wpwe_send_copy'] ) && is_email( $copy_to ) ) {
+                $this->send_copy_email( $template, $copy_to, $pdf_paths, $booking_info );
             }
         }
 
@@ -256,57 +240,12 @@ class Entry_Handler {
             wp_send_json_error( [ 'message' => __( 'Access denied.', 'wp-waiver-engine' ) ], 403 );
         }
 
-        if ( ! function_exists( 'wwe_fs' ) || ! wwe_fs() ) {
-            wp_send_json_success( [] );
-        }
-
-        if ( wwe_fs()->can_use_premium_code__premium_only() ) {
-            $this->ajax_search_bookings__premium_only();
+        if ( class_exists( Premium_Bridge::class ) ) {
+            Premium_Bridge::ajax_search_bookings();
             return;
         }
 
         wp_send_json_success( [] );
-    }
-
-    private function ajax_search_bookings__premium_only(): void {
-        if ( ! Settings::is_amelia_enabled() || ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
-            wp_send_json_success( [] ); // Amelia integration is disabled
-        }
-
-        if ( ! isset( $_POST['nonce'] ) ||
-             ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpwe_search_bookings' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'wp-waiver-engine' ) ], 403 );
-        }
-
-        $template_id = isset( $_POST['template_id'] ) ? absint( $_POST['template_id'] ) : 0;
-        $query       = isset( $_POST['query'] )       ? sanitize_text_field( wp_unslash( $_POST['query'] ) ) : '';
-
-        if ( ! $template_id || strlen( $query ) < 2 ) {
-            wp_send_json_success( [] );
-        }
-
-        $template = Database::get_template( $template_id );
-        if ( ! $template ) {
-            wp_send_json_success( [] );
-        }
-
-        $service_ids = json_decode( $template->amelia_service_ids ?? '', true ) ?: [];
-        $service_ids = array_map( 'intval', $service_ids );
-
-        $results = Integration_Amelia::search_bookings( $service_ids, $query );
-
-        // Shape results for the frontend.
-        $output = array_map( function ( $row ) {
-            return [
-                'id'          => (int) $row->appointment_id,
-                'bookingDate' => wp_date( 'd/m/Y g:i a', strtotime( $row->bookingStart ) ),
-                'service'     => $row->service_name,
-                'customer'    => $row->firstName . ' ' . $row->lastName,
-                'status'      => $row->appointment_status,
-            ];
-        }, $results );
-
-        wp_send_json_success( $output );
     }
 
     /**
@@ -318,66 +257,12 @@ class Entry_Handler {
      * Nonce: reuses `wpwe_search_bookings` so no extra localised nonce is needed.
      */
     public function ajax_get_booking(): void {
-        if ( ! function_exists( 'wwe_fs' ) || ! wwe_fs() ) {
-            wp_send_json_error( [ 'message' => __( 'Booking verification is unavailable.', 'wp-waiver-engine' ) ], 400 );
-        }
-
-        if ( wwe_fs()->can_use_premium_code__premium_only() ) {
-            $this->ajax_get_booking__premium_only();
+        if ( class_exists( Premium_Bridge::class ) ) {
+            Premium_Bridge::ajax_get_booking();
             return;
         }
 
         wp_send_json_error( [ 'message' => __( 'Booking verification is unavailable.', 'wp-waiver-engine' ) ], 400 );
-    }
-
-    private function ajax_get_booking__premium_only(): void {
-        if ( ! Settings::is_amelia_enabled() || ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Amelia integration not enabled.', 'wp-waiver-engine' ) ], 400 );
-        }
-
-        if ( ! isset( $_POST['nonce'] ) ||
-             ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpwe_search_bookings' ) ) {
-            wp_send_json_error( [ 'message' => __( 'Security check failed.', 'wp-waiver-engine' ) ], 403 );
-        }
-
-        $booking_id  = isset( $_POST['booking_id'] )  ? absint( $_POST['booking_id'] )  : 0;
-        $template_id = isset( $_POST['template_id'] ) ? absint( $_POST['template_id'] ) : 0;
-        $customer_email = isset( $_POST['customer_email'] )
-            ? sanitize_email( wp_unslash( $_POST['customer_email'] ) )
-            : '';
-
-        if ( ! $booking_id || ! $template_id || ! is_email( $customer_email ) ) {
-            wp_send_json_error( [ 'message' => __( 'Invalid request.', 'wp-waiver-engine' ) ], 400 );
-        }
-
-        $template = Database::get_template( $template_id );
-        if ( ! $template ) {
-            wp_send_json_error( [ 'message' => __( 'Template not found.', 'wp-waiver-engine' ) ], 404 );
-        }
-
-        $row = Integration_Amelia::get_booking( $booking_id );
-        if ( ! $row ) {
-            wp_send_json_error( [ 'message' => __( 'Booking not found.', 'wp-waiver-engine' ) ], 404 );
-        }
-
-        $service_ids = json_decode( $template->amelia_service_ids ?? '', true ) ?: [];
-        $service_ids = array_map( 'intval', $service_ids );
-
-        if ( $service_ids && ! in_array( (int) $row->service_id, $service_ids, true ) ) {
-            wp_send_json_error( [ 'message' => __( 'Booking not found.', 'wp-waiver-engine' ) ], 404 );
-        }
-
-        $stored_email = isset( $row->customer_email ) ? sanitize_email( (string) $row->customer_email ) : '';
-        if ( strtolower( $stored_email ) !== strtolower( $customer_email ) ) {
-            wp_send_json_error( [ 'message' => __( 'Booking not found.', 'wp-waiver-engine' ) ], 404 );
-        }
-
-        wp_send_json_success( [
-            'id'          => (int) $row->appointment_id,
-            'bookingDate' => wp_date( 'd/m/Y g:i a', strtotime( $row->bookingStart ) ),
-            'service'     => $row->service_name,
-            'customer'    => $row->firstName . ' ' . $row->lastName,
-        ] );
     }
 
     // -----------------------------------------------------------------------
@@ -394,37 +279,19 @@ class Entry_Handler {
 
         foreach ( $schema['groups'] as $group ) {
             $gk         = sanitize_key( $group['key'] ?? '' );
-            $repeatable = false;
             $fields     = $group['fields'] ?? [];
-            $min_rows   = max( 1, (int) ( $group['min_rows'] ?? 1 ) );
-            $max_rows   = (int) ( $group['max_rows'] ?? 20 );
-
-            if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only() ) {
-                $repeatable = ! empty( $group['repeatable'] );
-            }
-
-            $raw_group = isset( $raw[ $gk ] ) && is_array( $raw[ $gk ] ) ? $raw[ $gk ] : [];
+            $repeatable = class_exists( Premium_Bridge::class ) && Premium_Bridge::is_repeatable_group( $group );
+            $raw_group  = isset( $raw[ $gk ] ) && is_array( $raw[ $gk ] ) ? $raw[ $gk ] : [];
 
             if ( $repeatable ) {
-                // Enforce max_rows to prevent abuse
-                $raw_group = array_slice( $raw_group, 0, $max_rows );
-
-                if ( count( $raw_group ) < $min_rows ) {
-                    $errors[ $gk ] = sprintf(
-                        /* translators: 1: group label, 2: min rows */
-                        __( '%1$s requires at least %2$d row(s).', 'wp-waiver-engine' ),
-                        $group['label'] ?? $gk,
-                        $min_rows
-                    );
-                }
-
-                $data[ $gk ] = [];
-                foreach ( $raw_group as $idx => $raw_row ) {
-                    $row_idx = (int) $idx;
-                    [ $row_data, $row_errors ] = $this->process_row( $raw_row, $fields, $gk, $row_idx );
-                    $data[ $gk ][] = $row_data;
-                    $errors        = array_merge( $errors, $row_errors );
-                }
+                [ $data[ $gk ], $group_errors ] = Premium_Bridge::process_repeatable_group(
+                    $raw_group,
+                    $group,
+                    $fields,
+                    $gk,
+                    [ $this, 'process_row_for_premium' ]
+                );
+                $errors = array_merge( $errors, $group_errors );
             } else {
                 // Non-repeatable: treat [0] as the single row
                 $raw_row = isset( $raw_group[0] ) && is_array( $raw_group[0] ) ? $raw_group[0] : $raw_group;
@@ -464,6 +331,10 @@ class Entry_Handler {
         }
 
         return [ $row, $errors ];
+    }
+
+    public function process_row_for_premium( array $raw_row, array $fields, string $gk, int $idx ): array {
+        return $this->process_row( $raw_row, $fields, $gk, $idx );
     }
 
     private function sanitize_field( mixed $value, string $type ): string {
@@ -509,174 +380,23 @@ class Entry_Handler {
      * for single mode the only PDF is used.
      */
     private function send_copy_email( object $template, string $to, array $pdf_paths, ?object $booking_info = null ): void {
-        if ( empty( $pdf_paths ) ) {
-            return;
-        }
-
-        // Per-row: combined PDF is the last entry; single: first (only) entry.
-        $attachment_path = ( $template->output_mode === 'per_row' )
-            ? end( $pdf_paths )
-            : reset( $pdf_paths );
-
-        if ( ! $attachment_path || ! file_exists( $attachment_path ) ) {
-            return;
-        }
-
-        $subject = sprintf(
-            /* translators: template title */
-            __( 'Your copy: %s', 'wp-waiver-engine' ),
-            $template->title
-        );
-
-        $body  = sprintf( __( 'Thank you for completing: %s', 'wp-waiver-engine' ), $template->title ) . "\n\n";
-
-        if ( $booking_info ) {
-            $body .= __( 'Booking details:', 'wp-waiver-engine' ) . "\n";
-            $body .= sprintf( __( 'Booking ID: %d', 'wp-waiver-engine' ), (int) $booking_info->appointment_id ) . "\n";
-            $body .= sprintf( __( 'Service: %s', 'wp-waiver-engine' ), $booking_info->service_name ) . "\n";
-            $body .= sprintf( __( 'Booking date: %s', 'wp-waiver-engine' ), wp_date( 'F j, Y g:i a', strtotime( $booking_info->bookingStart ) ) ) . "\n";
-            $body .= sprintf( __( 'Customer: %s', 'wp-waiver-engine' ), $booking_info->firstName . ' ' . $booking_info->lastName ) . "\n\n";
-        }
-
-        $body .= __( 'Please find your waiver PDF attached to this email.', 'wp-waiver-engine' ) . "\n";
-
-        $headers = [ 'Content-Type: text/plain; charset=UTF-8' ];
-
-        $sent = wp_mail( $to, $subject, $body, $headers, [ $attachment_path ] );
-        if ( ! $sent ) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log( '[WPWE] send_copy_email failed for: ' . $to . ' | last WP mail error: ' . print_r( $GLOBALS['phpmailer']->ErrorInfo ?? '', true ) );
+        if ( class_exists( Premium_Bridge::class ) ) {
+            Premium_Bridge::send_copy_email( $template, $to, $pdf_paths, $booking_info );
         }
     }
 
     private function send_notification( object $template, int $entry_id, array $data, array $pdf_paths, ?object $booking_info = null ): bool {
-        $to = $template->notification_email ?: get_option( 'admin_email' );
-        if ( ! is_email( $to ) ) {
-            return false;
-        }
-
-        $template_title = $template->title;
-        $subject        = sprintf(
-            /* translators: template title */
-            __( 'New Waiver Submission: %s', 'wp-waiver-engine' ),
-            $template_title
-        );
-
-        $entry_url = admin_url( 'admin.php?page=wpwe-entry&id=' . $entry_id );
-
-        $body  = '<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.45;color:#1d2327;">';
-        $body .= '<p>' . esc_html( sprintf( __( 'A new waiver was submitted for: %s', 'wp-waiver-engine' ), $template_title ) ) . '</p>';
-        $body .= '<p>' . esc_html( sprintf( __( 'Submission time: %s', 'wp-waiver-engine' ), wp_date( 'F j, Y g:i a' ) ) ) . '<br>';
-        $body .= esc_html( __( 'View entry:', 'wp-waiver-engine' ) ) . ' <a href="' . esc_url( $entry_url ) . '">' . esc_html( $entry_url ) . '</a></p>';
-
-        if ( $booking_info ) {
-            $body .= '<h3 style="margin:20px 0 8px 0;">' . esc_html__( 'Booking details', 'wp-waiver-engine' ) . '</h3>';
-            $body .= '<table cellpadding="6" cellspacing="0" border="1" style="border-collapse:collapse;border-color:#dcdcde;">';
-            $body .= '<tr><th align="left">' . esc_html__( 'Field', 'wp-waiver-engine' ) . '</th><th align="left">' . esc_html__( 'Value', 'wp-waiver-engine' ) . '</th></tr>';
-            $body .= '<tr><td>' . esc_html__( 'Booking ID', 'wp-waiver-engine' ) . '</td><td>' . esc_html( (string) (int) $booking_info->appointment_id ) . '</td></tr>';
-            $body .= '<tr><td>' . esc_html__( 'Service', 'wp-waiver-engine' ) . '</td><td>' . esc_html( (string) $booking_info->service_name ) . '</td></tr>';
-            $body .= '<tr><td>' . esc_html__( 'Booking date', 'wp-waiver-engine' ) . '</td><td>' . esc_html( wp_date( 'F j, Y g:i a', strtotime( $booking_info->bookingStart ) ) ) . '</td></tr>';
-            $body .= '<tr><td>' . esc_html__( 'Customer', 'wp-waiver-engine' ) . '</td><td>' . esc_html( (string) ( $booking_info->firstName . ' ' . $booking_info->lastName ) ) . '</td></tr>';
-            $body .= '</table>';
-        }
-
-        $body .= '<h3 style="margin:20px 0 8px 0;">' . esc_html__( 'Submitted data', 'wp-waiver-engine' ) . '</h3>';
-        $body .= $this->build_submission_html_tables( $template, $data );
-        $body .= '</body></html>';
-
-        // Attach generated PDFs directly from filesystem paths
-        $attachments = [];
-        foreach ( $pdf_paths as $path ) {
-            if ( $path && file_exists( $path ) ) {
-                $attachments[] = $path;
-            }
-        }
-
-        $headers = [ 'Content-Type: text/html; charset=UTF-8' ];
-
-        return wp_mail( $to, $subject, $body, $headers, $attachments );
+        return class_exists( Premium_Bridge::class )
+            ? Premium_Bridge::send_notification( $template, $entry_id, $data, $pdf_paths, $booking_info )
+            : false;
     }
 
     private function build_submission_html_tables( object $template, array $data ): string {
-        $schema = json_decode( (string) ( $template->field_schema ?? '' ), true );
-        if ( ! is_array( $schema ) || empty( $schema['groups'] ) || ! is_array( $schema['groups'] ) ) {
-            return '<pre style="white-space:pre-wrap;">' . esc_html( $this->flatten_data_text( $data ) ) . '</pre>';
+        if ( class_exists( Premium_Bridge::class ) ) {
+            return Premium_Bridge::build_submission_html_tables( $template, $data );
         }
 
-        $html            = '';
-        $rendered_groups = [];
-
-        foreach ( $schema['groups'] as $group ) {
-            $group_key = sanitize_key( $group['key'] ?? '' );
-            if ( '' === $group_key || ! isset( $data[ $group_key ] ) ) {
-                continue;
-            }
-
-            $rendered_groups[] = $group_key;
-            $group_label = (string) ( $group['label'] ?? $group_key );
-            $fields      = isset( $group['fields'] ) && is_array( $group['fields'] ) ? $group['fields'] : [];
-            $rows        = $this->normalize_group_rows_for_output( $data[ $group_key ] );
-            $repeatable  = ! empty( $group['repeatable'] );
-
-            $html .= '<h4 style="margin:14px 0 6px 0;">' . esc_html( $group_label ) . '</h4>';
-            $html .= '<table cellpadding="6" cellspacing="0" border="1" style="border-collapse:collapse;border-color:#dcdcde;width:100%;max-width:1000px;">';
-
-            if ( $repeatable ) {
-                $html .= '<tr><th align="left" style="width:70px;">' . esc_html__( 'Row', 'wp-waiver-engine' ) . '</th>';
-                foreach ( $fields as $field ) {
-                    $field_label = (string) ( $field['label'] ?? ( $field['key'] ?? '' ) );
-                    $html .= '<th align="left">' . esc_html( $field_label ) . '</th>';
-                }
-                $html .= '</tr>';
-
-                if ( ! $rows ) {
-                    $colspan = max( 2, count( $fields ) + 1 );
-                    $html .= '<tr><td colspan="' . esc_attr( (string) $colspan ) . '"><em>' . esc_html__( 'No rows submitted.', 'wp-waiver-engine' ) . '</em></td></tr>';
-                } else {
-                    foreach ( $rows as $row_index => $row ) {
-                        $html .= '<tr><td>' . esc_html( (string) ( $row_index + 1 ) ) . '</td>';
-                        foreach ( $fields as $field ) {
-                            $field_key = sanitize_key( $field['key'] ?? '' );
-                            $value     = $field_key && isset( $row[ $field_key ] ) ? $row[ $field_key ] : '';
-                            $html     .= '<td>' . $this->format_email_cell_value( $value ) . '</td>';
-                        }
-                        $html .= '</tr>';
-                    }
-                }
-            } else {
-                $html .= '<tr><th align="left" style="width:35%;">' . esc_html__( 'Field', 'wp-waiver-engine' ) . '</th><th align="left">' . esc_html__( 'Value', 'wp-waiver-engine' ) . '</th></tr>';
-                $row = $rows[0] ?? [];
-                foreach ( $fields as $field ) {
-                    $field_key   = sanitize_key( $field['key'] ?? '' );
-                    $field_label = (string) ( $field['label'] ?? $field_key );
-                    $value       = $field_key && isset( $row[ $field_key ] ) ? $row[ $field_key ] : '';
-                    $html       .= '<tr><td>' . esc_html( $field_label ) . '</td><td>' . $this->format_email_cell_value( $value ) . '</td></tr>';
-                }
-            }
-
-            $html .= '</table>';
-        }
-
-        $unknown = array_diff( array_keys( $data ), $rendered_groups );
-        if ( ! empty( $unknown ) ) {
-            $html .= '<h4 style="margin:14px 0 6px 0;">' . esc_html__( 'Additional Data', 'wp-waiver-engine' ) . '</h4>';
-            $html .= '<table cellpadding="6" cellspacing="0" border="1" style="border-collapse:collapse;border-color:#dcdcde;width:100%;max-width:900px;">';
-            $html .= '<tr><th align="left" style="width:35%;">' . esc_html__( 'Field', 'wp-waiver-engine' ) . '</th><th align="left">' . esc_html__( 'Value', 'wp-waiver-engine' ) . '</th></tr>';
-            foreach ( $unknown as $unknown_key ) {
-                $raw_value = $data[ $unknown_key ];
-                $value     = is_array( $raw_value )
-                    ? ( wp_json_encode( $raw_value ) ?: '' )
-                    : (string) $raw_value;
-                $html .= '<tr><td><code>' . esc_html( (string) $unknown_key ) . '</code></td><td>' . $this->format_email_cell_value( $value ) . '</td></tr>';
-            }
-            $html .= '</table>';
-        }
-
-        if ( '' === $html ) {
-            return '<pre style="white-space:pre-wrap;">' . esc_html( $this->flatten_data_text( $data ) ) . '</pre>';
-        }
-
-        return $html;
+        return '<pre style="white-space:pre-wrap;">' . esc_html( $this->flatten_data_text( $data ) ) . '</pre>';
     }
 
     private function normalize_group_rows_for_output( mixed $group_data ): array {

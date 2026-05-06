@@ -76,11 +76,11 @@ class Entry_Detail {
                         ? esc_html__( 'Yes', 'wp-waiver-engine' )
                         : esc_html__( 'No', 'wp-waiver-engine' ); ?></td>
                 </tr>
-                <?php if ( Settings::is_amelia_enabled() ) : ?>
+                <?php if ( Settings::is_amelia_enabled() && class_exists( Premium_Bridge::class ) ) : ?>
                 <?php
                 $bk_id = (int) ( $entry->amelia_booking_id ?? 0 );
                 if ( $bk_id ) :
-                    $booking = Integration_Amelia::get_booking( $bk_id );
+                    $booking = Premium_Bridge::get_booking( $bk_id );
                 endif;
                 if ( $bk_id && isset( $booking ) && $booking ) : ?>
                 <tr>
@@ -92,8 +92,7 @@ class Entry_Detail {
                         <small style="color:#6b7a8d;"> &mdash; <?php printf( esc_html__( 'Booking #%d', 'wp-waiver-engine' ), $bk_id ); ?></small>
                     </td>
                 </tr>
-                <?php elseif ( $bk_id ) : ?>
-                <tr>
+                <?php elseif ( $bk_id ) : ?>                <tr>
                     <th><?php esc_html_e( 'Booking', 'wp-waiver-engine' ); ?></th>
                     <td><?php printf( esc_html__( 'Booking #%d (details unavailable)', 'wp-waiver-engine' ), $bk_id ); ?></td>
                 </tr>

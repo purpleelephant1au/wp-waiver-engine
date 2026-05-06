@@ -127,7 +127,6 @@ class Template_Editor {
             : __( 'Add New Template', 'wp-waiver-engine' );
 
         $back_url = admin_url( 'admin.php?page=wpwe' );
-        $has_premium_editor = function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only();
         ?>
         <div class="wrap">
             <h1 class="wp-heading-inline"><?php echo esc_html( $heading ); ?></h1>
@@ -195,59 +194,12 @@ class Template_Editor {
                                             <option value="single"  <?php selected( $output_mode, 'single' ); ?>>
                                                 <?php esc_html_e( 'Single PDF per submission', 'wp-waiver-engine' ); ?>
                                             </option>
-                                            <?php if ( $has_premium_editor ) : ?>
-                                            <option value="per_row" <?php selected( $output_mode, 'per_row' ); ?>>
-                                                <?php esc_html_e( 'One PDF per row (repeatable group)', 'wp-waiver-engine' ); ?>
-                                            </option>
-                                            <?php endif; ?>
+                                            <?php $this->render_per_row_output_mode_option( $output_mode ); ?>
                                         </select>
-                                        <?php if ( $has_premium_editor ) : ?>
-                                        <div id="wpwe_group_key_wrap" style="margin-top:8px;<?php echo $output_mode !== 'per_row' ? 'display:none;' : ''; ?>">
-                                            <label for="wpwe_output_group_key"><?php esc_html_e( 'Repeatable Group Key:', 'wp-waiver-engine' ); ?></label>
-                                            <input type="text" id="wpwe_output_group_key" name="wpwe_output_group_key"
-                                                   value="<?php echo esc_attr( $group_key ); ?>" class="regular-text"
-                                                   placeholder="e.g. participants">
-                                        </div>
-                                        <?php endif; ?>
+                                        <?php $this->render_output_group_key_control( $output_mode, $group_key ); ?>
                                     </td>
                                 </tr>
-                                <?php if ( $has_premium_editor ) : ?>
-                                <tr>
-                                    <th><label for="wpwe_notification_email"><?php esc_html_e( 'Notification Email', 'wp-waiver-engine' ); ?></label></th>
-                                    <td>
-                                        <input type="email" id="wpwe_notification_email" name="wpwe_notification_email"
-                                               value="<?php echo esc_attr( $notify ); ?>" class="regular-text"
-                                               placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
-                                        <p class="description"><?php esc_html_e( 'Leave blank to use the site admin email.', 'wp-waiver-engine' ); ?></p>
-                                    </td>
-                                </tr>
-                                <?php if ( Settings::is_admin_email_enabled() ) : ?>
-                                <tr>
-                                    <th><label for="wpwe_send_admin_email"><?php esc_html_e( 'Admin Notification', 'wp-waiver-engine' ); ?></label></th>
-                                    <td>
-                                        <input type="checkbox" id="wpwe_send_admin_email" name="wpwe_send_admin_email" value="1"
-                                               <?php checked( $send_admin_email ); ?>>
-                                        <label for="wpwe_send_admin_email">
-                                            <?php esc_html_e( 'Send admin notification email on submission', 'wp-waiver-engine' ); ?>
-                                        </label>
-                                        <p class="description"><?php esc_html_e( 'If unchecked, no email is sent to the notification address when this template is submitted.', 'wp-waiver-engine' ); ?></p>
-                                    </td>
-                                </tr>
-                                <?php endif; /* Settings::is_admin_email_enabled() */ ?>
-                                <?php if ( Settings::is_user_email_enabled() ) : ?>
-                                <tr>
-                                    <th><label for="wpwe_send_user_email"><?php esc_html_e( 'Submitter Copy', 'wp-waiver-engine' ); ?></label></th>
-                                    <td>
-                                        <input type="checkbox" id="wpwe_send_user_email" name="wpwe_send_user_email" value="1"
-                                               <?php checked( $send_user_email ); ?>>
-                                        <label for="wpwe_send_user_email">
-                                            <?php esc_html_e( 'Allow submitters to request an email copy of their PDF', 'wp-waiver-engine' ); ?>
-                                        </label>
-                                        <p class="description"><?php esc_html_e( 'If unchecked, the email copy opt-in is hidden for this template.', 'wp-waiver-engine' ); ?></p>
-                                    </td>
-                                </tr>
-                                <?php endif; /* Settings::is_user_email_enabled() */ ?>
-                                <?php endif; ?>
+                                <?php $this->render_premium_settings_rows( $tpl, (string) $notify, (bool) $send_admin_email, (bool) $send_user_email ); ?>
                                 <?php if ( Settings::captcha_provider() !== 'none' ) : ?>
                                 <tr>
                                     <th><label for="wpwe_captcha_enabled"><?php esc_html_e( 'CAPTCHA', 'wp-waiver-engine' ); ?></label></th>
@@ -282,36 +234,7 @@ class Template_Editor {
                                         </label>
                                     </td>
                                 </tr>
-                                <?php if ( $has_premium_editor && Settings::is_amelia_enabled() ) : ?>
-                                <tr>
-                                    <th><?php esc_html_e( 'Linked Amelia Services', 'wp-waiver-engine' ); ?></th>
-                                    <td>
-                                        <?php
-                                        $saved_amelia_ids = json_decode( (string) ( $tpl->amelia_service_ids ?? '' ), true ) ?: [];
-                                        $saved_amelia_ids = array_map( 'intval', $saved_amelia_ids );
-                                        $amelia_svc       = Integration_Amelia::get_services();
-                                        if ( empty( $amelia_svc ) ) : ?>
-                                            <p class="description"><?php esc_html_e( 'No Amelia services found. Activate the Amelia plugin and create services first.', 'wp-waiver-engine' ); ?></p>
-                                        <?php else : ?>
-                                            <fieldset>
-                                                <?php foreach ( $amelia_svc as $svc ) :
-                                                    $svc_id  = (int) $svc['id'];
-                                                    $checked = in_array( $svc_id, $saved_amelia_ids, true );
-                                                    ?>
-                                                    <label style="display:block;margin-bottom:4px;">
-                                                        <input type="checkbox"
-                                                               name="wpwe_amelia_service_ids[]"
-                                                               value="<?php echo esc_attr( $svc_id ); ?>"
-                                                               <?php checked( $checked ); ?>>
-                                                        <?php echo esc_html( $svc['name'] ); ?>
-                                                    </label>
-                                                <?php endforeach; ?>
-                                            </fieldset>
-                                            <p class="description"><?php esc_html_e( 'When services are selected, a booking-search widget appears on the frontend form so submitters can link their waiver to an existing booking.', 'wp-waiver-engine' ); ?></p>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                                <?php endif; /* Settings::is_amelia_enabled() */ ?>
+
                             </table>
                         </div><!-- /.inside -->
                     </div><!-- /.postbox -->
@@ -421,9 +344,7 @@ class Template_Editor {
                                     <th><?php esc_html_e( 'Label', 'wp-waiver-engine' ); ?></th>
                                     <th><?php esc_html_e( 'Type', 'wp-waiver-engine' ); ?></th>
                                     <th style="width:34px" title="<?php esc_attr_e( 'Required', 'wp-waiver-engine' ); ?>">Req</th>
-                                    <?php if ( $has_premium_editor ) : ?>
-                                    <th style="width:34px" title="<?php esc_attr_e( 'Repeatable group', 'wp-waiver-engine' ); ?>">Rpt</th>
-                                    <?php endif; ?>
+                                    <?php $this->render_repeatable_header_cell(); ?>
                                     <th style="width:36px"><?php esc_html_e( 'Pg', 'wp-waiver-engine' ); ?></th>
                                     <th><?php esc_html_e( 'Location', 'wp-waiver-engine' ); ?></th>
                                     <th style="width:42px"><?php esc_html_e( 'Font', 'wp-waiver-engine' ); ?></th>
@@ -548,7 +469,6 @@ class Template_Editor {
         $font_size    = $cfg['font_size']    ?? '';
         $char_spacing = $cfg['char_spacing'] ?? '';
         $date_format  = $cfg['date_format']  ?? '';
-        $has_premium_editor = function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only();
 
         $loc = '';
         if ( $x !== '' && $y !== '' ) {
@@ -584,13 +504,7 @@ class Template_Editor {
                        value="<?php echo $required ? '1' : '0'; ?>">
                 <input type="checkbox" class="wpwe-map-required" <?php checked( $required ); ?>>
             </td>
-            <?php if ( $has_premium_editor ) : ?>
-            <td style="text-align:center">
-                <input type="hidden" class="wpwe-rep-hidden" name="wpwe_map_repeatable[]"
-                       value="<?php echo $repeatable ? '1' : '0'; ?>">
-                <input type="checkbox" class="wpwe-map-repeatable" <?php checked( $repeatable ); ?>>
-            </td>
-            <?php endif; ?>
+            <?php $this->render_repeatable_row_cell( $repeatable ); ?>
             <td><input type="number" class="wpwe-map-page small-text" name="wpwe_map_pages[]"
                        value="<?php echo esc_attr( $page ); ?>" min="1" max="99"></td>
             <input type="hidden" class="wpwe-map-x" name="wpwe_map_x[]" value="<?php echo esc_attr( $x ); ?>">
@@ -641,11 +555,7 @@ class Template_Editor {
         $date_format_arr  = self::post_arr( 'wpwe_map_date_format' );
         $req_map   = isset( $_POST['wpwe_map_required'] )   && is_array( $_POST['wpwe_map_required'] )
             ? array_map( 'absint', $_POST['wpwe_map_required'] )   : [];
-        $rep_map   = [];
-        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
-            $rep_map = isset( $_POST['wpwe_map_repeatable'] ) && is_array( $_POST['wpwe_map_repeatable'] )
-                ? array_map( 'absint', $_POST['wpwe_map_repeatable'] ) : [];
-        }
+        $rep_map   = self::repeatable_map_from_premium();
 
         $allowed_types = [ 'text', 'email', 'number', 'date', 'tel', 'textarea', 'select', 'checkbox', 'signature', 'image' ];
 
@@ -751,5 +661,50 @@ class Template_Editor {
             return [];
         }
         return array_values( $_POST[ $key ] );
+    }
+
+    private static function can_use_repeatable_mapping(): bool {
+        return class_exists( Premium_Bridge::class )
+            && method_exists( Premium_Bridge::class, 'can_use_repeatable_mapping' )
+            && Premium_Bridge::can_use_repeatable_mapping();
+    }
+
+    private static function repeatable_map_from_premium(): array {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'build_repeatable_map_from_post' ) ) {
+            $map = Premium_Bridge::build_repeatable_map_from_post();
+            return is_array( $map ) ? $map : [];
+        }
+
+        return [];
+    }
+
+    private function render_per_row_output_mode_option( string $output_mode ): void {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_per_row_output_mode_option' ) ) {
+            Premium_Bridge::render_per_row_output_mode_option( $output_mode );
+        }
+    }
+
+    private function render_output_group_key_control( string $output_mode, string $group_key ): void {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_output_group_key_control' ) ) {
+            Premium_Bridge::render_output_group_key_control( $output_mode, $group_key );
+        }
+    }
+
+    private function render_premium_settings_rows( ?object $tpl, string $notify, bool $send_admin_email, bool $send_user_email ): void {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_template_editor_premium_rows' ) ) {
+            Premium_Bridge::render_template_editor_premium_rows( $tpl, $notify, $send_admin_email, $send_user_email );
+        }
+    }
+
+    private function render_repeatable_header_cell(): void {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_repeatable_header_cell' ) ) {
+            Premium_Bridge::render_repeatable_header_cell();
+        }
+    }
+
+    private function render_repeatable_row_cell( bool $repeatable ): void {
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_repeatable_row_cell' ) ) {
+            Premium_Bridge::render_repeatable_row_cell( $repeatable );
+        }
     }
 }

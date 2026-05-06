@@ -100,6 +100,10 @@ if ( ! function_exists( 'wpwe_fs' ) ) {
     }
 }
 
+if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only() ) {
+    require_once WPWE_PLUGIN_DIR . 'includes/class-premium-bridge__premium_only.php';
+}
+
 /**
  * Whether this running package is the premium package.
  *

@@ -209,37 +209,19 @@ class Admin_Menu {
         // Build both pdf_mapping and field_schema from the unified table POST data
         [ $mapping, $schema ] = \WPWE\Template_Editor::build_from_post();
 
-        $raw_amelia_ids = isset( $_POST['wpwe_amelia_service_ids'] ) && is_array( $_POST['wpwe_amelia_service_ids'] )
-            ? array_map( 'absint', $_POST['wpwe_amelia_service_ids'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-            : [];
-
-        $output_mode = isset( $_POST['wpwe_output_mode'] ) ? sanitize_text_field( wp_unslash( $_POST['wpwe_output_mode'] ) ) : 'single';
-        if ( $output_mode === 'per_row' && ! \WPWE\Plan::is_feature_enabled( 'repeating_rows' ) ) {
-            $output_mode = 'single';
-        }
-
-        if ( ! \WPWE\Plan::is_feature_enabled( 'amelia_integration' ) ) {
-            $raw_amelia_ids = [];
-        }
-
-        $send_admin_email = ! empty( $_POST['wpwe_send_admin_email'] ) ? 1 : 0;
-        $send_user_email  = ! empty( $_POST['wpwe_send_user_email'] ) ? 1 : 0;
-        if ( ! \WPWE\Plan::is_feature_enabled( 'email_sending' ) ) {
-            $send_admin_email = 0;
-            $send_user_email  = 0;
-        }
+        $premium_data = $this->build_template_premium_data_from_post();
 
         $data = [
             'title'              => isset( $_POST['wpwe_title'] ) ? sanitize_text_field( wp_unslash( $_POST['wpwe_title'] ) ) : '',
             'description'        => isset( $_POST['wpwe_description'] ) ? sanitize_textarea_field( wp_unslash( $_POST['wpwe_description'] ) ) : '',
             'pdf_attachment_id'  => isset( $_POST['wpwe_pdf_attachment_id'] ) ? absint( $_POST['wpwe_pdf_attachment_id'] ) : 0,
-            'output_mode'        => $output_mode,
-            'output_group_key'   => isset( $_POST['wpwe_output_group_key'] ) ? sanitize_key( wp_unslash( $_POST['wpwe_output_group_key'] ) ) : '',
-            'notification_email' => isset( $_POST['wpwe_notification_email'] ) ? sanitize_email( wp_unslash( $_POST['wpwe_notification_email'] ) ) : '',
-            'send_admin_email'   => $send_admin_email,
-            'send_user_email'    => $send_user_email,
+            'output_mode'        => (string) ( $premium_data['output_mode'] ?? 'single' ),
+            'output_group_key'   => (string) ( $premium_data['output_group_key'] ?? '' ),
+            'notification_email' => (string) ( $premium_data['notification_email'] ?? '' ),
+            'send_admin_email'   => (int) ( $premium_data['send_admin_email'] ?? 0 ),
+            'send_user_email'    => (int) ( $premium_data['send_user_email'] ?? 0 ),
             'captcha_enabled'    => ! empty( $_POST['wpwe_captcha_enabled'] )  ? 1 : 0,
-            'amelia_service_ids' => array_values( $raw_amelia_ids ),
+            'amelia_service_ids' => array_values( (array) ( $premium_data['amelia_service_ids'] ?? [] ) ),
             'active'             => ! empty( $_POST['wpwe_active'] ) ? 1 : 0,
             'field_schema'       => wp_json_encode( $schema ),
             'pdf_mapping'        => wp_json_encode( $mapping ),
@@ -253,6 +235,26 @@ class Admin_Menu {
             wp_safe_redirect( admin_url( 'admin.php?page=wpwe-edit&id=' . (int) $new_id . '&wpwe_saved=1' ) );
         }
         exit;
+    }
+
+    private function build_template_premium_data_from_post(): array {
+        $defaults = [
+            'output_mode'        => 'single',
+            'output_group_key'   => '',
+            'notification_email' => '',
+            'send_admin_email'   => 0,
+            'send_user_email'    => 0,
+            'amelia_service_ids' => [],
+        ];
+
+        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'build_template_premium_data_from_post' ) ) {
+            $premium = Premium_Bridge::build_template_premium_data_from_post();
+            if ( is_array( $premium ) ) {
+                return array_merge( $defaults, $premium );
+            }
+        }
+
+        return $defaults;
     }
 
     // -----------------------------------------------------------------------
