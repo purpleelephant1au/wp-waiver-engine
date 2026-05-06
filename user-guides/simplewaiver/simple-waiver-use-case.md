@@ -18,11 +18,11 @@ It uses the demo-standard-waiver.pdf file as the base PDF and focuses on:
 4. Select your PDF waiver from your media library.
 5. Save the template.
 
-![Templates list](screenshots/FINAL-01-templates-list.png)
-![Standard Waiver title](screenshots/FINAL-02-standard-waiver-title.png)
-![Demo PDF selected](screenshots/FINAL-03-demo-pdf-selected.png)
-![Demo PDF linked](screenshots/FINAL-04-demo-pdf-linked.png)
-![Template saved](screenshots/FINAL-05-template-saved.png)
+![Templates list](screenshots/template-setup-flow/TFLOW-01-templates-list.png)
+![Standard Waiver title](screenshots/template-setup-flow/TFLOW-02-standard-waiver-title.png)
+![Demo PDF selected](screenshots/template-setup-flow/TFLOW-03-demo-pdf-selected.png)
+![Demo PDF linked](screenshots/template-setup-flow/TFLOW-04-demo-pdf-linked.png)
+![Template saved](screenshots/template-setup-flow/TFLOW-05-template-saved.png)
 
 ## 2) Open the Visual Mapper
 
@@ -30,7 +30,7 @@ It uses the demo-standard-waiver.pdf file as the base PDF and focuses on:
 2. Click Open Visual Mapper.
 3. Confirm the mapper shows Pg 1/2, which means the PDF has multiple pages.
 
-![Mapper page 1](screenshots/FINAL-06-mapper-page1.png)
+![Mapper page 1](screenshots/template-setup-flow/TFLOW-06-mapper-page1.png)
 
 ## 3) Map fields to the actual lines on page 1
 
@@ -42,9 +42,9 @@ This sample PDF has three printed entry lines on page 1:
 
 Click and drag directly over each printed line so the blue mapping box sits on top of the real field area.
 
-![Full name drag start](screenshots/FINAL-07-full-name-drag-start.png)
-![Full name drag end](screenshots/FINAL-08-full-name-drag-end.png)
-![Three aligned page 1 fields](screenshots/FINAL-09-page1-three-aligned-fields.png)
+![Full name drag start](screenshots/template-setup-flow/TFLOW-07-full-name-drag-start.png)
+![Full name drag end](screenshots/template-setup-flow/TFLOW-08-full-name-drag-end.png)
+![Three aligned page 1 fields](screenshots/template-setup-flow/TFLOW-09-page1-three-aligned-fields.png)
 
 ## 4) Field type guidance
 
@@ -61,7 +61,7 @@ The TYPE column controls whether each mapped row behaves as a text, email, date,
 
 The screenshot below shows the corrected aligned page 1 fields with the Group, Key, Label, and Type values filled in for the mapped rows.
 
-![Mapped rows on page 1](screenshots/FINAL-10-page1-fields-filled.png)
+![Mapped rows on page 1](screenshots/template-setup-flow/TFLOW-10-page1-fields-filled.png)
 
 ## 5) Use page 2 for the signature example
 
@@ -69,7 +69,7 @@ Page 2 is shown separately using the Pg 1/2 navigation in the mapper header.
 
 For this sample PDF, the signature field is mapped to the printed Signature line at the top of page 2.
 
-![Page 2 signature area](screenshots/FINAL-11-page2-signature-area.png)
-![Signature drag start](screenshots/FINAL-12-signature-drag-start.png)
-![Signature drag end](screenshots/FINAL-13-signature-drag-end.png)
-![Signature mapped on page 2](screenshots/FINAL-14-page2-signature-mapped.png)
+![Page 2 signature area](screenshots/template-setup-flow/TFLOW-11-page2-signature-area.png)
+![Signature drag start](screenshots/template-setup-flow/TFLOW-12-signature-drag-start.png)
+![Signature drag end](screenshots/template-setup-flow/TFLOW-13-signature-drag-end.png)
+![Signature mapped on page 2](screenshots/template-setup-flow/TFLOW-14-page2-signature-mapped.png)

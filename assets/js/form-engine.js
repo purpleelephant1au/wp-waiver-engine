@@ -227,14 +227,6 @@
             } );
 
             updateAddButtonVisibility( group, maxRows );
-
-            // Mode toggle (for table-layout repeatable groups)
-            var modeSelect = group.querySelector( '.wpwe-mode-select' );
-            if ( modeSelect ) {
-                modeSelect.addEventListener( 'change', function () {
-                    handleModeChange( group, this.value );
-                } );
-            }
         } );
     }
 
@@ -331,42 +323,6 @@
         var rowCount = group.querySelectorAll( '.wpwe-row' ).length;
         if ( addBtn ) {
             addBtn.style.display = rowCount >= maxRows ? 'none' : '';
-        }
-    }
-
-    function handleModeChange( group, mode ) {
-        group.dataset.mode = mode;
-        var allRows = group.querySelectorAll( '.wpwe-rows .wpwe-row' );
-        var addBtn  = group.querySelector( '.wpwe-add-row' );
-        var maxRows = parseInt( group.dataset.maxRows, 10 ) || 20;
-
-        if ( mode === 'single' ) {
-            allRows.forEach( function ( row, i ) {
-                if ( i === 0 ) {
-                    row.style.display = '';
-                    row.querySelectorAll( 'input, select, textarea' ).forEach( function ( el ) {
-                        el.disabled = false;
-                    } );
-                    var removeBtn = row.querySelector( '.wpwe-remove-row' );
-                    if ( removeBtn ) removeBtn.style.display = 'none';
-                } else {
-                    row.style.display = 'none';
-                    row.querySelectorAll( 'input, select, textarea' ).forEach( function ( el ) {
-                        el.disabled = true;
-                    } );
-                }
-            } );
-            if ( addBtn ) addBtn.style.display = 'none';
-        } else {
-            // repeating mode
-            allRows.forEach( function ( row ) {
-                row.style.display = '';
-                row.querySelectorAll( 'input, select, textarea' ).forEach( function ( el ) {
-                    el.disabled = false;
-                } );
-            } );
-            reindexRows( group );
-            updateAddButtonVisibility( group, maxRows );
         }
     }
 

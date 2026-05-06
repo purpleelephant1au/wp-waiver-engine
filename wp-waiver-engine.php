@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name:       WP Waiver Engine
+ * Plugin Name:       Waiver Engine
  * Description:       Template-driven waiver and contract system with PDF overlay generation and optional third-party booking integrations.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            Nathaniel Smith
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'WPWE_VERSION' ) ) {
-    define( 'WPWE_VERSION', '1.0.0' );
+    define( 'WPWE_VERSION', '1.0.1' );
 }
 if ( ! defined( 'WPWE_PLUGIN_DIR' ) ) {
     define( 'WPWE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );

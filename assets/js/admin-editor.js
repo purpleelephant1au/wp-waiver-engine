@@ -89,7 +89,14 @@
         var el = document.getElementById( 'wpwe-mapper-summary-text' );
         if ( ! el ) return;
         var count = ( document.getElementById( 'wpwe-mapping-tbody' ) || {} ).querySelectorAll( 'tr.wpwe-mapping-row' ).length || 0;
-        var pdf   = ( document.getElementById( 'wpwe_builtin_pdf' ) || {} ).value || '';
+        var pdf = '';
+        if ( pdfUrl ) {
+            try {
+                pdf = new URL( pdfUrl, window.location.origin ).pathname.split( '/' ).pop() || '';
+            } catch ( err ) {
+                pdf = '';
+            }
+        }
         if ( pdf && count ) {
             el.textContent = pdf + ' — ' + count + ( count === 1 ? ' field' : ' fields' );
         } else if ( count ) {
@@ -144,14 +151,6 @@
     if ( wpweAdmin.currentPdfUrl ) {
         loadPdfIntoMapper( wpweAdmin.currentPdfUrl );
     }
-
-    // --- Built-in PDF selector ---
-    $( '#wpwe_builtin_pdf' ).on( 'change', function () {
-        var val = $( this ).val();
-        if ( ! val ) return;
-        var match = ( wpweAdmin.builtinForms || [] ).find( function ( f ) { return f.value === val; } );
-        if ( match ) loadPdfIntoMapper( match.url );
-    } );
 
     // --- Page navigation ---
     $( '#wpwe-prev-page' ).on( 'click', function () { if ( currentPage > 1 ) { currentPage--; renderPage( currentPage ); } } );
@@ -599,11 +598,9 @@
             rowIndex++;
         } );
 
-        var builtinVal = ( document.getElementById( 'wpwe_builtin_pdf' ) || {} ).value || '';
         var pageCount  = parseInt( ( document.getElementById( 'wpwe_map_page_count' ) || {} ).value, 10 ) || totalPages || 1;
 
         var mapping = { page_count: pageCount, groups: groupsMeta, fields: fields };
-        if ( builtinVal ) mapping.pdf_file = builtinVal;
         hiddenInput.value = JSON.stringify( mapping );
     }
 

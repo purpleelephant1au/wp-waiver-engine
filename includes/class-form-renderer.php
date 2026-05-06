@@ -266,17 +266,9 @@ class Form_Renderer {
         <fieldset class="wpwe-group wpwe-group--repeatable wpwe-group--table"
                   data-group-key="<?php echo esc_attr( $group_key ); ?>"
                   data-min-rows="<?php echo esc_attr( $min_rows ); ?>"
-                  data-max-rows="<?php echo esc_attr( $max_rows ); ?>"
-                  data-mode="repeating">
+                  data-max-rows="<?php echo esc_attr( $max_rows ); ?>">
             <legend class="wpwe-group-legend">
                 <?php echo $group_label; ?>
-                <span class="wpwe-mode-wrap">
-                    <span class="wpwe-mode-label"><?php esc_html_e( 'Mode:', 'wp-waiver-engine' ); ?></span>
-                    <select class="wpwe-mode-select" id="wpwe-mode-<?php echo esc_attr( $group_key ); ?>">
-                        <option value="single"><?php esc_html_e( 'Single', 'wp-waiver-engine' ); ?></option>
-                        <option value="repeating" selected><?php esc_html_e( 'Repeating', 'wp-waiver-engine' ); ?></option>
-                    </select>
-                </span>
             </legend>
 
             <div class="wpwe-table-wrap">

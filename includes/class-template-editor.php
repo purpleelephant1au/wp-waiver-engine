@@ -65,11 +65,6 @@ class Template_Editor {
             'mediaButton'   => __( 'Use this PDF', 'wp-waiver-engine' ),
             'workerSrc'     => \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.worker.min.js',
             'currentPdfUrl' => $pdf_url,
-            'builtinForms'  => [
-                [ 'label' => 'Archery Tag',    'value' => 'archerytag.pdf',   'url' => home_url( '/forms/archerytag.pdf' ) ],
-                [ 'label' => 'Laser Skirmish', 'value' => 'laserskirmish.pdf','url' => home_url( '/forms/laserskirmish.pdf' ) ],
-                [ 'label' => 'Paintball',      'value' => 'paintballNew.pdf', 'url' => home_url( '/forms/paintballNew.pdf' ) ],
-            ],
             'i18n' => [
                 'drawHint'  => __( 'Draw a rectangle on the PDF to map a field', 'wp-waiver-engine' ),
                 'page'      => __( 'Page', 'wp-waiver-engine' ),
@@ -78,7 +73,7 @@ class Template_Editor {
                 'deleteRow' => __( 'Delete', 'wp-waiver-engine' ),
                 'addRow'    => __( '+ Add Row Manually', 'wp-waiver-engine' ),
                 'noSchema'  => __( 'Save the field schema first to populate the field dropdown.', 'wp-waiver-engine' ),
-                'noPdf'     => __( 'Select or choose a PDF above to enable the visual mapper.', 'wp-waiver-engine' ),
+                'noPdf'     => __( 'Select a Base PDF in Template Settings to enable the visual mapper.', 'wp-waiver-engine' ),
             ],
         ] );
     }
@@ -379,17 +374,8 @@ class Template_Editor {
                     <?php esc_html_e( 'Visual Field Mapper', 'wp-waiver-engine' ); ?>
                 </span>
                 <div class="wpwe-modal-toolbar">
-                    <label for="wpwe_builtin_pdf"><?php esc_html_e( 'PDF:', 'wp-waiver-engine' ); ?></label>
-                    <select id="wpwe_builtin_pdf" name="wpwe_builtin_pdf">
-                        <option value=""><?php esc_html_e( '— built-in forms —', 'wp-waiver-engine' ); ?></option>
-                        <option value="archerytag.pdf"    <?php selected( $pdf_file, 'archerytag.pdf' ); ?>>Archery Tag</option>
-                        <option value="laserskirmish.pdf" <?php selected( $pdf_file, 'laserskirmish.pdf' ); ?>>Laser Skirmish</option>
-                        <option value="paintballNew.pdf"  <?php selected( $pdf_file, 'paintballNew.pdf' ); ?>>Paintball</option>
-                    </select>
-                    <input type="number" id="wpwe_map_page_count" name="wpwe_map_page_count" min="1" max="20"
-                           value="<?php echo esc_attr( $page_count ?: 1 ); ?>"
-                           title="<?php esc_attr_e( 'Total pages', 'wp-waiver-engine' ); ?>"
-                           style="width:46px;">
+                      <input type="hidden" id="wpwe_map_page_count" name="wpwe_map_page_count"
+                          value="<?php echo esc_attr( $page_count ?: 1 ); ?>">
                     <button type="button" class="button" id="wpwe-prev-page">&#8249;</button>
                     <span><?php esc_html_e( 'Pg', 'wp-waiver-engine' ); ?> <strong id="wpwe-page-num">1</strong>/<span id="wpwe-page-total">1</span></span>
                     <button type="button" class="button" id="wpwe-next-page">&#8250;</button>
@@ -404,7 +390,7 @@ class Template_Editor {
             <div class="wpwe-modal-body">
                 <div class="wpwe-modal-pdf-pane">
                     <div class="wpwe-mapper-hint" id="wpwe-mapper-hint">
-                        <?php esc_html_e( 'Select a PDF above, or use the Base PDF picker in Template Settings.', 'wp-waiver-engine' ); ?>
+                        <?php esc_html_e( 'Use the Base PDF picker in Template Settings to enable the visual mapper.', 'wp-waiver-engine' ); ?>
                     </div>
                     <div class="wpwe-pdf-viewer" id="wpwe-pdf-viewer" style="display:none;">
                         <div class="wpwe-canvas-wrap" id="wpwe-canvas-wrap">
@@ -626,8 +612,6 @@ class Template_Editor {
      * @return array{0: array, 1: array}  [ $mapping, $schema ]
      */
     public static function build_from_post(): array {
-        $pdf_file   = isset( $_POST['wpwe_builtin_pdf'] )
-            ? basename( sanitize_text_field( wp_unslash( $_POST['wpwe_builtin_pdf'] ) ) ) : '';
         $page_count = isset( $_POST['wpwe_map_page_count'] )
             ? max( 1, absint( $_POST['wpwe_map_page_count'] ) ) : 1;
 
@@ -741,7 +725,6 @@ class Template_Editor {
             'groups'     => $groups_meta,
             'fields'     => $mapping_fields,
         ];
-        if ( $pdf_file ) $mapping['pdf_file'] = $pdf_file;
 
         $schema = [ 'groups' => array_values( $schema_groups ) ];
 

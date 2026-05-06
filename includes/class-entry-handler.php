@@ -527,20 +527,25 @@ class Entry_Handler {
 
         $entry_url = admin_url( 'admin.php?page=wpwe-entry&id=' . $entry_id );
 
-        $body  = sprintf( __( 'A new waiver was submitted for: %s', 'wp-waiver-engine' ), $template_title ) . "\n\n";
-        $body .= sprintf( __( 'Submission time: %s', 'wp-waiver-engine' ), wp_date( 'F j, Y g:i a' ) ) . "\n";
-        $body .= sprintf( __( 'View entry: %s', 'wp-waiver-engine' ), $entry_url ) . "\n\n";
+        $body  = '<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.45;color:#1d2327;">';
+        $body .= '<p>' . esc_html( sprintf( __( 'A new waiver was submitted for: %s', 'wp-waiver-engine' ), $template_title ) ) . '</p>';
+        $body .= '<p>' . esc_html( sprintf( __( 'Submission time: %s', 'wp-waiver-engine' ), wp_date( 'F j, Y g:i a' ) ) ) . '<br>';
+        $body .= esc_html( __( 'View entry:', 'wp-waiver-engine' ) ) . ' <a href="' . esc_url( $entry_url ) . '">' . esc_html( $entry_url ) . '</a></p>';
 
         if ( $booking_info ) {
-            $body .= __( 'Booking details:', 'wp-waiver-engine' ) . "\n";
-            $body .= sprintf( __( 'Booking ID: %d', 'wp-waiver-engine' ), (int) $booking_info->appointment_id ) . "\n";
-            $body .= sprintf( __( 'Service: %s', 'wp-waiver-engine' ), $booking_info->service_name ) . "\n";
-            $body .= sprintf( __( 'Booking date: %s', 'wp-waiver-engine' ), wp_date( 'F j, Y g:i a', strtotime( $booking_info->bookingStart ) ) ) . "\n";
-            $body .= sprintf( __( 'Customer: %s', 'wp-waiver-engine' ), $booking_info->firstName . ' ' . $booking_info->lastName ) . "\n\n";
+            $body .= '<h3 style="margin:20px 0 8px 0;">' . esc_html__( 'Booking details', 'wp-waiver-engine' ) . '</h3>';
+            $body .= '<table cellpadding="6" cellspacing="0" border="1" style="border-collapse:collapse;border-color:#dcdcde;">';
+            $body .= '<tr><th align="left">' . esc_html__( 'Field', 'wp-waiver-engine' ) . '</th><th align="left">' . esc_html__( 'Value', 'wp-waiver-engine' ) . '</th></tr>';
+            $body .= '<tr><td>' . esc_html__( 'Booking ID', 'wp-waiver-engine' ) . '</td><td>' . esc_html( (string) (int) $booking_info->appointment_id ) . '</td></tr>';
+            $body .= '<tr><td>' . esc_html__( 'Service', 'wp-waiver-engine' ) . '</td><td>' . esc_html( (string) $booking_info->service_name ) . '</td></tr>';
+            $body .= '<tr><td>' . esc_html__( 'Booking date', 'wp-waiver-engine' ) . '</td><td>' . esc_html( wp_date( 'F j, Y g:i a', strtotime( $booking_info->bookingStart ) ) ) . '</td></tr>';
+            $body .= '<tr><td>' . esc_html__( 'Customer', 'wp-waiver-engine' ) . '</td><td>' . esc_html( (string) ( $booking_info->firstName . ' ' . $booking_info->lastName ) ) . '</td></tr>';
+            $body .= '</table>';
         }
 
-        $body .= __( 'Submitted data:', 'wp-waiver-engine' ) . "\n";
-        $body .= $this->flatten_data_text( $data );
+        $body .= '<h3 style="margin:20px 0 8px 0;">' . esc_html__( 'Submitted data', 'wp-waiver-engine' ) . '</h3>';
+        $body .= $this->build_submission_html_tables( $template, $data );
+        $body .= '</body></html>';
 
         // Attach generated PDFs directly from filesystem paths
         $attachments = [];
@@ -550,9 +555,125 @@ class Entry_Handler {
             }
         }
 
-        $headers = [ 'Content-Type: text/plain; charset=UTF-8' ];
+        $headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 
         return wp_mail( $to, $subject, $body, $headers, $attachments );
+    }
+
+    private function build_submission_html_tables( object $template, array $data ): string {
+        $schema = json_decode( (string) ( $template->field_schema ?? '' ), true );
+        if ( ! is_array( $schema ) || empty( $schema['groups'] ) || ! is_array( $schema['groups'] ) ) {
+            return '<pre style="white-space:pre-wrap;">' . esc_html( $this->flatten_data_text( $data ) ) . '</pre>';
+        }
+
+        $html            = '';
+        $rendered_groups = [];
+
+        foreach ( $schema['groups'] as $group ) {
+            $group_key = sanitize_key( $group['key'] ?? '' );
+            if ( '' === $group_key || ! isset( $data[ $group_key ] ) ) {
+                continue;
+            }
+
+            $rendered_groups[] = $group_key;
+            $group_label = (string) ( $group['label'] ?? $group_key );
+            $fields      = isset( $group['fields'] ) && is_array( $group['fields'] ) ? $group['fields'] : [];
+            $rows        = $this->normalize_group_rows_for_output( $data[ $group_key ] );
+            $repeatable  = ! empty( $group['repeatable'] );
+
+            $html .= '<h4 style="margin:14px 0 6px 0;">' . esc_html( $group_label ) . '</h4>';
+            $html .= '<table cellpadding="6" cellspacing="0" border="1" style="border-collapse:collapse;border-color:#dcdcde;width:100%;max-width:1000px;">';
+
+            if ( $repeatable ) {
+                $html .= '<tr><th align="left" style="width:70px;">' . esc_html__( 'Row', 'wp-waiver-engine' ) . '</th>';
+                foreach ( $fields as $field ) {
+                    $field_label = (string) ( $field['label'] ?? ( $field['key'] ?? '' ) );
+                    $html .= '<th align="left">' . esc_html( $field_label ) . '</th>';
+                }
+                $html .= '</tr>';
+
+                if ( ! $rows ) {
+                    $colspan = max( 2, count( $fields ) + 1 );
+                    $html .= '<tr><td colspan="' . esc_attr( (string) $colspan ) . '"><em>' . esc_html__( 'No rows submitted.', 'wp-waiver-engine' ) . '</em></td></tr>';
+                } else {
+                    foreach ( $rows as $row_index => $row ) {
+                        $html .= '<tr><td>' . esc_html( (string) ( $row_index + 1 ) ) . '</td>';
+                        foreach ( $fields as $field ) {
+                            $field_key = sanitize_key( $field['key'] ?? '' );
+                            $value     = $field_key && isset( $row[ $field_key ] ) ? $row[ $field_key ] : '';
+                            $html     .= '<td>' . $this->format_email_cell_value( $value ) . '</td>';
+                        }
+                        $html .= '</tr>';
+                    }
+                }
+            } else {
+                $html .= '<tr><th align="left" style="width:35%;">' . esc_html__( 'Field', 'wp-waiver-engine' ) . '</th><th align="left">' . esc_html__( 'Value', 'wp-waiver-engine' ) . '</th></tr>';
+                $row = $rows[0] ?? [];
+                foreach ( $fields as $field ) {
+                    $field_key   = sanitize_key( $field['key'] ?? '' );
+                    $field_label = (string) ( $field['label'] ?? $field_key );
+                    $value       = $field_key && isset( $row[ $field_key ] ) ? $row[ $field_key ] : '';
+                    $html       .= '<tr><td>' . esc_html( $field_label ) . '</td><td>' . $this->format_email_cell_value( $value ) . '</td></tr>';
+                }
+            }
+
+            $html .= '</table>';
+        }
+
+        $unknown = array_diff( array_keys( $data ), $rendered_groups );
+        if ( ! empty( $unknown ) ) {
+            $html .= '<h4 style="margin:14px 0 6px 0;">' . esc_html__( 'Additional Data', 'wp-waiver-engine' ) . '</h4>';
+            $html .= '<table cellpadding="6" cellspacing="0" border="1" style="border-collapse:collapse;border-color:#dcdcde;width:100%;max-width:900px;">';
+            $html .= '<tr><th align="left" style="width:35%;">' . esc_html__( 'Field', 'wp-waiver-engine' ) . '</th><th align="left">' . esc_html__( 'Value', 'wp-waiver-engine' ) . '</th></tr>';
+            foreach ( $unknown as $unknown_key ) {
+                $raw_value = $data[ $unknown_key ];
+                $value     = is_array( $raw_value )
+                    ? ( wp_json_encode( $raw_value ) ?: '' )
+                    : (string) $raw_value;
+                $html .= '<tr><td><code>' . esc_html( (string) $unknown_key ) . '</code></td><td>' . $this->format_email_cell_value( $value ) . '</td></tr>';
+            }
+            $html .= '</table>';
+        }
+
+        if ( '' === $html ) {
+            return '<pre style="white-space:pre-wrap;">' . esc_html( $this->flatten_data_text( $data ) ) . '</pre>';
+        }
+
+        return $html;
+    }
+
+    private function normalize_group_rows_for_output( mixed $group_data ): array {
+        if ( ! is_array( $group_data ) ) {
+            return [];
+        }
+
+        if ( [] === $group_data ) {
+            return [];
+        }
+
+        $first = reset( $group_data );
+        if ( is_array( $first ) ) {
+            return $group_data;
+        }
+
+        return [ $group_data ];
+    }
+
+    private function format_email_cell_value( mixed $value ): string {
+        if ( is_array( $value ) ) {
+            $value = wp_json_encode( $value ) ?: '';
+        }
+
+        $display = (string) $value;
+        if ( '' === $display ) {
+            return '&mdash;';
+        }
+
+        if ( str_starts_with( $display, 'data:image/' ) ) {
+            return '<em>' . esc_html__( 'Signature captured (see PDF attachment)', 'wp-waiver-engine' ) . '</em>';
+        }
+
+        return nl2br( esc_html( $display ) );
     }
 
     private function flatten_data_text( array $data, string $prefix = '' ): string {

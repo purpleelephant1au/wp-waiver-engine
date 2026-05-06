@@ -1,10 +1,11 @@
-=== WP Waiver Engine ===
+=== Waiver Engine ===
 Contributors: purpleelephant1au
-Tags: waiver, contract, pdf, form, booking
+Donate link: https://github.com/sponsors/purpleelephant1au
+Tags: pdf, forms, contracts, signature, booking
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 8.0
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +13,7 @@ Template-driven waiver and contract system with PDF overlay generation.
 
 == Description ==
 
-WP Waiver Engine lets you build waiver and contract forms in the WordPress
+Waiver Engine lets you build waiver and contract forms in the WordPress
 admin, map form fields to coordinate positions on an uploaded PDF template,
 and automatically generate filled PDFs when visitors submit the form.
 
@@ -102,7 +103,7 @@ Generated ZIP files are excluded from version control via `.gitignore`.
 
 == Security ==
 
-WP Waiver Engine implements multiple layers of protection against automated
+Waiver Engine implements multiple layers of protection against automated
 abuse and bot submissions:
 
 **1. WordPress Nonce (CSRF protection)**
@@ -155,6 +156,15 @@ The **PDF File Cleanup** tool in Settings lets you permanently delete generated
 PDFs older than a chosen number of days. PDFs older than the threshold are
 removed from disk; database entry records are preserved. This reduces disk
 footprint and limits the blast radius of any hypothetical file-disclosure issue.
+
+== Screenshots ==
+
+1. Template editor with section builder, PDF upload, and field mapping tools.
+2. Frontend waiver form rendered from a published shortcode.
+3. PDF preview modal before final confirmation and submission.
+4. Waiver Entries admin table with filtering, sorting, and PDF access.
+5. Entry detail screen showing captured field data and generated PDF actions.
+6. Settings screen for security options, CAPTCHA, cleanup, and integrations.
 
 == Frequently Asked Questions ==
 
@@ -225,6 +235,11 @@ Run this checklist before uploading your first SVN commit:
 
 == Changelog ==
 
+= 1.0.1 =
+* Improvements to form/template handling and admin workflows.
+* User guide updates with reorganized flow-based screenshots.
+* Release tooling and packaging updates for consistent ZIP builds.
+
 = 1.0.0 =
 * Initial public release.
 * Custom DB tables (no CPT dependency).
@@ -242,17 +257,20 @@ Run this checklist before uploading your first SVN commit:
 
 == Upgrade Notice ==
 
+= 1.0.1 =
+Maintenance release with fixes and documentation updates.
+
 = 1.0.0 =
 First release. No upgrade steps required for fresh installs.
 
 == License ==
 
-WP Waiver Engine is free software: you can redistribute it and/or modify
+Waiver Engine is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by the
 Free Software Foundation, either version 2 of the License, or any later
 version.
 
-WP Waiver Engine is distributed in the hope that it will be useful, but
+Waiver Engine is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.

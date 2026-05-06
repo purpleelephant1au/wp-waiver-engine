@@ -23,6 +23,7 @@ class Entry_Detail {
         $data      = json_decode( $entry->submission_data, true ) ?: [];
         $pdf_paths = json_decode( $entry->pdf_paths, true ) ?: [];
         $template  = Database::get_template( (int) $entry->template_id );
+        $schema    = $template ? ( json_decode( (string) $template->field_schema, true ) ?: [] ) : [];
 
         // Note: ?dl_pdf downloads are handled early by Admin_Menu::handle_actions()
         // before any HTML output, so we never reach here for download requests.
@@ -148,6 +149,112 @@ class Entry_Detail {
             <!-- Submission data -->
             <h3><?php esc_html_e( 'Field Values', 'wp-waiver-engine' ); ?></h3>
             <?php if ( $data ) : ?>
+            <?php if ( ! empty( $schema['groups'] ) && is_array( $schema['groups'] ) ) : ?>
+            <?php $rendered_groups = []; ?>
+            <?php foreach ( $schema['groups'] as $group ) :
+                $group_key = sanitize_key( $group['key'] ?? '' );
+                if ( '' === $group_key || ! isset( $data[ $group_key ] ) ) {
+                    continue;
+                }
+                $rendered_groups[] = $group_key;
+                $group_label = (string) ( $group['label'] ?? $group_key );
+                $fields      = isset( $group['fields'] ) && is_array( $group['fields'] ) ? $group['fields'] : [];
+                $rows        = $this->normalize_group_rows( $data[ $group_key ] );
+                $repeatable  = ! empty( $group['repeatable'] );
+            ?>
+            <h4 style="margin-top:20px;"><?php echo esc_html( $group_label ); ?></h4>
+
+            <?php if ( $repeatable ) : ?>
+            <table class="widefat fixed striped" style="max-width:1000px;">
+                <thead>
+                    <tr>
+                        <th style="width:70px;"><?php esc_html_e( 'Row', 'wp-waiver-engine' ); ?></th>
+                        <?php foreach ( $fields as $field ) :
+                            $field_label = (string) ( $field['label'] ?? ( $field['key'] ?? '' ) );
+                        ?>
+                        <th><?php echo esc_html( $field_label ); ?></th>
+                        <?php endforeach; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ( ! $rows ) : ?>
+                    <tr>
+                        <td colspan="<?php echo esc_attr( (string) ( count( $fields ) + 1 ) ); ?>">
+                            <em><?php esc_html_e( 'No rows submitted.', 'wp-waiver-engine' ); ?></em>
+                        </td>
+                    </tr>
+                    <?php else : ?>
+                    <?php foreach ( $rows as $row_index => $row ) : ?>
+                    <tr>
+                        <td><?php echo esc_html( (string) ( $row_index + 1 ) ); ?></td>
+                        <?php foreach ( $fields as $field ) :
+                            $field_key = sanitize_key( $field['key'] ?? '' );
+                            $value     = $field_key && isset( $row[ $field_key ] ) ? $row[ $field_key ] : '';
+                        ?>
+                        <td><?php $this->render_cell_value( $value ); ?></td>
+                        <?php endforeach; ?>
+                    </tr>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+            <?php else : ?>
+            <?php $row = $rows[0] ?? []; ?>
+            <table class="widefat fixed striped" style="max-width:900px;">
+                <thead>
+                    <tr>
+                        <th style="width:35%"><?php esc_html_e( 'Field', 'wp-waiver-engine' ); ?></th>
+                        <th><?php esc_html_e( 'Value', 'wp-waiver-engine' ); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ( $fields as $field ) :
+                        $field_key   = sanitize_key( $field['key'] ?? '' );
+                        $field_label = (string) ( $field['label'] ?? $field_key );
+                        $value       = $field_key && isset( $row[ $field_key ] ) ? $row[ $field_key ] : '';
+                    ?>
+                    <tr>
+                        <td><?php echo esc_html( $field_label ); ?></td>
+                        <td><?php $this->render_cell_value( $value ); ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php endif; ?>
+            <?php endforeach; ?>
+
+            <?php
+            $unknown = array_diff( array_keys( $data ), $rendered_groups );
+            if ( ! empty( $unknown ) ) :
+            ?>
+            <h4 style="margin-top:20px;"><?php esc_html_e( 'Additional Data', 'wp-waiver-engine' ); ?></h4>
+            <table class="widefat fixed striped" style="max-width:900px;">
+                <thead>
+                    <tr>
+                        <th style="width:35%"><?php esc_html_e( 'Field', 'wp-waiver-engine' ); ?></th>
+                        <th><?php esc_html_e( 'Value', 'wp-waiver-engine' ); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ( $unknown as $unknown_key ) : ?>
+                    <tr>
+                        <td><code><?php echo esc_html( (string) $unknown_key ); ?></code></td>
+                        <td>
+                            <?php
+                            $raw_value = $data[ $unknown_key ];
+                            if ( is_array( $raw_value ) ) {
+                                echo esc_html( wp_json_encode( $raw_value ) ?: '' );
+                            } else {
+                                $this->render_cell_value( $raw_value );
+                            }
+                            ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <?php endif; ?>
+            <?php else : ?>
             <table class="widefat fixed striped" style="max-width:900px;">
                 <thead>
                     <tr>
@@ -159,6 +266,7 @@ class Entry_Detail {
                     <?php $this->render_data_rows( $data ); ?>
                 </tbody>
             </table>
+            <?php endif; ?>
             <?php else : ?>
             <p><?php esc_html_e( 'No submission data found.', 'wp-waiver-engine' ); ?></p>
             <?php endif; ?>
@@ -169,6 +277,47 @@ class Entry_Detail {
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
+
+    private function normalize_group_rows( mixed $group_data ): array {
+        if ( ! is_array( $group_data ) ) {
+            return [];
+        }
+
+        if ( [] === $group_data ) {
+            return [];
+        }
+
+        $first = reset( $group_data );
+        if ( is_array( $first ) ) {
+            return $group_data;
+        }
+
+        return [ $group_data ];
+    }
+
+    private function render_cell_value( mixed $value ): void {
+        if ( is_array( $value ) ) {
+            echo esc_html( wp_json_encode( $value ) ?: '' );
+            return;
+        }
+
+        $display = (string) $value;
+        if ( '' === $display ) {
+            echo '&mdash;';
+            return;
+        }
+
+        if ( str_starts_with( $display, 'data:image/' ) ) {
+            ?>
+            <img src="<?php echo esc_attr( $display ); ?>"
+                 alt="<?php esc_attr_e( 'Signature', 'wp-waiver-engine' ); ?>"
+                 style="display:block;max-width:100%;width:auto;height:auto;max-height:60px;border:1px solid #ddd;padding:2px;background:#fff;box-sizing:border-box;">
+            <?php
+            return;
+        }
+
+        echo nl2br( esc_html( $display ) );
+    }
 
     private function render_data_rows( array $data, string $prefix = '' ): void {
         foreach ( $data as $key => $value ) {
