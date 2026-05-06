@@ -1,6 +1,7 @@
 <?php
 /**
  * Plugin Name:       Waiver Engine
+ * Plugin URI:        https://github.com/purpleelephant1au/wp-waiver-engine
  * Description:       Template-driven waiver and contract system with PDF overlay generation and optional third-party booking integrations.
  * Version:           1.1.0
  * Requires at least: 6.2
