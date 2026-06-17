@@ -148,7 +148,7 @@ class Entry_List_Table {
                         $pdf_paths = json_decode( $entry->pdf_paths, true ) ?: [];
                         $entry_id  = (int) $entry->id;
 
-                        // Booking columns (from LEFT JOIN â€“ only populated when Amelia enabled)
+                        // Booking columns (from LEFT JOIN – only populated when Amelia enabled)
                         $bk_service  = isset( $entry->booking_service )  ? $entry->booking_service  : null;
                         $bk_date     = isset( $entry->booking_date )      ? $entry->booking_date     : null;
                         $bk_customer = isset( $entry->booking_customer )  ? $entry->booking_customer : null;

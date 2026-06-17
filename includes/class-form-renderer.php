@@ -21,7 +21,7 @@ class Form_Renderer {
     // -----------------------------------------------------------------------
 
     public function maybe_enqueue(): void {
-        // Always enqueue â€“ shortcode usage can't always be detected early.
+        // Always enqueue – shortcode usage can't always be detected early.
         // Scripts use defer so no cost if shortcode is absent.
         wp_enqueue_script(
             'signature-pad',
@@ -45,7 +45,7 @@ class Form_Renderer {
             'captchaProvider' => Settings::captcha_provider(),
             'captchaSiteKey'  => Settings::captcha_site_key(),
             'i18n'          => [
-                'submitting'          => __( 'Submittingâ€¦', 'waiver-engine' ),
+                'submitting'          => __( 'Submitting…', 'waiver-engine' ),
                 'success'             => __( 'Thank you! Your waiver has been submitted.', 'waiver-engine' ),
                 'error'               => __( 'Submission failed. Please try again.', 'waiver-engine' ),
                 'required'            => __( 'This field is required.', 'waiver-engine' ),
@@ -54,13 +54,13 @@ class Form_Renderer {
                 'removeRow'           => __( 'Remove', 'waiver-engine' ),
                 'preview'             => __( 'Preview', 'waiver-engine' ),
                 'previewHeading'      => __( 'PDF Preview', 'waiver-engine' ),
-                'pdfLoading'          => __( 'Generating PDF previewâ€¦', 'waiver-engine' ),
-                'editForm'            => __( 'â† Edit', 'waiver-engine' ),
+                'pdfLoading'          => __( 'Generating PDF preview…', 'waiver-engine' ),
+                'editForm'            => __( '← Edit', 'waiver-engine' ),
                 'confirmSubmit'       => __( 'Confirm & Submit', 'waiver-engine' ),
                 'notSigned'           => __( 'Not signed', 'waiver-engine' ),
                 'bookingSearchLabel'  => __( 'Find your booking', 'waiver-engine' ),
                 'bookingSearchHint'   => __( 'Enter booking ID and booking email to verify.', 'waiver-engine' ),
-                'bookingSearching'    => __( 'Verifyingâ€¦', 'waiver-engine' ),
+                'bookingSearching'    => __( 'Verifying…', 'waiver-engine' ),
                 'bookingNoResults'    => __( 'Booking not found or details do not match.', 'waiver-engine' ),
                 'bookingSelected'     => __( 'Booking selected:', 'waiver-engine' ),
                 'bookingClear'        => __( 'Change', 'waiver-engine' ),
@@ -167,7 +167,7 @@ class Form_Renderer {
                            autocomplete="email"
                            aria-label="<?php esc_attr_e( 'Booking email', 'waiver-engine' ); ?>">
                     <button type="button" class="wpwe-booking-verify-btn"><?php esc_html_e( 'Verify', 'waiver-engine' ); ?></button>
-                    <span class="wpwe-booking-searching" hidden><?php esc_html_e( 'Verifyingâ€¦', 'waiver-engine' ); ?></span>
+                    <span class="wpwe-booking-searching" hidden><?php esc_html_e( 'Verifying…', 'waiver-engine' ); ?></span>
                 </div>
                 <div class="wpwe-booking-search-error" hidden></div>
                 <div class="wpwe-booking-selected" hidden>
@@ -383,7 +383,7 @@ class Form_Renderer {
                         name="<?php echo esc_attr( $name ); ?>"
                         class="wpwe-input wpwe-select"
                     <?php if ( $required ) : ?>required aria-required="true"<?php endif; ?>>
-                    <option value=""><?php esc_html_e( 'â€” Select â€”', 'waiver-engine' ); ?></option>
+                    <option value=""><?php esc_html_e( '— Select —', 'waiver-engine' ); ?></option>
                     <?php foreach ( $options as $opt ) : ?>
                     <option value="<?php echo esc_attr( $opt['value'] ?? $opt ); ?>">
                         <?php echo esc_html( $opt['label'] ?? $opt ); ?>

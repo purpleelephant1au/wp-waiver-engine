@@ -11,8 +11,8 @@ require_once dirname( __DIR__ ) . '/vendor_prefixed/WPWE/DbProxy.php';
 /**
  * Manages the two custom database tables:
  *
- *   {prefix}wpwe_templates  â€“ template definitions (replaces waiver_template CPT)
- *   {prefix}wpwe_entries    â€“ submission entries   (replaces waiver_entry CPT)
+ *   {prefix}wpwe_templates  – template definitions (replaces waiver_template CPT)
+ *   {prefix}wpwe_entries    – submission entries   (replaces waiver_entry CPT)
  *
  * Schema version is stored in option `wpwe_db_version`.
  * Call Database::install() on activation and on plugins_loaded (for upgrades).
@@ -42,7 +42,7 @@ class Database {
     public static function install(): void {
         $current_version = (string) get_option( 'wpwe_db_version', '0.0' );
         if ( $current_version === self::DB_VERSION ) {
-            return; // Already current â€“ skip expensive dbDelta.
+            return; // Already current – skip expensive dbDelta.
         }
 
         global $wpdb;
@@ -54,8 +54,8 @@ class Database {
         // Require dbDelta helper
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-        // â”€â”€ Templates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        // `amelia_service_ids` â€“ JSON array of Amelia service IDs linked to this template
+        // -- Templates -------------------------------------------------------
+        // `amelia_service_ids` – JSON array of Amelia service IDs linked to this template
         dbDelta( "
 CREATE TABLE $templates (
   id                  BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -78,8 +78,8 @@ CREATE TABLE $templates (
 ) $charset_collate;
 " );
 
-        // â”€â”€ Entries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        // `amelia_booking_id` â€“ Amelia appointment ID linked to this submission (0 = none)
+        // -- Entries ---------------------------------------------------------
+        // `amelia_booking_id` – Amelia appointment ID linked to this submission (0 = none)
         dbDelta( "
 CREATE TABLE $entries (
   id                 BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -97,7 +97,7 @@ CREATE TABLE $entries (
 ) $charset_collate;
 " );
 
-        // â”€â”€ v1.1 live-site column migrations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // -- v1.1 live-site column migrations --------------------------------
         // dbDelta adds columns to new installs; existing sites need ALTER TABLE.
         if ( version_compare( $current_version, '1.1', '<' ) ) {
             // phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
@@ -112,7 +112,7 @@ CREATE TABLE $entries (
             // phpcs:enable
         }
 
-        // â”€â”€ v1.2 live-site column migrations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // -- v1.2 live-site column migrations --------------------------------
         if ( version_compare( $current_version, '1.2', '<' ) ) {
             // phpcs:disable WordPress.DB.DirectDatabaseQuery
             $has_admin_email = DbProxy::get_results( DbProxy::prepare( 'SHOW COLUMNS FROM %i LIKE %s', $templates, 'send_admin_email' ) );
@@ -126,7 +126,7 @@ CREATE TABLE $entries (
             // phpcs:enable
         }
 
-        // â”€â”€ v1.3 live-site column migrations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // -- v1.3 live-site column migrations --------------------------------
         if ( version_compare( $current_version, '1.3', '<' ) ) {
             // phpcs:disable WordPress.DB.DirectDatabaseQuery
             $has_captcha = DbProxy::get_results( DbProxy::prepare( 'SHOW COLUMNS FROM %i LIKE %s', $templates, 'captcha_enabled' ) );

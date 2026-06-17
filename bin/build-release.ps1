@@ -89,6 +89,8 @@ $ExcludePatterns = @(
     'composer.lock',
     'Feedback.txt',
     'instructions*',
+    'user-guides*',
+    'temp*',
     '*.zip'
 )
 

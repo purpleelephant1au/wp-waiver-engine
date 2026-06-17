@@ -43,7 +43,7 @@ class Admin_Entry_List {
         switch ( $column ) {
             case 'template':
                 $tid = (int) get_post_meta( $post_id, 'template_id', true );
-                echo $tid ? esc_html( get_the_title( $tid ) ) : 'â€”';
+                echo $tid ? esc_html( get_the_title( $tid ) ) : '—';
                 break;
 
             case 'submitter':
@@ -51,7 +51,7 @@ class Admin_Entry_List {
                 // Try common signer fields
                 $name  = $this->find_field( $data, [ 'signer.full_name', 'signer.name', 'full_name' ] );
                 $email = $this->find_field( $data, [ 'signer.email', 'email' ] );
-                echo esc_html( $name ?: 'â€”' );
+                echo esc_html( $name ?: '—' );
                 if ( $email ) {
                     echo '<br><small>' . esc_html( $email ) . '</small>';
                 }
@@ -70,13 +70,13 @@ class Admin_Entry_List {
                         }
                     }
                 } else {
-                    echo 'â€”';
+                    echo '—';
                 }
                 break;
 
             case 'email_sent':
                 $sent = (bool) get_post_meta( $post_id, 'email_sent', true );
-                echo $sent ? '<span style="color:green">&#10003;</span>' : 'â€”';
+                echo $sent ? '<span style="color:green">&#10003;</span>' : '—';
                 break;
         }
     }
@@ -105,10 +105,10 @@ class Admin_Entry_List {
         ?>
         <p>
             <strong><?php esc_html_e( 'Template:', 'waiver-engine' ); ?></strong>
-            <?php echo $template_id ? esc_html( get_the_title( $template_id ) ) : 'â€”'; ?>
+            <?php echo $template_id ? esc_html( get_the_title( $template_id ) ) : '—'; ?>
             &nbsp;|&nbsp;
             <strong><?php esc_html_e( 'Submitter IP:', 'waiver-engine' ); ?></strong>
-            <?php echo esc_html( $ip ?: 'â€”' ); ?>
+            <?php echo esc_html( $ip ?: '—' ); ?>
             &nbsp;|&nbsp;
             <strong><?php esc_html_e( 'Email Sent:', 'waiver-engine' ); ?></strong>
             <?php echo $email_sent ? esc_html__( 'Yes', 'waiver-engine' ) : esc_html__( 'No', 'waiver-engine' ); ?>
@@ -212,7 +212,7 @@ class Admin_Entry_List {
                 }
             } else {
                 $display = (string) $value;
-                // Hide raw base64 signature â€“ show placeholder
+                // Hide raw base64 signature – show placeholder
                 if ( str_starts_with( $display, 'data:image/' ) ) {
                     $display = '[signature image]';
                 }

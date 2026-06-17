@@ -185,7 +185,7 @@ class Entry_Handler {
     }
 
     // -----------------------------------------------------------------------
-    // PDF Preview (AJAX â€“ no entry created, no email sent)
+    // PDF Preview (AJAX – no entry created, no email sent)
     // -----------------------------------------------------------------------
 
     public function ajax_preview_pdf(): void {
@@ -456,7 +456,7 @@ class Entry_Handler {
             } else {
                 $display = (string) $value;
                 if ( str_starts_with( $display, 'data:image/' ) ) {
-                    $display = '[signature image â€“ see PDF]';
+                    $display = '[signature image – see PDF]';
                 }
                 $lines .= $label . ': ' . $display . "\n";
             }
@@ -490,7 +490,7 @@ class Entry_Handler {
 
         $secret = Settings::captcha_secret_key();
         if ( '' === $secret ) {
-            // No secret key configured â€“ can't verify, fail open
+            // No secret key configured – can't verify, fail open
             return true;
         }
 

@@ -68,8 +68,8 @@ class Template_Editor {
             'i18n' => [
                 'drawHint'  => __( 'Draw a rectangle on the PDF to map a field', 'waiver-engine' ),
                 'page'      => __( 'Page', 'waiver-engine' ),
-                'prev'      => __( 'â€¹ Prev', 'waiver-engine' ),
-                'next'      => __( 'Next â€º', 'waiver-engine' ),
+                'prev'      => __( '‹ Prev', 'waiver-engine' ),
+                'next'      => __( 'Next ›', 'waiver-engine' ),
                 'deleteRow' => __( 'Delete', 'waiver-engine' ),
                 'addRow'    => __( '+ Add Row Manually', 'waiver-engine' ),
                 'noSchema'  => __( 'Save the field schema first to populate the field dropdown.', 'waiver-engine' ),
@@ -107,7 +107,7 @@ class Template_Editor {
         $page_count  = (int) ( $mapping['page_count'] ?? 1 );
 
         // Build a form-type lookup from field_schema so the mapper dropdown shows
-        // the real type (date, signature, numberâ€¦) even for older templates whose
+        // the real type (date, signature, number…) even for older templates whose
         // pdf_mapping only stored the collapsed 'text'/'image' pdf render type.
         $schema_raw         = $tpl ? $tpl->field_schema : '';
         $schema_data        = $schema_raw ? ( json_decode( $schema_raw, true ) ?: [] ) : [];
@@ -152,7 +152,7 @@ class Template_Editor {
                 <input type="hidden" name="wpwe_action"      value="save_template">
                 <input type="hidden" name="wpwe_template_id" value="<?php echo esc_attr( $id ); ?>">
 
-                <!-- â”€â”€ Core Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+                <!-- -- Core Settings --------------------------------------- -->
                 <div id="poststuff">
                 <div id="post-body" class="metabox-holder">
                 <div id="post-body-content">
@@ -245,13 +245,13 @@ class Template_Editor {
                         </div><!-- /.inside -->
                     </div><!-- /.postbox -->
 
-                    <!-- â”€â”€ Fields & PDF Mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+                    <!-- -- Fields & PDF Mapping ----------------------------- -->
                     <div class="postbox">
                         <div class="postbox-header">
                             <h2><?php esc_html_e( 'Fields & PDF Mapping', 'waiver-engine' ); ?></h2>
                         </div>
                         <div class="inside">
-                            <!-- Hidden JSON store â€“ JS updates this before form submit -->
+                            <!-- Hidden JSON store – JS updates this before form submit -->
                             <input type="hidden" id="wpwe_pdf_mapping" name="wpwe_pdf_mapping"
                                    value="<?php echo esc_attr( $mapping_raw ); ?>">
 
@@ -263,7 +263,7 @@ class Template_Editor {
                                     if ( $pdf_file && $field_count ) {
                                         echo esc_html( sprintf(
                                             /* translators: 1: PDF filename, 2: number of mapped fields */
-                                            _n( '%1$s â€” %2$d field', '%1$s â€” %2$d fields', $field_count, 'waiver-engine' ),
+                                            _n( '%1$s — %2$d field', '%1$s — %2$d fields', $field_count, 'waiver-engine' ),
                                             $pdf_file, $field_count
                                         ) );
                                     } elseif ( $field_count ) {
@@ -301,7 +301,7 @@ class Template_Editor {
                 </div><!-- /#poststuff -->
 
         <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-             Full-screen mapper modal â€” kept INSIDE the form so that
+             Full-screen mapper modal — kept INSIDE the form so that
              all wpwe_map_*[] inputs are submitted with the form.
              â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
         <div id="wpwe-mapper-modal" class="wpwe-mapper-modal" role="dialog" aria-modal="true" style="display:none;">
@@ -398,7 +398,7 @@ class Template_Editor {
                     <h2><?php esc_html_e( 'Export / Import Field Mappings', 'waiver-engine' ); ?></h2>
                 </div>
                 <div class="inside">
-                    <p><?php esc_html_e( 'Export the field schema and PDF coordinate mappings to migrate this template\'s configuration to another site. The Base PDF itself is not included â€” upload it separately on the destination site before importing.', 'waiver-engine' ); ?></p>
+                    <p><?php esc_html_e( 'Export the field schema and PDF coordinate mappings to migrate this template\'s configuration to another site. The Base PDF itself is not included — upload it separately on the destination site before importing.', 'waiver-engine' ); ?></p>
 
                     <h3 style="margin-top:0;"><?php esc_html_e( 'Export', 'waiver-engine' ); ?></h3>
                     <a href="<?php echo esc_url( wp_nonce_url(
@@ -482,9 +482,9 @@ class Template_Editor {
 
         $loc = '';
         if ( $x !== '' && $y !== '' ) {
-            $loc = 'pg.' . $page . ' Â· ' . round( (float) $x, 1 ) . ', ' . round( (float) $y, 1 );
+            $loc = 'pg.' . $page . ' · ' . round( (float) $x, 1 ) . ', ' . round( (float) $y, 1 );
             if ( $width !== '' && $height !== '' ) {
-                $loc .= ' Â· ' . round( (float) $width, 1 ) . 'Ã—' . round( (float) $height, 1 );
+                $loc .= ' · ' . round( (float) $width, 1 ) . '×' . round( (float) $height, 1 );
             }
         }
         ?>
@@ -582,7 +582,7 @@ class Template_Editor {
 
             $path = $gk . '.' . $fk;
             // Allow multiple PDF locations for the same form field:
-            // append __2, __3, â€¦ suffix when the path already exists.
+            // append __2, __3, … suffix when the path already exists.
             $final_path = $path;
             $dup_count  = 2;
             while ( isset( $mapping_fields[ $final_path ] ) ) {
@@ -641,7 +641,7 @@ class Template_Editor {
                 }
             }
             // Skip if this field key is already in the schema (duplicate PDF placement
-            // for the same form field â€” two boxes on the PDF, one input on the form).
+            // for the same form field — two boxes on the PDF, one input on the form).
             $already_in_schema = false;
             foreach ( $schema_groups[ $gk ]['fields'] as $existing ) {
                 if ( ( $existing['key'] ?? '' ) === $fk ) { $already_in_schema = true; break; }

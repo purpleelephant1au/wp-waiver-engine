@@ -28,7 +28,7 @@ class Template_Meta_Box {
         }
         wp_enqueue_media();
 
-        // PDF.js (UMD â€“ exposes window.pdfjsLib)
+        // PDF.js (UMD – exposes window.pdfjsLib)
         wp_enqueue_script(
             'pdfjs',
             \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.min.js',
@@ -73,8 +73,8 @@ class Template_Meta_Box {
             'i18n'         => [
                 'drawHint'    => __( 'Draw a rectangle on the PDF to map a field', 'waiver-engine' ),
                 'page'        => __( 'Page', 'waiver-engine' ),
-                'prev'        => __( 'â€¹ Prev', 'waiver-engine' ),
-                'next'        => __( 'Next â€º', 'waiver-engine' ),
+                'prev'        => __( '‹ Prev', 'waiver-engine' ),
+                'next'        => __( 'Next ›', 'waiver-engine' ),
                 'deleteRow'   => __( 'Delete', 'waiver-engine' ),
                 'addRow'      => __( '+ Add Row Manually', 'waiver-engine' ),
                 'noSchema'    => __( 'Save the field schema first to populate the field dropdown.', 'waiver-engine' ),
@@ -182,10 +182,10 @@ class Template_Meta_Box {
         $groups_meta = $mapping['groups'] ?? [];
         ?>
 
-        <!-- Hidden JSON store â€“ updated by JS before form submit -->
+        <!-- Hidden JSON store – updated by JS before form submit -->
         <input type="hidden" id="wpwe_pdf_mapping" name="wpwe_pdf_mapping" value="<?php echo esc_attr( $raw ); ?>">
 
-        <!-- â”€â”€ Meta box summary: field count + open button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+        <!-- -- Meta box summary: field count + open button --------------- -->
         <div class="wpwe-mapper-summary">
             <span id="wpwe-mapper-summary-text" class="wpwe-mapper-summary-text">
                 <?php
@@ -193,7 +193,7 @@ class Template_Meta_Box {
                 if ( $pdf_file && $field_count ) {
                     echo esc_html( sprintf(
                         /* translators: 1: PDF filename, 2: number of fields */
-                        _n( '%1$s â€” %2$d field', '%1$s â€” %2$d fields', $field_count, 'waiver-engine' ),
+                        _n( '%1$s — %2$d field', '%1$s — %2$d fields', $field_count, 'waiver-engine' ),
                         $pdf_file, $field_count
                     ) );
                 } elseif ( $field_count ) {
@@ -263,7 +263,7 @@ class Template_Meta_Box {
                 <!-- Right: Field table -->
                 <div class="wpwe-modal-table-pane">
                     <p class="description" style="margin:0 0 8px;font-size:12px;">
-                        <?php esc_html_e( 'Draw on the PDF to add rows. Fill in Group, Field Key, Label, Type â€” both the frontend form and PDF overlay are generated from this table.', 'waiver-engine' ); ?>
+                        <?php esc_html_e( 'Draw on the PDF to add rows. Fill in Group, Field Key, Label, Type — both the frontend form and PDF overlay are generated from this table.', 'waiver-engine' ); ?>
                     </p>
                     <div class="wpwe-mapping-table-wrap">
                         <table class="widefat wpwe-mapping-table" id="wpwe-mapping-table">
@@ -300,7 +300,7 @@ class Template_Meta_Box {
                     <?php esc_html_e( 'Done', 'waiver-engine' ); ?>
                 </button>
                 <span class="wpwe-modal-footer-hint">
-                    <?php esc_html_e( 'Changes are held in memory â€” click Save/Update in the post editor to persist.', 'waiver-engine' ); ?>
+                    <?php esc_html_e( 'Changes are held in memory — click Save/Update in the post editor to persist.', 'waiver-engine' ); ?>
                 </span>
             </div>
 
@@ -338,9 +338,9 @@ class Template_Meta_Box {
 
         $loc = '';
         if ( $x !== '' && $y !== '' ) {
-            $loc = 'pg.' . $page . ' Â· ' . round( (float) $x, 1 ) . ', ' . round( (float) $y, 1 );
+            $loc = 'pg.' . $page . ' · ' . round( (float) $x, 1 ) . ', ' . round( (float) $y, 1 );
             if ( $width !== '' && $height !== '' ) {
-                $loc .= ' Â· ' . round( (float) $width, 1 ) . 'Ã—' . round( (float) $height, 1 );
+                $loc .= ' · ' . round( (float) $width, 1 ) . '×' . round( (float) $height, 1 );
             }
         }
         ?>
@@ -378,7 +378,7 @@ class Template_Meta_Box {
             <!-- Page -->
             <td><input type="number" class="wpwe-map-page small-text" name="wpwe_map_pages[]"
                        value="<?php echo esc_attr( $page ); ?>" min="1" max="99"></td>
-            <!-- X/Y/W/H â€“ hidden, set by canvas draw -->
+            <!-- X/Y/W/H – hidden, set by canvas draw -->
             <input type="hidden" class="wpwe-map-x" name="wpwe_map_x[]" value="<?php echo esc_attr( $x ); ?>">
             <input type="hidden" class="wpwe-map-y" name="wpwe_map_y[]" value="<?php echo esc_attr( $y ); ?>">
             <input type="hidden" class="wpwe-map-w" name="wpwe_map_w[]" value="<?php echo esc_attr( $width ); ?>">
@@ -545,7 +545,7 @@ class Template_Meta_Box {
                 }
             }
             // Skip if this field key is already in the schema (duplicate PDF placement
-            // for the same form field â€” two boxes on the PDF, one input on the form).
+            // for the same form field — two boxes on the PDF, one input on the form).
             $already_in_schema = false;
             foreach ( $schema_groups[ $gk ]['fields'] as $existing ) {
                 if ( ( $existing['key'] ?? '' ) === $fk ) { $already_in_schema = true; break; }

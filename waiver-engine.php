@@ -3,7 +3,7 @@
  * Plugin Name:       Waiver Engine
  * Plugin URI:        https://github.com/purpleelephant1au/wp-waiver-engine
  * Description:       Template-driven waiver and contract system with PDF overlay generation and optional third-party booking integrations.
- * Version:           1.1.2
+ * Version:           1.1.3
  * Requires at least: 6.2
  * Requires PHP:      8.0
  * Author:            Nathaniel Smith
@@ -12,7 +12,7 @@
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       waiver-engine
  * Domain Path:       /languages
- * @fs_premium_only /includes/integrations/class-integration-amelia.php, /user-guides/simplewaiver/repeatable-form-user-flow-guide.md, /user-guides/simplewaiver/screenshots/repeatable-form-flow/
+ * @fs_premium_only /includes/integrations/class-integration-amelia.php
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'WPWE_VERSION' ) ) {
-    define( 'WPWE_VERSION', '1.1.2' );
+    define( 'WPWE_VERSION', '1.1.3' );
 }
 if ( ! defined( 'WPWE_PLUGIN_DIR' ) ) {
     define( 'WPWE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -260,28 +260,6 @@ register_deactivation_hook( __FILE__, function (): void {
 } );
 
 // -----------------------------------------------------------------------
-// Uninstall - drop tables and remove options (Freemius after_uninstall hook)
+// Uninstall cleanup is handled in uninstall.php when the plugin is deleted.
 // -----------------------------------------------------------------------
-if ( function_exists( 'wwe_fs' ) && wwe_fs() ) {
-    wwe_fs()->add_action( 'after_uninstall', function (): void {
-        global $wpdb;
-
-        // Drop custom tables.
-        $wpdb->query( "DROP TABLE IF EXISTS `{$wpdb->prefix}wpwe_entries`" );   // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-        $wpdb->query( "DROP TABLE IF EXISTS `{$wpdb->prefix}wpwe_templates`" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-
-        // Remove all plugin options.
-        delete_option( 'wpwe_db_version' );
-        delete_option( 'wpwe_amelia_enabled' );
-        delete_option( 'wpwe_admin_email_enabled' );
-        delete_option( 'wpwe_user_email_enabled' );
-        delete_option( 'wpwe_rate_limit_enabled' );
-        delete_option( 'wpwe_rate_limit_max' );
-        delete_option( 'wpwe_rate_limit_window' );
-        delete_option( 'wpwe_pdf_retention_days' );
-        delete_option( 'wpwe_captcha_provider' );
-        delete_option( 'wpwe_captcha_site_key' );
-        delete_option( 'wpwe_captcha_secret_key' );
-    } );
-}
 

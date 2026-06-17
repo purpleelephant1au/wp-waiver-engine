@@ -71,7 +71,7 @@ class Entry_Detail {
                 </tr>
                 <tr>
                     <th><?php esc_html_e( 'Submitter IP', 'waiver-engine' ); ?></th>
-                    <td><?php echo esc_html( $entry->submitter_ip ?: 'â€”' ); ?></td>
+                    <td><?php echo esc_html( $entry->submitter_ip ?: '—' ); ?></td>
                 </tr>
                 <tr>
                     <th><?php esc_html_e( 'Email Sent', 'waiver-engine' ); ?></th>

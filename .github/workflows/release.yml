@@ -92,6 +92,8 @@ jobs:
             --exclude='composer.lock' \
             --exclude='Feedback.txt' \
             --exclude='instructions/' \
+            --exclude='user-guides/' \
+            --exclude='temp/' \
             --exclude='*.zip' \
             --exclude='.github/' \
             . /tmp/stage/waiver-engine/

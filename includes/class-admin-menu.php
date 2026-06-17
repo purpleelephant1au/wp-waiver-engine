@@ -8,8 +8,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * Menu structure:
  *   Waivers                     (top-level, slug: wpwe)
- *   â”œâ”€ Templates                (sub: wpwe)          â†’ template list
- *   â””â”€ Entries                  (sub: wpwe-entries)   â†’ entry list
+ *   |- Templates                (sub: wpwe)          → template list
+ *   `- Entries                  (sub: wpwe-entries)   → entry list
  *
  * Edit-template page is accessed via `?page=wpwe-edit&id=N` (hidden from menu).
  * View-entry page is accessed via `?page=wpwe-entry&id=N` (hidden from menu).
@@ -46,7 +46,7 @@ class Admin_Menu {
             [ $this, 'page_template_list' ]
         );
 
-        // Add New â€” hidden from sidebar; accessed via the button in the template list
+        // Add New — hidden from sidebar; accessed via the button in the template list
         add_submenu_page(
             null,
             __( 'Add New Template', 'waiver-engine' ),
@@ -56,7 +56,7 @@ class Admin_Menu {
             [ $this, 'page_template_edit' ]
         );
 
-        // Edit page â€” hidden (no parent), accessed via ?page=wpwe-edit&id=N
+        // Edit page — hidden (no parent), accessed via ?page=wpwe-edit&id=N
         add_submenu_page(
             null,
             __( 'Edit Template', 'waiver-engine' ),
@@ -75,7 +75,7 @@ class Admin_Menu {
             [ $this, 'page_entry_list' ]
         );
 
-        // Entry detail â€” hidden
+        // Entry detail — hidden
         add_submenu_page(
             null,
             __( 'View Entry', 'waiver-engine' ),
@@ -96,7 +96,7 @@ class Admin_Menu {
     }
 
     // -----------------------------------------------------------------------
-    // POST action handling (save, delete, etc.) â€“ runs before output
+    // POST action handling (save, delete, etc.) – runs before output
     // -----------------------------------------------------------------------
 
     public function handle_actions(): void {
@@ -359,7 +359,7 @@ class Admin_Menu {
                         <td>
                             <?php echo $tpl->active
                                 ? '<span style="color:green">&#10003;</span>'
-                                : '<span style="color:#aaa">â€”</span>'; ?>
+                                : '<span style="color:#aaa">—</span>'; ?>
                         </td>
                         <td>
                             <code>[waiver_form id="<?php echo esc_attr( $tpl->id ); ?>"]</code>

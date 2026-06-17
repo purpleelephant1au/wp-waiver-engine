@@ -693,5 +693,109 @@ class Premium_Bridge {
     public static function get_booking( int $booking_id ): ?object {
         return Integration_Amelia::get_booking( $booking_id );
     }
+
+    /**
+     * Pro upgrade notice on the settings screen (unlicensed premium package only).
+     */
+    public static function render_settings_upgrade_notice(): void {
+        if ( Plan::is_pro() ) {
+            return;
+        }
+        ?>
+        <div class="notice notice-info">
+            <p>
+                <?php esc_html_e( 'You are on the Free plan. Email sending, repeating rows, and Amelia integration require Pro.', 'waiver-engine' ); ?>
+                <?php if ( Plan::get_upgrade_url() !== '#' ) : ?>
+                    <a class="button button-secondary" href="<?php echo esc_url( Plan::get_upgrade_url() ); ?>" target="_blank" rel="noopener noreferrer" style="margin-left:8px;">
+                        <?php esc_html_e( 'Upgrade to Pro', 'waiver-engine' ); ?>
+                    </a>
+                <?php endif; ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    /**
+     * Amelia and email settings rows on the settings screen (premium package only).
+     */
+    public static function render_settings_premium_rows(): void {
+        ?>
+        <tr>
+            <th scope="row">
+                <?php esc_html_e( 'Amelia Integration', 'waiver-engine' ); ?>
+                <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                      title="<?php esc_attr_e( 'Connect Waiver Engine with the Amelia Booking plugin. When active, a booking-search widget appears on waiver forms so customers can link their submission to an existing appointment.', 'waiver-engine' ); ?>"></span>
+            </th>
+            <td>
+            <?php if ( ! Plan::is_feature_enabled( 'amelia_integration' ) ) : ?>
+                <p class="description">
+                    <?php esc_html_e( 'Available on Pro plans.', 'waiver-engine' ); ?>
+                </p>
+            <?php elseif ( Integration_Manager::is_amelia_active() ) : ?>
+                <fieldset>
+                    <label>
+                        <input type="checkbox" name="wpwe_amelia_enabled" value="1"
+                               <?php checked( (bool) get_option( Settings::OPTION_AMELIA_ENABLED, false ) ); ?>>
+                        <?php esc_html_e( 'Enable Amelia booking integration', 'waiver-engine' ); ?>
+                    </label>
+                    <p class="description">
+                        <?php esc_html_e( 'When enabled: a booking-search widget appears on frontend forms, booking details are included in notification emails, Service / Customer / Date columns appear in the Entries list, and "Linked Amelia Services" is shown in template editors. Defaults to OFF.', 'waiver-engine' ); ?>
+                    </p>
+                </fieldset>
+            <?php else : ?>
+                <p class="description">
+                    <?php esc_html_e( 'Amelia Booking plugin not detected. Install and activate Amelia to enable booking integration settings.', 'waiver-engine' ); ?>
+                </p>
+            <?php endif; ?>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">
+                <?php esc_html_e( 'Admin Notification Emails', 'waiver-engine' ); ?>
+                <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                      title="<?php esc_attr_e( 'When enabled, the notification address receives an email with the PDF attached each time a waiver is submitted. Can also be toggled per-template in the template editor.', 'waiver-engine' ); ?>"></span>
+            </th>
+            <td>
+                <?php if ( Plan::is_feature_enabled( 'email_sending' ) ) : ?>
+                <fieldset>
+                    <label>
+                        <input type="checkbox" name="wpwe_admin_email_enabled" value="1"
+                               <?php checked( Settings::is_admin_email_enabled() ); ?>>
+                        <?php esc_html_e( 'Enable admin notification emails', 'waiver-engine' ); ?>
+                    </label>
+                    <p class="description">
+                        <?php esc_html_e( 'When enabled, an email is sent to the notification address each time a new waiver is submitted. Per-template control appears on each template\'s settings page. Defaults to ON.', 'waiver-engine' ); ?>
+                    </p>
+                </fieldset>
+                <?php else : ?>
+                <p class="description"><?php esc_html_e( 'Available on Pro plans.', 'waiver-engine' ); ?></p>
+                <?php endif; ?>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">
+                <?php esc_html_e( 'Submitter Copy Emails', 'waiver-engine' ); ?>
+                <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                      title="<?php esc_attr_e( 'When enabled, an opt-in checkbox appears on waiver forms so submitters can request a PDF copy by email. Can also be toggled per-template.', 'waiver-engine' ); ?>"></span>
+            </th>
+            <td>
+                <?php if ( Plan::is_feature_enabled( 'email_sending' ) ) : ?>
+                <fieldset>
+                    <label>
+                        <input type="checkbox" name="wpwe_user_email_enabled" value="1"
+                               <?php checked( Settings::is_user_email_enabled() ); ?>>
+                        <?php esc_html_e( 'Enable submitter copy emails', 'waiver-engine' ); ?>
+                    </label>
+                    <p class="description">
+                        <?php esc_html_e( 'When enabled, submitters can opt in to receive a PDF copy by email. The opt-in checkbox appears on the frontend form. Per-template control appears on each template\'s settings page. Defaults to ON.', 'waiver-engine' ); ?>
+                    </p>
+                </fieldset>
+                <?php else : ?>
+                <p class="description"><?php esc_html_e( 'Available on Pro plans.', 'waiver-engine' ); ?></p>
+                <?php endif; ?>
+            </td>
+        </tr>
+        <?php
+    }
 }
 

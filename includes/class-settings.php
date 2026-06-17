@@ -7,16 +7,16 @@ defined( 'ABSPATH' ) || exit;
  * Plugin-wide settings page and option helpers.
  *
  * Stored in wp_options:
- *   wpwe_amelia_enabled       â€“ '1' (on) or '' (off) â€“ defaults to OFF.
- *   wpwe_admin_email_enabled  â€“ '1' (on) or '' (off) â€“ defaults to ON.
- *   wpwe_user_email_enabled   â€“ '1' (on) or '' (off) â€“ defaults to ON.
- *   wpwe_rate_limit_enabled   â€“ '1' (on) or '' (off) â€“ defaults to ON.
- *   wpwe_rate_limit_max       â€“ int, max submissions per window â€“ defaults to 5.
- *   wpwe_rate_limit_window    â€“ int, window in minutes â€“ defaults to 15.
- *   wpwe_pdf_retention_days   â€“ int, days retained for manual cleanup tool â€“ defaults to 90.
- *   wpwe_captcha_provider     â€“ 'none' | 'recaptcha_v3' | 'hcaptcha' â€“ defaults to 'none'.
- *   wpwe_captcha_site_key     â€“ string, published site key.
- *   wpwe_captcha_secret_key   â€“ string, server-side secret key.
+ *   wpwe_amelia_enabled       – '1' (on) or '' (off) – defaults to OFF.
+ *   wpwe_admin_email_enabled  – '1' (on) or '' (off) – defaults to ON.
+ *   wpwe_user_email_enabled   – '1' (on) or '' (off) – defaults to ON.
+ *   wpwe_rate_limit_enabled   – '1' (on) or '' (off) – defaults to ON.
+ *   wpwe_rate_limit_max       – int, max submissions per window – defaults to 5.
+ *   wpwe_rate_limit_window    – int, window in minutes – defaults to 15.
+ *   wpwe_pdf_retention_days   – int, days retained for manual cleanup tool – defaults to 90.
+ *   wpwe_captcha_provider     – 'none' | 'recaptcha_v3' | 'hcaptcha' – defaults to 'none'.
+ *   wpwe_captcha_site_key     – string, published site key.
+ *   wpwe_captcha_secret_key   – string, server-side secret key.
  *
  * Amelia settings are only saved/displayed when Amelia is detected by
  * Integration_Manager::is_amelia_active().
@@ -156,17 +156,8 @@ class Settings {
         <div class="wrap">
             <h1><?php esc_html_e( 'Waiver Engine Settings', 'waiver-engine' ); ?></h1>
 
-            <?php if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only() && ! \WPWE\Plan::is_pro() ) : ?>
-            <div class="notice notice-info">
-                <p>
-                    <?php esc_html_e( 'You are on the Free plan. Email sending, repeating rows, and Amelia integration require Pro.', 'waiver-engine' ); ?>
-                    <?php if ( \WPWE\Plan::get_upgrade_url() !== '#' ) : ?>
-                        <a class="button button-secondary" href="<?php echo esc_url( \WPWE\Plan::get_upgrade_url() ); ?>" target="_blank" rel="noopener noreferrer" style="margin-left:8px;">
-                            <?php esc_html_e( 'Upgrade to Pro', 'waiver-engine' ); ?>
-                        </a>
-                    <?php endif; ?>
-                </p>
-            </div>
+            <?php if ( class_exists( Premium_Bridge::class ) ) : ?>
+                <?php Premium_Bridge::render_settings_upgrade_notice(); ?>
             <?php endif; ?>
 
             <?php // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only admin notice query vars. ?>
@@ -243,90 +234,16 @@ class Settings {
                 <input type="hidden" name="wpwe_action" value="save_settings">
 
                 <table class="form-table" role="presentation">
-                    <?php if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only() ) : ?>
-                    <tr>
-                        <th scope="row">
-                            <?php esc_html_e( 'Amelia Integration', 'waiver-engine' ); ?>
-                            <span class="wpwe-tooltip dashicons dashicons-editor-help"
-                                  title="<?php esc_attr_e( 'Connect Waiver Engine with the Amelia Booking plugin. When active, a booking-search widget appears on waiver forms so customers can link their submission to an existing appointment.', 'waiver-engine' ); ?>"></span>
-                        </th>
-                        <td>
-                        <?php if ( ! \WPWE\Plan::is_feature_enabled( 'amelia_integration' ) ) : ?>
-                            <p class="description">
-                                <?php esc_html_e( 'Available on Pro plans.', 'waiver-engine' ); ?>
-                            </p>
-                        <?php elseif ( \WPWE\Integration_Manager::is_amelia_active() ) : ?>
-                            <fieldset>
-                                <label>
-                                    <input type="checkbox" name="wpwe_amelia_enabled" value="1"
-                                           <?php checked( (bool) get_option( self::OPTION_AMELIA_ENABLED, false ) ); ?>>
-                                    <?php esc_html_e( 'Enable Amelia booking integration', 'waiver-engine' ); ?>
-                                </label>
-                                <p class="description">
-                                    <?php esc_html_e( 'When enabled: a booking-search widget appears on frontend forms, booking details are included in notification emails, Service / Customer / Date columns appear in the Entries list, and "Linked Amelia Services" is shown in template editors. Defaults to OFF.', 'waiver-engine' ); ?>
-                                </p>
-                            </fieldset>
-                        <?php else : ?>
-                            <p class="description">
-                                <?php esc_html_e( 'Amelia Booking plugin not detected. Install and activate Amelia to enable booking integration settings.', 'waiver-engine' ); ?>
-                            </p>
-                        <?php endif; ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">
-                            <?php esc_html_e( 'Admin Notification Emails', 'waiver-engine' ); ?>
-                            <span class="wpwe-tooltip dashicons dashicons-editor-help"
-                                  title="<?php esc_attr_e( 'When enabled, the notification address receives an email with the PDF attached each time a waiver is submitted. Can also be toggled per-template in the template editor.', 'waiver-engine' ); ?>"></span>
-                        </th>
-                        <td>
-                            <?php if ( \WPWE\Plan::is_feature_enabled( 'email_sending' ) ) : ?>
-                            <fieldset>
-                                <label>
-                                    <input type="checkbox" name="wpwe_admin_email_enabled" value="1"
-                                           <?php checked( self::is_admin_email_enabled() ); ?>>
-                                    <?php esc_html_e( 'Enable admin notification emails', 'waiver-engine' ); ?>
-                                </label>
-                                <p class="description">
-                                    <?php esc_html_e( 'When enabled, an email is sent to the notification address each time a new waiver is submitted. Per-template control appears on each template\'s settings page. Defaults to ON.', 'waiver-engine' ); ?>
-                                </p>
-                            </fieldset>
-                            <?php else : ?>
-                            <p class="description"><?php esc_html_e( 'Available on Pro plans.', 'waiver-engine' ); ?></p>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row">
-                            <?php esc_html_e( 'Submitter Copy Emails', 'waiver-engine' ); ?>
-                            <span class="wpwe-tooltip dashicons dashicons-editor-help"
-                                  title="<?php esc_attr_e( 'When enabled, an opt-in checkbox appears on waiver forms so submitters can request a PDF copy by email. Can also be toggled per-template.', 'waiver-engine' ); ?>"></span>
-                        </th>
-                        <td>
-                            <?php if ( \WPWE\Plan::is_feature_enabled( 'email_sending' ) ) : ?>
-                            <fieldset>
-                                <label>
-                                    <input type="checkbox" name="wpwe_user_email_enabled" value="1"
-                                           <?php checked( self::is_user_email_enabled() ); ?>>
-                                    <?php esc_html_e( 'Enable submitter copy emails', 'waiver-engine' ); ?>
-                                </label>
-                                <p class="description">
-                                    <?php esc_html_e( 'When enabled, submitters can opt in to receive a PDF copy by email. The opt-in checkbox appears on the frontend form. Per-template control appears on each template\'s settings page. Defaults to ON.', 'waiver-engine' ); ?>
-                                </p>
-                            </fieldset>
-                            <?php else : ?>
-                            <p class="description"><?php esc_html_e( 'Available on Pro plans.', 'waiver-engine' ); ?></p>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
+                    <?php if ( class_exists( Premium_Bridge::class ) ) : ?>
+                        <?php Premium_Bridge::render_settings_premium_rows(); ?>
                     <?php endif; ?>
 
-                    <!-- â”€â”€ Submission rate limiting â”€â”€ -->
+                    <!-- -- Submission rate limiting -- -->
                     <tr>
                         <th scope="row">
                             <?php esc_html_e( 'Submission Rate Limiting', 'waiver-engine' ); ?>
                             <span class="wpwe-tooltip dashicons dashicons-editor-help"
-                                  title="<?php esc_attr_e( 'Limits how many waivers a single IP address can submit within a rolling time window. Protects against bots flooding PDFs to disk. Uses WordPress transients â€” no extra database tables needed.', 'waiver-engine' ); ?>"></span>
+                                  title="<?php esc_attr_e( 'Limits how many waivers a single IP address can submit within a rolling time window. Protects against bots flooding PDFs to disk. Uses WordPress transients — no extra database tables needed.', 'waiver-engine' ); ?>"></span>
                         </th>
                         <td>
                             <fieldset>
@@ -360,7 +277,7 @@ class Settings {
                         </td>
                     </tr>
 
-                    <!-- â”€â”€ CAPTCHA â”€â”€ -->
+                    <!-- -- CAPTCHA -- -->
                     <tr>
                         <th scope="row">
                             <?php esc_html_e( 'CAPTCHA', 'waiver-engine' ); ?>
@@ -417,10 +334,10 @@ class Settings {
                 </p>
             </form>
 
-            <!-- â”€â”€ PDF Cleanup Tool â”€â”€ -->
+            <!-- -- PDF Cleanup Tool -- -->
             <hr>
             <h2><?php esc_html_e( 'PDF File Cleanup', 'waiver-engine' ); ?></h2>
-            <p><?php esc_html_e( 'Permanently delete generated PDF files older than the specified number of days. This only removes the files from disk â€” entry records in the database are preserved.', 'waiver-engine' ); ?></p>
+            <p><?php esc_html_e( 'Permanently delete generated PDF files older than the specified number of days. This only removes the files from disk — entry records in the database are preserved.', 'waiver-engine' ); ?></p>
 
             <?php
             $retention_days = self::pdf_retention_days();
@@ -471,7 +388,7 @@ class Settings {
                     <button type="button" class="button button-secondary" id="wpwe-cleanup-trigger"
                             data-count="<?php echo esc_attr( $count_old ); ?>"
                             data-days="<?php echo esc_attr( $retention_days ); ?>">
-                        <?php esc_html_e( 'Delete Old PDFsâ€¦', 'waiver-engine' ); ?>
+                        <?php esc_html_e( 'Delete Old PDFs…', 'waiver-engine' ); ?>
                     </button>
                 </p>
             </form>
