@@ -5,7 +5,7 @@ Tags: pdf, forms, contracts, signature, booking
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -230,6 +230,9 @@ as a convenience parameter.
 
 == Changelog ==
 
+= 1.1.4 =
+* Remove uninstall.php so Freemius can track uninstall events; cleanup runs via after_uninstall hook.
+
 = 1.1.3 =
 * Fix garbled punctuation in admin and frontend UI strings.
 * Exclude internal user guides from release ZIPs.
@@ -270,6 +273,9 @@ as a convenience parameter.
 * Import / export of template field-to-PDF mappings.
 
 == Upgrade Notice ==
+
+= 1.1.4 =
+Freemius deployment fix for uninstall handling. No database migrations required.
 
 = 1.1.3 =
 Fixes UI encoding issues and trims release package size. No database migrations required.

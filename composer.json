@@ -28,7 +28,8 @@
             "includes/class-license-provider-null.php",
             "includes/class-license-provider-freemius.php",
             "includes/class-plan.php",
-            "includes/class-integration-manager.php"
+            "includes/class-integration-manager.php",
+            "includes/class-uninstall.php"
         ]
     },
     "config": {

@@ -3,7 +3,7 @@
  * Plugin Name:       Waiver Engine
  * Plugin URI:        https://github.com/purpleelephant1au/wp-waiver-engine
  * Description:       Template-driven waiver and contract system with PDF overlay generation and optional third-party booking integrations.
- * Version:           1.1.3
+ * Version:           1.1.4
  * Requires at least: 6.2
  * Requires PHP:      8.0
  * Author:            Nathaniel Smith
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'WPWE_VERSION' ) ) {
-    define( 'WPWE_VERSION', '1.1.3' );
+    define( 'WPWE_VERSION', '1.1.4' );
 }
 if ( ! defined( 'WPWE_PLUGIN_DIR' ) ) {
     define( 'WPWE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -260,6 +260,12 @@ register_deactivation_hook( __FILE__, function (): void {
 } );
 
 // -----------------------------------------------------------------------
-// Uninstall cleanup is handled in uninstall.php when the plugin is deleted.
+// Uninstall - drop tables and remove options (Freemius after_uninstall hook)
 // -----------------------------------------------------------------------
+if ( function_exists( 'wwe_fs' ) && wwe_fs() ) {
+    wwe_fs()->add_action( 'after_uninstall', function (): void {
+        require_once WPWE_PLUGIN_DIR . 'includes/class-uninstall.php';
+        \WPWE\Uninstall::run();
+    } );
+}
 
