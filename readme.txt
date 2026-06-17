@@ -5,7 +5,7 @@ Tags: pdf, forms, contracts, signature, booking
 Requires at least: 6.2
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,26 +24,27 @@ and automatically generate filled PDFs when visitors submit the form.
 * Auto-generate filled PDFs on each submission
 * Admin entry list with pagination, filtering, sorting, and PDF download
 * Import / export template field-to-PDF mappings for easy site migration
-
-**Free vs Pro:**
-
-**Free**
-
-* Up to 2 active waiver templates
-* PDF field mapping and PDF generation
-* Waiver submission capture and admin entry management
 * Security protections (nonce, honeypot, timing checks, rate limiting, optional CAPTCHA)
-* Import/export of template field mappings
 
-**Pro**
+**WordPress.org (free) package:**
+
+The version distributed on WordPress.org is fully functional and includes:
 
 * Unlimited waiver templates
-* Repeating rows in form sections (per-row output mode)
+* PDF field mapping and PDF generation
+* Waiver submission capture and admin entry management
+* Import/export of template field mappings
+* Security settings (rate limiting, optional CAPTCHA, PDF cleanup)
+
+**Pro add-on (separate download):**
+
+A premium package is available separately (not from WordPress.org) with
+additional features:
+
+* Repeating rows in form sections (per-row PDF output mode)
 * Admin notification emails with PDF attachments
 * Submitter email copies with PDF attachments
 * Amelia Booking integration and booking-linked waiver flows
-
-The distributed free package contains the Free feature set only. Pro builds add premium functionality through Freemius packaging.
 
 **Integration architecture:**
 
@@ -61,6 +62,40 @@ when Amelia is not installed.
 4. Upload a PDF template file, map form fields to PDF coordinates, and
    copy the `[waiver_form id="N"]` shortcode into any page or post.
 
+== External services ==
+
+This plugin can connect to third-party services when you enable optional
+features. No data is sent unless you configure the feature.
+
+**Google reCAPTCHA v3 (optional CAPTCHA)**
+
+Used only when you select Google reCAPTCHA v3 under **Waivers > Settings**
+and enable CAPTCHA on a template.
+
+* What it is: Google's invisible bot-detection service.
+* What is sent: When a visitor submits a waiver form with CAPTCHA enabled,
+  the browser loads Google's reCAPTCHA script and obtains a token. On
+  submission, the plugin sends that token, your secret key, and the
+  visitor's IP address to Google's verification endpoint to validate the
+  request.
+* When: Only during form submission when CAPTCHA is enabled for that template.
+* Terms of service: https://policies.google.com/terms
+* Privacy policy: https://policies.google.com/privacy
+
+**hCaptcha (optional CAPTCHA)**
+
+Used only when you select hCaptcha under **Waivers > Settings** and enable
+CAPTCHA on a template.
+
+* What it is: hCaptcha's invisible bot-detection service.
+* What is sent: When a visitor submits a waiver form with CAPTCHA enabled,
+  the browser loads hCaptcha's script and obtains a token. On submission,
+  the plugin sends that token, your secret key, and the visitor's IP
+  address to hCaptcha's verification endpoint to validate the request.
+* When: Only during form submission when CAPTCHA is enabled for that template.
+* Terms of service: https://hcaptcha.com/terms
+* Privacy policy: https://hcaptcha.com/privacy
+
 == Development & Building a Release ==
 
 The source repository does not include the `vendor/` directory (Composer
@@ -70,14 +105,14 @@ run locally.
 **Requirements:**
 
 * Git
-* PHP 8.0+
+* PHP 8.0+ with the GD extension
 * [Composer](https://getcomposer.org/download/)
 * PowerShell 5.1+ (Windows) or PowerShell 7+ (cross-platform)
 
 **Install dependencies after cloning:**
 
-    git clone https://github.com/purpleelephant1au/waiver-engine.git
-    cd waiver-engine
+    git clone https://github.com/purpleelephant1au/wp-waiver-engine.git
+    cd wp-waiver-engine
     composer install
 
 **Build a production-ready release ZIP:**
@@ -90,13 +125,13 @@ The script will:
 2. Run `composer install --no-dev --optimize-autoloader` to ensure
    `vendor/` is present and contains only production dependencies.
 3. Read the version number automatically from the plugin header.
-4. Collect all plugin files (excluding `.git`, `bin/`, `composer.*`,
-   and any previously generated ZIPs).
+4. Collect all plugin files (excluding `.git`, `bin/`, `composer.lock`,
+   and any previously generated ZIPs). `composer.json` is included.
 5. Bundle them under a top-level `waiver-engine/` folder and output
    `waiver-engine-<version>.zip` at the repository root.
 
-The resulting ZIP is ready to upload via **WordPress Admin â†’ Plugins â†’
-Add New â†’ Upload Plugin**, or to submit to the WordPress.org plugin
+The resulting ZIP is ready to upload via **WordPress Admin -> Plugins ->
+Add New -> Upload Plugin**, or to submit to the WordPress.org plugin
 directory.
 
 Generated ZIP files are excluded from version control via `.gitignore`.
@@ -132,9 +167,9 @@ Can be disabled independently if another rate-limiting layer exists.
 An invisible CAPTCHA challenge can be added to waiver forms for additional
 protection. Supported providers:
 
-* **Google reCAPTCHA v3** â€“ invisible scoring model. A score of â‰¥ 0.5 is
+* **Google reCAPTCHA v3** - invisible scoring model. A score of >= 0.5 is
   required. Register your keys at https://www.google.com/recaptcha/admin.
-* **hCaptcha (invisible)** â€“ privacy-respecting alternative. Register at
+* **hCaptcha (invisible)** - privacy-respecting alternative. Register at
   https://www.hcaptcha.com/signup-interstitial.
 
 Configuration steps:
@@ -170,10 +205,8 @@ footprint and limits the blast radius of any hypothetical file-disclosure issue.
 
 = Does this plugin require Amelia Booking? =
 
-No. Amelia integration is entirely optional and is included in Pro builds.
-If the Amelia Booking plugin is active and Pro is enabled, an
-"Amelia Integration" toggle appears under **Waivers > Settings**.
-Without Amelia (or on Free), the plugin still works for standalone waivers.
+No. Amelia integration is optional and is only available in the separate
+Pro package. The WordPress.org version works fully for standalone waivers.
 
 = Where are submitted PDFs stored? =
 
@@ -186,54 +219,23 @@ authenticated admin URL, not directly from disk.
 Yes. On the template edit screen, scroll past the Save button to find the
 Export / Import section. Export downloads a JSON file containing your field
 schema and PDF coordinate mappings. Import merges those into an existing
-template on another site while preserving its title, notification email,
-and other settings.
+template on another site while preserving its title and other settings.
 
 = Can booking confirmation emails link directly to the pre-filled waiver form? =
 
-Yes. Append a `booking_id` query parameter to the waiver page URL to pre-fill
-the booking ID field, and ask the customer to confirm using the same booking
-email they used in Amelia. Optionally include `booking_email` as a convenience
-parameter. Example links for inclusion in booking confirmation emails:
-
-    https://yoursite.com/waiver-page/?booking_id=42
-  https://yoursite.com/waiver-page/?booking_id=42&booking_email=customer@example.com
-
-This requires the Pro Amelia integration to be enabled in **Waivers > Settings**
-and the template to have at least one linked Amelia service.
-
-== WordPress.org Submission Checklist (One Pass) ==
-
-Run this checklist before uploading your first SVN commit:
-
-1. Clean package contents:
-  - include runtime plugin files only
-  - exclude `.git/`, build scripts, local docs, test fixtures, and release ZIP artifacts
-2. Verify plugin header and readme consistency:
-  - plugin `Version` matches `Stable tag`
-  - `Requires at least`, `Tested up to`, `Requires PHP` are accurate
-3. Verify licenses:
-  - plugin is GPL-compatible
-  - third-party libraries in `vendor/` include compatible licenses
-4. Run security checks:
-  - all state-changing admin actions use nonce + capability checks
-  - sanitize all input, escape all output, prepare SQL queries
-5. Verify privacy behavior:
-  - no public endpoints expose customer PII via open search
-  - booking lookup requires booking ID + matching booking email
-6. Test on clean WordPress install:
-  - activate/deactivate/uninstall
-  - create template, submit waiver, generate/download PDF, send emails
-  - test with Amelia both enabled and disabled
-7. Run plugin quality checks:
-  - WordPress Plugin Check plugin
-  - PHPCS with WordPress coding standards (recommended)
-8. Final smoke test:
-  - frontend waiver flow works
-  - admin list/detail screens load
-  - no PHP warnings/notices in debug log
+Yes, in the Pro package with Amelia integration enabled. Append a `booking_id`
+query parameter to the waiver page URL and ask the customer to confirm using
+the same booking email they used in Amelia. Optionally include `booking_email`
+as a convenience parameter.
 
 == Changelog ==
+
+= 1.1.1 =
+* WordPress.org compliance: removed feature gating and upgrade prompts from the free package.
+* Moved settings page inline JavaScript to enqueued admin assets.
+* Documented external CAPTCHA services in readme with terms and privacy links.
+* Updated FPDF (1.9) and PDF.js (5.7.284) dependencies.
+* Included composer.json in release packages; corrected repository URL.
 
 = 1.1.0 =
 * Added Free-to-Pro handoff detection and in-dashboard migration guidance.
@@ -251,17 +253,16 @@ Run this checklist before uploading your first SVN commit:
 * Custom DB tables (no CPT dependency).
 * PDF overlay generation via FPDI/FPDF.
 * Integration manager architecture for optional third-party integrations.
-* Amelia Booking integration (auto-detected, opt-in via Settings).
-* Admin and submitter email notifications, configurable per template.
-* Import / export of template field-to-PDF mappings.
 * Security: WordPress nonce validation, honeypot field, HMAC-signed timing
   check, IP rate limiting (configurable via Settings), optional CAPTCHA
   (reCAPTCHA v3 or hCaptcha, configurable globally and per-template),
   and manual PDF cleanup tool.
-* Amelia integration: support `?booking_id=N` URL parameter to pre-select
-  a booking on the waiver form (for use in booking confirmation email links).
+* Import / export of template field-to-PDF mappings.
 
 == Upgrade Notice ==
+
+= 1.1.1 =
+WordPress.org compliance and documentation updates. No database migrations required.
 
 = 1.1.0 =
 Adds migration and handoff tooling for Free-to-Pro transitions and data transfer.
@@ -283,4 +284,3 @@ Waiver Engine is distributed in the hope that it will be useful, but
 WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 for more details.
-

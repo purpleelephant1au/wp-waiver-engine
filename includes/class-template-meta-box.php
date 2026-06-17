@@ -33,7 +33,7 @@ class Template_Meta_Box {
             'pdfjs',
             \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.min.js',
             [],
-            '3.11.174',
+            '5.7.284',
             true
         );
 
@@ -623,10 +623,6 @@ class Template_Meta_Box {
         }
 
         if ( ! in_array( $requested_mode, [ 'single', 'per_row' ], true ) ) {
-            return 'single';
-        }
-
-        if ( ! \WPWE\Plan::is_feature_enabled( 'repeating_rows' ) ) {
             return 'single';
         }
 

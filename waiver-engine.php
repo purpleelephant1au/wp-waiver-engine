@@ -3,7 +3,7 @@
  * Plugin Name:       Waiver Engine
  * Plugin URI:        https://github.com/purpleelephant1au/wp-waiver-engine
  * Description:       Template-driven waiver and contract system with PDF overlay generation and optional third-party booking integrations.
- * Version:           1.1.0
+ * Version:           1.1.1
  * Requires at least: 6.2
  * Requires PHP:      8.0
  * Author:            Nathaniel Smith
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'WPWE_VERSION' ) ) {
-    define( 'WPWE_VERSION', '1.1.0' );
+    define( 'WPWE_VERSION', '1.1.1' );
 }
 if ( ! defined( 'WPWE_PLUGIN_DIR' ) ) {
     define( 'WPWE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -76,10 +76,6 @@ if ( ! function_exists( 'wwe_fs' ) ) {
                 'has_paid_plans'      => true,
                 'is_org_compliant'    => true,
                 'wp_org_gatekeeper'   => 'OA7#BoRiBNqdf52FvzEf!!074aRLPs8fspif$7K1#4u4Csys1fQlCecVcUTOs2mcpeVHi#C2j9d09fOTvbC0HloPT7fFee5WdS3G',
-                'trial'               => array(
-                    'days'               => 3,
-                    'is_require_payment' => true,
-                ),
                 'menu'                => array(
                     'slug'           => 'wpwe',
                     'support'        => false,
@@ -133,13 +129,17 @@ if ( ! function_exists( 'wpwe_is_premium_package' ) ) {
  */
 if ( ! function_exists( 'wpwe_can_use_premium_features' ) ) {
     function wpwe_can_use_premium_features(): bool {
+        if ( ! wpwe_is_premium_package() ) {
+            return false;
+        }
+
         $fs = function_exists( 'wwe_fs' ) ? wwe_fs() : null;
 
         if ( $fs && method_exists( $fs, 'can_use_premium_code' ) ) {
             return (bool) $fs->can_use_premium_code();
         }
 
-        return wpwe_is_premium_package();
+        return false;
     }
 }
 

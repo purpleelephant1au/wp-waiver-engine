@@ -89,7 +89,8 @@ jobs:
           rsync -a \
             --exclude='.git*' \
             --exclude='bin/' \
-            --exclude='composer.*' \
+            --exclude='composer.lock' \
+            --exclude='Feedback.txt' \
             --exclude='instructions/' \
             --exclude='*.zip' \
             --exclude='.github/' \
@@ -108,7 +109,9 @@ jobs:
         run: |
           unzip -l "$ZIP_PATH" | grep -q 'freemius/wordpress-sdk/start.php' \
             || (echo "ERROR: Freemius SDK missing from ZIP" && exit 1)
-          echo "Freemius SDK verified in ZIP."
+          unzip -l "$ZIP_PATH" | grep -q 'waiver-engine/composer.json' \
+            || (echo "ERROR: composer.json missing from ZIP" && exit 1)
+          echo "Freemius SDK and composer.json verified in ZIP."
 
       # ---------------------------------------------------------------
       # 7. Create GitHub Release and upload ZIP asset

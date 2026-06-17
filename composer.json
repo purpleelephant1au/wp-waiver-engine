@@ -1,12 +1,12 @@
 {
     "name": "waiver-engine/waiver-engine",
-    "description": "WordPress Waiver Engine â€“ PDF overlay generation",
+    "description": "WordPress Waiver Engine - PDF overlay generation",
     "type": "wordpress-plugin",
     "require": {
         "php": ">=8.0",
         "freemius/wordpress-sdk": "^2.12",
         "setasign/fpdi": "^2.5",
-        "setasign/fpdf": "^1.8"
+        "setasign/fpdf": "^1.9"
     },
     "autoload": {
         "classmap": [
@@ -33,7 +33,10 @@
     },
     "config": {
         "vendor-dir": "vendor",
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "platform": {
+            "ext-gd": "1"
+        }
     }
 }
 

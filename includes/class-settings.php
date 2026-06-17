@@ -42,22 +42,17 @@ class Settings {
      *   2. The user has explicitly enabled the integration in Settings.
      */
     public static function is_amelia_enabled(): bool {
-        if ( ! \WPWE\Plan::is_feature_enabled( 'amelia_integration' ) ) {
+        if ( ! \WPWE\Integration_Manager::is_amelia_active() ) {
             return false;
         }
 
-        return \WPWE\Integration_Manager::is_amelia_active()
-            && (bool) get_option( self::OPTION_AMELIA_ENABLED, false );
+        return (bool) get_option( self::OPTION_AMELIA_ENABLED, false );
     }
 
     /**
      * Returns true when admin notification emails are globally enabled (default ON).
      */
     public static function is_admin_email_enabled(): bool {
-        if ( ! \WPWE\Plan::is_feature_enabled( 'email_sending' ) ) {
-            return false;
-        }
-
         return get_option( self::OPTION_ADMIN_EMAIL_ENABLED, '1' ) !== '';
     }
 
@@ -65,10 +60,6 @@ class Settings {
      * Returns true when submitter copy emails are globally enabled (default ON).
      */
     public static function is_user_email_enabled(): bool {
-        if ( ! \WPWE\Plan::is_feature_enabled( 'email_sending' ) ) {
-            return false;
-        }
-
         return get_option( self::OPTION_USER_EMAIL_ENABLED, '1' ) !== '';
     }
 
@@ -126,7 +117,30 @@ class Settings {
     // Settings page
     // -----------------------------------------------------------------------
 
+    /**
+     * Enqueue admin assets for the settings screen.
+     */
+    public static function enqueue_assets(): void {
+        wp_enqueue_script(
+            'wpwe-admin-settings',
+            \WPWE_PLUGIN_URL . 'assets/js/admin-settings.js',
+            [],
+            \WPWE_VERSION,
+            true
+        );
+
+        wp_localize_script(
+            'wpwe-admin-settings',
+            'wpweSettings',
+            [
+                'cleanupConfirm' => __( 'This will permanently delete {count} PDF file(s) older than {days} day(s) from disk. This cannot be undone. Continue?', 'waiver-engine' ),
+                'cleanupEmpty'   => __( 'No PDF files older than {days} day(s) were found. Nothing will be deleted. Continue?', 'waiver-engine' ),
+            ]
+        );
+    }
+
     public function render(): void {
+        self::enqueue_assets();
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only admin notice query vars.
         $cleanup_done = isset( $_GET['wpwe_cleanup_done'] ) ? absint( wp_unslash( $_GET['wpwe_cleanup_done'] ) ) : null;
         $import_templates = isset( $_GET['wpwe_import_templates'] ) ? absint( wp_unslash( $_GET['wpwe_import_templates'] ) ) : 0;
@@ -396,18 +410,6 @@ class Settings {
                     </tr>
                 </table>
 
-                <script>
-                (function() {
-                    var sel  = document.getElementById('wpwe_captcha_provider');
-                    var wrap = document.getElementById('wpwe-captcha-keys');
-                    if ( sel && wrap ) {
-                        sel.addEventListener('change', function() {
-                            wrap.style.display = this.value === 'none' ? 'none' : '';
-                        });
-                    }
-                })();
-                </script>
-
                 <p class="submit">
                     <button type="submit" class="button button-primary">
                         <?php esc_html_e( 'Save Settings', 'waiver-engine' ); ?>
@@ -474,32 +476,7 @@ class Settings {
                 </p>
             </form>
 
-            <script>
-            (function() {
-                var btn = document.getElementById('wpwe-cleanup-trigger');
-                if (!btn) return;
-
-                // Re-read live values when the button is clicked
-                btn.addEventListener('click', function() {
-                    var daysInput = document.getElementById('wpwe_pdf_retention_days');
-                    var days  = daysInput ? parseInt(daysInput.value, 10) : parseInt(btn.dataset.days, 10);
-
-                    // Re-count is done server-side on next load; show the count from page render
-                    var count = parseInt(btn.dataset.count, 10);
-                    var msg   = count > 0
-                        ? '<?php echo esc_js( __( 'This will permanently delete {count} PDF file(s) older than {days} day(s) from disk. This cannot be undone. Continue?', 'waiver-engine' ) ); ?>'
-                        : '<?php echo esc_js( __( 'No PDF files older than {days} day(s) were found. Nothing will be deleted. Continue?', 'waiver-engine' ) ); ?>';
-
-                    msg = msg.replace('{count}', count).replace('{days}', days);
-
-                    if ( window.confirm(msg) ) {
-                        document.getElementById('wpwe-cleanup-form').submit();
-                    }
-                });
-            })();
-            </script>
-
-            <!-- â”€â”€ Free/Pro migration helpers â”€â”€ -->
+            <!-- PDF Cleanup Tool -->
             <hr>
             <h2><?php esc_html_e( 'Migration & Data Transfer', 'waiver-engine' ); ?></h2>
             <p><?php esc_html_e( 'Export and import the full Waiver Engine dataset (templates, entries, and plugin settings). Use this for migrations, backups, and Free-to-Pro handoff verification.', 'waiver-engine' ); ?></p>

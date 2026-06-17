@@ -31,7 +31,7 @@ class Template_Editor {
             'pdfjs',
             \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.min.js',
             [],
-            '3.11.174',
+            '5.7.284',
             true
         );
         wp_enqueue_script(

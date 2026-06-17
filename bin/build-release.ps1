@@ -76,6 +76,7 @@ Then re-run this release script.
 }
 
 Write-Host "   Freemius SDK found in vendor/."
+Write-Host "   composer.json will be included in the release ZIP."
 
 # ---------------------------------------------------------------------------
 # Exclusions
@@ -86,6 +87,7 @@ $ExcludePatterns = @(
     '.release-stage*',
     'bin*',
     'composer.lock',
+    'Feedback.txt',
     'instructions*',
     '*.zip'
 )
@@ -190,9 +192,16 @@ if (-not (Test-ZipContainsEntry -ZipPath $ZipPath -EntryPath $FreemiusZipEntry))
     exit 1
 }
 
+$ComposerZipEntry = 'waiver-engine/composer.json'
+if (-not (Test-ZipContainsEntry -ZipPath $ZipPath -EntryPath $ComposerZipEntry)) {
+    Write-Error "Release ZIP is missing composer.json entry: $ComposerZipEntry"
+    exit 1
+}
+
 Write-Host "`n[OK] Release ZIP created:"
 Write-Host "  - $ZipName"
 Write-Host "  - Freemius SDK verified"
+Write-Host "  - composer.json verified"
 Write-Host "`nPlugin folder slug: waiver-engine"
 
 
