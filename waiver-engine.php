@@ -3,7 +3,7 @@
  * Plugin Name:       Waiver Engine
  * Plugin URI:        https://github.com/purpleelephant1au/wp-waiver-engine
  * Description:       Template-driven waiver and contract system with PDF overlay generation and optional third-party booking integrations.
- * Version:           1.1.1
+ * Version:           1.1.2
  * Requires at least: 6.2
  * Requires PHP:      8.0
  * Author:            Nathaniel Smith
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'WPWE_VERSION' ) ) {
-    define( 'WPWE_VERSION', '1.1.1' );
+    define( 'WPWE_VERSION', '1.1.2' );
 }
 if ( ! defined( 'WPWE_PLUGIN_DIR' ) ) {
     define( 'WPWE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -90,6 +90,78 @@ if ( ! function_exists( 'wwe_fs' ) ) {
     wwe_fs();
     // Signal that SDK was initiated.
     do_action( 'wwe_fs_loaded' );
+}
+
+/**
+ * Suppress Freemius upsell banners in the WordPress.org free package.
+ *
+ * Guideline 11 allows contextual upsells on the plugin settings page only;
+ * site-wide trial/pricing notices are disabled here.
+ */
+if ( ! function_exists( 'wpwe_configure_freemius_org_package' ) ) {
+    function wpwe_configure_freemius_org_package(): void {
+        if ( ! function_exists( 'wwe_fs' ) || ! wwe_fs() ) {
+            return;
+        }
+
+        $fs = wwe_fs();
+
+        if ( method_exists( $fs, 'is__premium_only' ) && $fs->is__premium_only() ) {
+            return;
+        }
+
+        $fs->add_filter( 'show_trial', '__return_false' );
+        $fs->add_filter( 'is_pricing_page_visible', '__return_false' );
+
+        $fs->add_filter(
+            'is_submenu_visible',
+            static function ( $is_visible, $id ) {
+                if ( in_array( $id, [ 'pricing', 'account' ], true ) ) {
+                    return false;
+                }
+
+                return $is_visible;
+            },
+            10,
+            2
+        );
+
+        $fs->add_filter(
+            'show_admin_notice',
+            static function ( $show, $msg ) {
+                if ( ! is_array( $msg ) || empty( $msg['id'] ) ) {
+                    return $show;
+                }
+
+                $blocked_ids = [
+                    'trial_promotion',
+                    'affiliate_program',
+                    'plan_upgraded',
+                    'trial_started',
+                    'premium_version_upgrade_selection',
+                    'activation_complete',
+                ];
+
+                if ( in_array( $msg['id'], $blocked_ids, true ) ) {
+                    return false;
+                }
+
+                if ( isset( $msg['type'] ) && 'promotion' === $msg['type'] ) {
+                    return false;
+                }
+
+                return $show;
+            },
+            10,
+            2
+        );
+    }
+
+    add_action( 'wwe_fs_loaded', 'wpwe_configure_freemius_org_package' );
+}
+
+if ( function_exists( 'wwe_fs' ) && wwe_fs() ) {
+    wpwe_configure_freemius_org_package();
 }
 // phpcs:enable
 

@@ -5,7 +5,7 @@ Tags: pdf, forms, contracts, signature, booking
 Requires at least: 6.2
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -230,6 +230,10 @@ as a convenience parameter.
 
 == Changelog ==
 
+= 1.1.2 =
+* Suppress Freemius site-wide trial and pricing upsell notices in the WordPress.org free package.
+* Add a single contextual Pro mention at the bottom of the Settings screen only.
+
 = 1.1.1 =
 * WordPress.org compliance: removed feature gating and upgrade prompts from the free package.
 * Moved settings page inline JavaScript to enqueued admin assets.
@@ -260,6 +264,9 @@ as a convenience parameter.
 * Import / export of template field-to-PDF mappings.
 
 == Upgrade Notice ==
+
+= 1.1.2 =
+Suppresses dashboard upsell banners in the free package; adds one settings-only Pro link.
 
 = 1.1.1 =
 WordPress.org compliance and documentation updates. No database migrations required.

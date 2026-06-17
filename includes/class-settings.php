@@ -514,7 +514,43 @@ class Settings {
                     </button>
                 </p>
             </form>
+
+            <?php self::render_org_upgrade_line(); ?>
         </div>
+        <?php
+    }
+
+    /**
+     * Single contextual Pro mention for the WordPress.org free package (settings only).
+     */
+    public static function render_org_upgrade_line(): void {
+        if ( function_exists( 'wpwe_is_premium_package' ) && wpwe_is_premium_package() ) {
+            return;
+        }
+
+        $upgrade_url = License::get_upgrade_url();
+        if ( $upgrade_url === '#' ) {
+            return;
+        }
+        ?>
+        <p class="description" style="margin-top:2em;">
+            <?php
+            printf(
+                wp_kses(
+                    /* translators: %s: URL to the separate Pro product page */
+                    __( 'Need repeating rows, email notifications, or Amelia integration? <a href="%s" target="_blank" rel="noopener noreferrer">Learn about Waiver Engine Pro</a> (separate download).', 'waiver-engine' ),
+                    [
+                        'a' => [
+                            'href'   => [],
+                            'target' => [],
+                            'rel'    => [],
+                        ],
+                    ]
+                ),
+                esc_url( $upgrade_url )
+            );
+            ?>
+        </p>
         <?php
     }
 
