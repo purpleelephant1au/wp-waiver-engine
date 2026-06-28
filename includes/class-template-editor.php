@@ -1,15 +1,15 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Renders the Template create/edit admin page and enqueues its assets.
- * Instantiated by Admin_Menu::page_template_edit().
+ * Instantiated by PeWave_Admin_Menu::page_template_edit().
  *
- * @param object|null $tpl  stdClass template row from Database::get_template(), or null for new.
+ * @param object|null $tpl  stdClass template row from PeWave_Database::get_template(), or null for new.
  */
-class Template_Editor {
+class PeWave_Template_Editor {
 
     private ?object $tpl;
 
@@ -29,23 +29,23 @@ class Template_Editor {
 
         wp_enqueue_script(
             'pdfjs',
-            \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.min.js',
+            \PEWAVE_PLUGIN_URL . 'assets/js/pdfjs/pdf.min.js',
             [],
             '5.7.284',
             true
         );
         wp_enqueue_script(
             'wpwe-admin-editor',
-            \WPWE_PLUGIN_URL . 'assets/js/admin-editor.js',
+            \PEWAVE_PLUGIN_URL . 'assets/js/admin-editor.js',
             [ 'jquery', 'pdfjs' ],
-            \WPWE_VERSION,
+            \PEWAVE_VERSION,
             true
         );
         wp_enqueue_style(
             'wpwe-admin',
-            \WPWE_PLUGIN_URL . 'assets/css/admin.css',
+            \PEWAVE_PLUGIN_URL . 'assets/css/admin.css',
             [],
-            \WPWE_VERSION
+            \PEWAVE_VERSION
         );
 
         // Resolve PDF preview URL
@@ -60,10 +60,10 @@ class Template_Editor {
             }
         }
 
-        wp_localize_script( 'wpwe-admin-editor', 'wpweAdmin', [
+        wp_localize_script( 'wpwe-admin-editor', 'pewaveAdmin', [
             'mediaTitle'    => __( 'Select Base PDF', 'waiver-engine' ),
             'mediaButton'   => __( 'Use this PDF', 'waiver-engine' ),
-            'workerSrc'     => \WPWE_PLUGIN_URL . 'assets/js/pdfjs/pdf.worker.min.js',
+            'workerSrc'     => \PEWAVE_PLUGIN_URL . 'assets/js/pdfjs/pdf.worker.min.js',
             'currentPdfUrl' => $pdf_url,
             'i18n' => [
                 'drawHint'  => __( 'Draw a rectangle on the PDF to map a field', 'waiver-engine' ),
@@ -73,7 +73,7 @@ class Template_Editor {
                 'deleteRow' => __( 'Delete', 'waiver-engine' ),
                 'addRow'    => __( '+ Add Row Manually', 'waiver-engine' ),
                 'noSchema'  => __( 'Save the field schema first to populate the field dropdown.', 'waiver-engine' ),
-                'noPdf'     => __( 'Select a Base PDF in Template Settings to enable the visual mapper.', 'waiver-engine' ),
+                'noPdf'     => __( 'Select a Base PDF in Template PeWave_Settings to enable the visual mapper.', 'waiver-engine' ),
             ],
         ] );
     }
@@ -130,7 +130,7 @@ class Template_Editor {
             )
             : __( 'Add New Template', 'waiver-engine' );
 
-        $back_url = admin_url( 'admin.php?page=wpwe' );
+        $back_url = admin_url( 'admin.php?page=pewave' );
         ?>
         <div class="wrap">
             <h1 class="wp-heading-inline"><?php echo esc_html( $heading ); ?></h1>
@@ -140,46 +140,46 @@ class Template_Editor {
             <hr class="wp-header-end">
 
             <?php // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only admin notice query vars. ?>
-            <?php if ( isset( $_GET['wpwe_saved'] ) ) : ?>
+            <?php if ( isset( $_GET['pewave_saved'] ) ) : ?>
             <div class="notice notice-success is-dismissible">
                 <p><?php esc_html_e( 'Template saved.', 'waiver-engine' ); ?></p>
             </div>
             <?php endif; ?>
             <?php // phpcs:enable ?>
 
-            <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . ( $id ? 'wpwe-edit' : 'wpwe-new' ) ) ); ?>">
-                <?php wp_nonce_field( 'wpwe_save_template' ); ?>
-                <input type="hidden" name="wpwe_action"      value="save_template">
-                <input type="hidden" name="wpwe_template_id" value="<?php echo esc_attr( $id ); ?>">
+            <form method="post" action="<?php echo esc_url( admin_url( 'admin.php?page=' . ( $id ? 'pewave-edit' : 'pewave-new' ) ) ); ?>">
+                <?php wp_nonce_field( 'pewave_save_template' ); ?>
+                <input type="hidden" name="pewave_action"      value="save_template">
+                <input type="hidden" name="pewave_template_id" value="<?php echo esc_attr( $id ); ?>">
 
-                <!-- -- Core Settings --------------------------------------- -->
+                <!-- -- PeWave_Core PeWave_Settings --------------------------------------- -->
                 <div id="poststuff">
                 <div id="post-body" class="metabox-holder">
                 <div id="post-body-content">
 
                     <div class="postbox">
                         <div class="postbox-header">
-                            <h2><?php esc_html_e( 'Template Settings', 'waiver-engine' ); ?></h2>
+                            <h2><?php esc_html_e( 'Template PeWave_Settings', 'waiver-engine' ); ?></h2>
                         </div>
                         <div class="inside">
-                            <table class="form-table wpwe-settings-table">
+                            <table class="form-table pewave-settings-table">
                                 <tr>
-                                    <th><label for="wpwe_title"><?php esc_html_e( 'Title', 'waiver-engine' ); ?></label></th>
+                                    <th><label for="pewave_title"><?php esc_html_e( 'Title', 'waiver-engine' ); ?></label></th>
                                     <td>
-                                        <input type="text" id="wpwe_title" name="wpwe_title"
+                                        <input type="text" id="pewave_title" name="pewave_title"
                                                value="<?php echo esc_attr( $title ); ?>"
                                                class="large-text" required>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th><label for="wpwe_pdf_attachment_id"><?php esc_html_e( 'Base PDF', 'waiver-engine' ); ?></label></th>
+                                    <th><label for="pewave_pdf_attachment_id"><?php esc_html_e( 'Base PDF', 'waiver-engine' ); ?></label></th>
                                     <td>
-                                        <input type="hidden" id="wpwe_pdf_attachment_id" name="wpwe_pdf_attachment_id"
+                                        <input type="hidden" id="pewave_pdf_attachment_id" name="pewave_pdf_attachment_id"
                                                value="<?php echo esc_attr( $pdf_id ); ?>">
-                                        <button type="button" class="button" id="wpwe_select_pdf">
+                                        <button type="button" class="button" id="pewave_select_pdf">
                                             <?php esc_html_e( 'Select PDF from Media Library', 'waiver-engine' ); ?>
                                         </button>
-                                        <span id="wpwe_pdf_name" style="margin-left:10px;">
+                                        <span id="pewave_pdf_name" style="margin-left:10px;">
                                             <?php echo $pdf_url
                                                 ? '<a href="' . esc_url( $pdf_url ) . '" target="_blank">' . esc_html( basename( $pdf_url ) ) . '</a>'
                                                 : esc_html__( 'No PDF selected', 'waiver-engine' ); ?>
@@ -187,16 +187,16 @@ class Template_Editor {
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th><label for="wpwe_description"><?php esc_html_e( 'Description', 'waiver-engine' ); ?></label></th>
+                                    <th><label for="pewave_description"><?php esc_html_e( 'Description', 'waiver-engine' ); ?></label></th>
                                     <td>
-                                        <textarea id="wpwe_description" name="wpwe_description"
+                                        <textarea id="pewave_description" name="pewave_description"
                                                   rows="3" class="large-text"><?php echo esc_textarea( $description ); ?></textarea>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th><label for="wpwe_output_mode"><?php esc_html_e( 'Output Mode', 'waiver-engine' ); ?></label></th>
+                                    <th><label for="pewave_output_mode"><?php esc_html_e( 'Output Mode', 'waiver-engine' ); ?></label></th>
                                     <td>
-                                        <select id="wpwe_output_mode" name="wpwe_output_mode">
+                                        <select id="pewave_output_mode" name="pewave_output_mode">
                                             <option value="single"  <?php selected( $output_mode, 'single' ); ?>>
                                                 <?php esc_html_e( 'Single PDF per submission', 'waiver-engine' ); ?>
                                             </option>
@@ -206,23 +206,23 @@ class Template_Editor {
                                     </td>
                                 </tr>
                                 <?php $this->render_premium_settings_rows( $tpl, (string) $notify, (bool) $send_admin_email, (bool) $send_user_email ); ?>
-                                <?php if ( Settings::captcha_provider() !== 'none' ) : ?>
+                                <?php if ( PeWave_Settings::captcha_provider() !== 'none' ) : ?>
                                 <tr>
-                                    <th><label for="wpwe_captcha_enabled"><?php esc_html_e( 'CAPTCHA', 'waiver-engine' ); ?></label></th>
+                                    <th><label for="pewave_captcha_enabled"><?php esc_html_e( 'CAPTCHA', 'waiver-engine' ); ?></label></th>
                                     <td>
-                                        <input type="checkbox" id="wpwe_captcha_enabled" name="wpwe_captcha_enabled" value="1"
+                                        <input type="checkbox" id="pewave_captcha_enabled" name="pewave_captcha_enabled" value="1"
                                                <?php checked( $captcha_enabled ); ?>>
-                                        <label for="wpwe_captcha_enabled">
+                                        <label for="pewave_captcha_enabled">
                                             <?php esc_html_e( 'Require CAPTCHA verification on this form', 'waiver-engine' ); ?>
                                         </label>
                                         <p class="description">
                                             <?php
-                                            $provider_label = Settings::captcha_provider() === 'recaptcha_v3'
+                                            $provider_label = PeWave_Settings::captcha_provider() === 'recaptcha_v3'
                                                 ? __( 'Google reCAPTCHA v3', 'waiver-engine' )
                                                 : __( 'hCaptcha', 'waiver-engine' );
                                             printf(
                                                 /* translators: CAPTCHA provider name */
-                                                esc_html__( 'When checked, %s will silently verify each submission. Global provider is configured in Settings.', 'waiver-engine' ),
+                                                esc_html__( 'When checked, %s will silently verify each submission. Global provider is configured in PeWave_Settings.', 'waiver-engine' ),
                                                 esc_html( $provider_label )
                                             );
                                             ?>
@@ -231,11 +231,11 @@ class Template_Editor {
                                 </tr>
                                 <?php endif; /* captcha_provider !== 'none' */ ?>
                                 <tr>
-                                    <th><label for="wpwe_active"><?php esc_html_e( 'Active', 'waiver-engine' ); ?></label></th>
+                                    <th><label for="pewave_active"><?php esc_html_e( 'Active', 'waiver-engine' ); ?></label></th>
                                     <td>
-                                        <input type="checkbox" id="wpwe_active" name="wpwe_active" value="1"
+                                        <input type="checkbox" id="pewave_active" name="pewave_active" value="1"
                                                <?php checked( $active, true ); ?>>
-                                        <label for="wpwe_active">
+                                        <label for="pewave_active">
                                             <?php esc_html_e( 'Make this template available on the frontend', 'waiver-engine' ); ?>
                                         </label>
                                     </td>
@@ -252,12 +252,12 @@ class Template_Editor {
                         </div>
                         <div class="inside">
                             <!-- Hidden JSON store – JS updates this before form submit -->
-                            <input type="hidden" id="wpwe_pdf_mapping" name="wpwe_pdf_mapping"
+                            <input type="hidden" id="pewave_pdf_mapping" name="pewave_pdf_mapping"
                                    value="<?php echo esc_attr( $mapping_raw ); ?>">
 
                             <!-- Summary + Open button -->
-                            <div class="wpwe-mapper-summary">
-                                <span id="wpwe-mapper-summary-text" class="wpwe-mapper-summary-text">
+                            <div class="pewave-mapper-summary">
+                                <span id="pewave-mapper-summary-text" class="pewave-mapper-summary-text">
                                     <?php
                                     $field_count = count( $rows );
                                     if ( $pdf_file && $field_count ) {
@@ -277,14 +277,14 @@ class Template_Editor {
                                     }
                                     ?>
                                 </span>
-                                <button type="button" class="button button-primary" id="wpwe-open-mapper">
+                                <button type="button" class="button button-primary" id="pewave-open-mapper">
                                     <span class="dashicons dashicons-editor-expand" style="vertical-align:text-bottom;margin-right:4px;"></span>
                                     <?php esc_html_e( 'Open Visual Mapper', 'waiver-engine' ); ?>
                                 </button>
                             </div>
 
                             <!-- Row template (cloned by JS) -->
-                            <template id="wpwe-mapping-row-tpl">
+                            <template id="pewave-mapping-row-tpl">
                                 <?php $this->render_mapping_row( '', [], [], [] ); ?>
                             </template>
                         </div><!-- /.inside -->
@@ -300,51 +300,51 @@ class Template_Editor {
                 </div><!-- /#post-body -->
                 </div><!-- /#poststuff -->
 
-        <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-             Full-screen mapper modal — kept INSIDE the form so that
-             all wpwe_map_*[] inputs are submitted with the form.
-             â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
-        <div id="wpwe-mapper-modal" class="wpwe-mapper-modal" role="dialog" aria-modal="true" style="display:none;">
+           <!-- -----------------------------------------------------------------
+               Full-screen mapper modal kept inside the form so that
+               all pewave_map_*[] inputs are submitted with the form.
+               ----------------------------------------------------------------- -->
+        <div id="pewave-mapper-modal" class="pewave-mapper-modal" role="dialog" aria-modal="true" style="display:none;">
 
-            <div class="wpwe-modal-header">
-                <span class="wpwe-modal-title">
+            <div class="pewave-modal-header">
+                <span class="pewave-modal-title">
                     <span class="dashicons dashicons-location-alt" style="vertical-align:middle;margin-right:6px;"></span>
                     <?php esc_html_e( 'Visual Field Mapper', 'waiver-engine' ); ?>
                 </span>
-                <div class="wpwe-modal-toolbar">
-                      <input type="hidden" id="wpwe_map_page_count" name="wpwe_map_page_count"
+                <div class="pewave-modal-toolbar">
+                      <input type="hidden" id="pewave_map_page_count" name="pewave_map_page_count"
                           value="<?php echo esc_attr( $page_count ?: 1 ); ?>">
-                    <button type="button" class="button" id="wpwe-prev-page">&#8249;</button>
-                    <span><?php esc_html_e( 'Pg', 'waiver-engine' ); ?> <strong id="wpwe-page-num">1</strong>/<span id="wpwe-page-total">1</span></span>
-                    <button type="button" class="button" id="wpwe-next-page">&#8250;</button>
-                    <span class="wpwe-draw-hint"><?php esc_html_e( 'Draw on PDF to add a field', 'waiver-engine' ); ?></span>
+                    <button type="button" class="button" id="pewave-prev-page">&#8249;</button>
+                    <span><?php esc_html_e( 'Pg', 'waiver-engine' ); ?> <strong id="pewave-page-num">1</strong>/<span id="pewave-page-total">1</span></span>
+                    <button type="button" class="button" id="pewave-next-page">&#8250;</button>
+                    <span class="pewave-draw-hint"><?php esc_html_e( 'Draw on PDF to add a field', 'waiver-engine' ); ?></span>
                 </div>
-                <button type="button" class="wpwe-modal-close" id="wpwe-close-mapper"
+                <button type="button" class="pewave-modal-close" id="pewave-close-mapper"
                         title="<?php esc_attr_e( 'Close mapper (Esc)', 'waiver-engine' ); ?>">
                     <span class="dashicons dashicons-no-alt"></span>
                 </button>
             </div>
 
-            <div class="wpwe-modal-body">
-                <div class="wpwe-modal-pdf-pane">
-                    <div class="wpwe-mapper-hint" id="wpwe-mapper-hint">
-                        <?php esc_html_e( 'Use the Base PDF picker in Template Settings to enable the visual mapper.', 'waiver-engine' ); ?>
+            <div class="pewave-modal-body">
+                <div class="pewave-modal-pdf-pane">
+                    <div class="pewave-mapper-hint" id="pewave-mapper-hint">
+                        <?php esc_html_e( 'Use the Base PDF picker in Template PeWave_Settings to enable the visual mapper.', 'waiver-engine' ); ?>
                     </div>
-                    <div class="wpwe-pdf-viewer" id="wpwe-pdf-viewer" style="display:none;">
-                        <div class="wpwe-canvas-wrap" id="wpwe-canvas-wrap">
-                            <canvas id="wpwe-pdf-canvas"></canvas>
-                            <canvas id="wpwe-draw-canvas"></canvas>
-                            <div id="wpwe-overlays"></div>
+                    <div class="pewave-pdf-viewer" id="pewave-pdf-viewer" style="display:none;">
+                        <div class="pewave-canvas-wrap" id="pewave-canvas-wrap">
+                            <canvas id="pewave-pdf-canvas"></canvas>
+                            <canvas id="pewave-draw-canvas"></canvas>
+                            <div id="pewave-overlays"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="wpwe-modal-table-pane">
+                <div class="pewave-modal-table-pane">
                     <p class="description" style="margin:0 0 8px;font-size:12px;">
                         <?php esc_html_e( 'Draw on the PDF to add rows. Fill in Group, Field Key, Label, Type.', 'waiver-engine' ); ?>
                     </p>
-                    <div class="wpwe-mapping-table-wrap">
-                        <table class="widefat wpwe-mapping-table" id="wpwe-mapping-table">
+                    <div class="pewave-mapping-table-wrap">
+                        <table class="widefat pewave-mapping-table" id="pewave-mapping-table">
                             <thead>
                                 <tr>
                                     <th><?php esc_html_e( 'Group', 'waiver-engine' ); ?></th>
@@ -361,24 +361,24 @@ class Template_Editor {
                                     <th style="width:26px"></th>
                                 </tr>
                             </thead>
-                            <tbody id="wpwe-mapping-tbody">
+                            <tbody id="pewave-mapping-tbody">
                                 <?php foreach ( $rows as $path => $cfg ) :
                                     $this->render_mapping_row( $path, $cfg, $groups_meta, $schema_type_lookup );
                                 endforeach; ?>
                             </tbody>
                         </table>
-                        <button type="button" class="button" id="wpwe-add-mapping-row" style="margin-top:6px;">
+                        <button type="button" class="button" id="pewave-add-mapping-row" style="margin-top:6px;">
                             <?php esc_html_e( '+ Add Field', 'waiver-engine' ); ?>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="wpwe-modal-footer">
-                <button type="button" class="button button-primary button-hero" id="wpwe-close-mapper-done">
+            <div class="pewave-modal-footer">
+                <button type="button" class="button button-primary button-hero" id="pewave-close-mapper-done">
                     <?php esc_html_e( 'Done', 'waiver-engine' ); ?>
                 </button>
-                <span class="wpwe-modal-footer-hint">
+                <span class="pewave-modal-footer-hint">
                     <?php esc_html_e( 'Click Done, then Save/Update Template to persist changes.', 'waiver-engine' ); ?>
                 </span>
             </div>
@@ -387,9 +387,9 @@ class Template_Editor {
             </form>
 
         <?php if ( $id ) : ?>
-        <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-             Export / Import Field Mappings (outside the main form)
-             â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+           <!-- -----------------------------------------------------------------
+               Export / Import field mappings (outside the main form)
+               ----------------------------------------------------------------- -->
         <div id="poststuff" style="padding-top:0;">
         <div id="post-body" class="metabox-holder">
         <div id="post-body-content">
@@ -402,8 +402,8 @@ class Template_Editor {
 
                     <h3 style="margin-top:0;"><?php esc_html_e( 'Export', 'waiver-engine' ); ?></h3>
                     <a href="<?php echo esc_url( wp_nonce_url(
-                        admin_url( 'admin.php?page=wpwe-edit&id=' . $id . '&wpwe_action=export_mappings' ),
-                        'wpwe_export_mappings_' . $id
+                        admin_url( 'admin.php?page=pewave-edit&id=' . $id . '&pewave_action=export_mappings' ),
+                        'pewave_export_mappings_' . $id
                     ) ); ?>" class="button">
                         <span class="dashicons dashicons-download" style="vertical-align:text-bottom;margin-right:4px;"></span>
                         <?php esc_html_e( 'Download Mapping JSON', 'waiver-engine' ); ?>
@@ -412,13 +412,13 @@ class Template_Editor {
                     <h3><?php esc_html_e( 'Import', 'waiver-engine' ); ?></h3>
 
                     <?php // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only admin notice query vars. ?>
-                    <?php if ( isset( $_GET['wpwe_imported'] ) ) : ?>
+                    <?php if ( isset( $_GET['pewave_imported'] ) ) : ?>
                     <div class="notice notice-success inline" style="margin-bottom:12px;">
                         <p><?php esc_html_e( 'Mappings imported successfully. Review the fields and save to confirm.', 'waiver-engine' ); ?></p>
                     </div>
                     <?php endif; ?>
 
-                    <?php if ( isset( $_GET['wpwe_import_error'] ) ) : ?>
+                    <?php if ( isset( $_GET['pewave_import_error'] ) ) : ?>
                     <div class="notice notice-error inline" style="margin-bottom:12px;">
                         <p><?php esc_html_e( 'Import failed. Please ensure the file is a valid waiver mapping export (.json).', 'waiver-engine' ); ?></p>
                     </div>
@@ -426,12 +426,12 @@ class Template_Editor {
                     <?php // phpcs:enable ?>
 
                     <form method="post"
-                          action="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-edit&id=' . $id ) ); ?>"
+                                                    action="<?php echo esc_url( admin_url( 'admin.php?page=pewave-edit&id=' . $id ) ); ?>"
                           enctype="multipart/form-data">
-                        <?php wp_nonce_field( 'wpwe_import_mappings' ); ?>
-                        <input type="hidden" name="wpwe_action"      value="import_mappings">
-                        <input type="hidden" name="wpwe_template_id" value="<?php echo esc_attr( $id ); ?>">
-                        <input type="file" name="wpwe_import_file" accept=".json,application/json" required style="margin-right:8px;">
+                                                <?php wp_nonce_field( 'pewave_import_mappings' ); ?>
+                                                <input type="hidden" name="pewave_action"      value="import_mappings">
+                                                <input type="hidden" name="pewave_template_id" value="<?php echo esc_attr( $id ); ?>">
+                                                <input type="file" name="pewave_import_file" accept=".json,application/json" required style="margin-right:8px;">
                         <button type="submit" class="button"
                                 onclick="return confirm('<?php esc_attr_e( 'This will overwrite the current field schema and PDF mapping. Continue?', 'waiver-engine' ); ?>')">
                             <span class="dashicons dashicons-upload" style="vertical-align:text-bottom;margin-right:4px;"></span>
@@ -453,7 +453,7 @@ class Template_Editor {
     }
 
     // -----------------------------------------------------------------------
-    // Mapping row renderer (kept identical to previous Template_Meta_Box)
+    // Mapping row renderer (kept identical to previous PeWave_Template_Meta_Box)
     // -----------------------------------------------------------------------
 
     private function render_mapping_row( string $path, array $cfg, array $groups_meta, array $schema_type_lookup = [] ): void {
@@ -488,15 +488,15 @@ class Template_Editor {
             }
         }
         ?>
-        <tr class="wpwe-mapping-row">
-            <td><input type="text" class="wpwe-map-group-key small-text" name="wpwe_map_group_keys[]"
+        <tr class="pewave-mapping-row">
+            <td><input type="text" class="pewave-map-group-key small-text" name="pewave_map_group_keys[]"
                        value="<?php echo esc_attr( $group_key ); ?>" placeholder="signer"></td>
-            <td><input type="text" class="wpwe-map-field-key small-text" name="wpwe_map_field_keys[]"
+            <td><input type="text" class="pewave-map-field-key small-text" name="pewave_map_field_keys[]"
                        value="<?php echo esc_attr( $field_key ); ?>" placeholder="full_name"></td>
-            <td><input type="text" class="wpwe-map-label" name="wpwe_map_labels[]"
+            <td><input type="text" class="pewave-map-label" name="pewave_map_labels[]"
                        value="<?php echo esc_attr( $label ); ?>" placeholder="e.g. Full Name"></td>
             <td>
-                <select class="wpwe-map-type" name="wpwe_map_types[]">
+                <select class="pewave-map-type" name="pewave_map_types[]">
                     <option value="text"      <?php selected( $type, 'text' );      ?>>text</option>
                     <option value="email"     <?php selected( $type, 'email' );     ?>>email</option>
                     <option value="number"    <?php selected( $type, 'number' );    ?>>number</option>
@@ -510,27 +510,27 @@ class Template_Editor {
                 </select>
             </td>
             <td style="text-align:center">
-                <input type="hidden" class="wpwe-req-hidden" name="wpwe_map_required[]"
+                <input type="hidden" class="pewave-req-hidden" name="pewave_map_required[]"
                        value="<?php echo $required ? '1' : '0'; ?>">
-                <input type="checkbox" class="wpwe-map-required" <?php checked( $required ); ?>>
+                <input type="checkbox" class="pewave-map-required" <?php checked( $required ); ?>>
             </td>
             <?php $this->render_repeatable_row_cell( $repeatable ); ?>
-            <td><input type="number" class="wpwe-map-page small-text" name="wpwe_map_pages[]"
+            <td><input type="number" class="pewave-map-page small-text" name="pewave_map_pages[]"
                        value="<?php echo esc_attr( $page ); ?>" min="1" max="99"></td>
-            <input type="hidden" class="wpwe-map-x" name="wpwe_map_x[]" value="<?php echo esc_attr( $x ); ?>">
-            <input type="hidden" class="wpwe-map-y" name="wpwe_map_y[]" value="<?php echo esc_attr( $y ); ?>">
-            <input type="hidden" class="wpwe-map-w" name="wpwe_map_w[]" value="<?php echo esc_attr( $width ); ?>">
-            <input type="hidden" class="wpwe-map-h" name="wpwe_map_h[]" value="<?php echo esc_attr( $height ); ?>">
-            <td class="wpwe-map-location"><?php echo $loc ? esc_html( $loc ) : '<em>draw on PDF</em>'; ?></td>
-            <td><input type="number" class="wpwe-map-font small-text" name="wpwe_map_fonts[]"
+            <input type="hidden" class="pewave-map-x" name="pewave_map_x[]" value="<?php echo esc_attr( $x ); ?>">
+            <input type="hidden" class="pewave-map-y" name="pewave_map_y[]" value="<?php echo esc_attr( $y ); ?>">
+            <input type="hidden" class="pewave-map-w" name="pewave_map_w[]" value="<?php echo esc_attr( $width ); ?>">
+            <input type="hidden" class="pewave-map-h" name="pewave_map_h[]" value="<?php echo esc_attr( $height ); ?>">
+            <td class="pewave-map-location"><?php echo $loc ? esc_html( $loc ) : '<em>draw on PDF</em>'; ?></td>
+            <td><input type="number" class="pewave-map-font small-text" name="pewave_map_fonts[]"
                        value="<?php echo esc_attr( $font_size ); ?>" step="0.5" placeholder="11"></td>
-            <td><input type="number" class="wpwe-map-char-spacing small-text" name="wpwe_map_char_spacing[]"
+            <td><input type="number" class="pewave-map-char-spacing small-text" name="pewave_map_char_spacing[]"
                        value="<?php echo esc_attr( $char_spacing ); ?>" step="0.1" min="0" placeholder="0"
                        title="<?php esc_attr_e( 'Extra character spacing in pt (e.g. 6 for date boxes)', 'waiver-engine' ); ?>"></td>
-            <td><input type="text" class="wpwe-map-date-format small-text" name="wpwe_map_date_format[]"
+            <td><input type="text" class="pewave-map-date-format small-text" name="pewave_map_date_format[]"
                        value="<?php echo esc_attr( $date_format ); ?>" placeholder="d/m/Y" maxlength="20"
                        title="<?php esc_attr_e( 'PHP date() format string, e.g. d/m/Y or m-d-Y. Leave blank for default d/m/Y.', 'waiver-engine' ); ?>"></td>
-            <td><button type="button" class="button-link wpwe-delete-map-row"
+            <td><button type="button" class="button-link pewave-delete-map-row"
                         title="<?php esc_attr_e( 'Delete', 'waiver-engine' ); ?>">
                 <span class="dashicons dashicons-trash" style="color:#d63638;vertical-align:middle;"></span>
             </button></td>
@@ -539,7 +539,7 @@ class Template_Editor {
     }
 
     // -----------------------------------------------------------------------
-    // Static: rebuild mapping + schema from POST (shared with Admin_Menu)
+    // Static: rebuild mapping + schema from POST (shared with PeWave_Admin_Menu)
     // -----------------------------------------------------------------------
 
     /**
@@ -549,23 +549,23 @@ class Template_Editor {
      */
     public static function build_from_post(): array {
         // phpcs:disable WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $page_count = isset( $_POST['wpwe_map_page_count'] )
-            ? max( 1, absint( $_POST['wpwe_map_page_count'] ) ) : 1;
+        $page_count = isset( $_POST['pewave_map_page_count'] )
+            ? max( 1, absint( $_POST['pewave_map_page_count'] ) ) : 1;
 
-        $gk_arr    = self::post_arr( 'wpwe_map_group_keys' );
-        $fk_arr    = self::post_arr( 'wpwe_map_field_keys' );
-        $label_arr = self::post_arr( 'wpwe_map_labels' );
-        $type_arr  = self::post_arr( 'wpwe_map_types' );
-        $pages_arr = self::post_arr( 'wpwe_map_pages' );
-        $x_arr     = self::post_arr( 'wpwe_map_x' );
-        $y_arr     = self::post_arr( 'wpwe_map_y' );
-        $w_arr     = self::post_arr( 'wpwe_map_w' );
-        $h_arr     = self::post_arr( 'wpwe_map_h' );
-        $fonts_arr        = self::post_arr( 'wpwe_map_fonts' );
-        $char_spacing_arr = self::post_arr( 'wpwe_map_char_spacing' );
-        $date_format_arr  = self::post_arr( 'wpwe_map_date_format' );
-        $req_map   = isset( $_POST['wpwe_map_required'] )   && is_array( $_POST['wpwe_map_required'] )
-            ? array_map( 'absint', $_POST['wpwe_map_required'] )   : [];
+        $gk_arr    = self::post_arr( 'pewave_map_group_keys' );
+        $fk_arr    = self::post_arr( 'pewave_map_field_keys' );
+        $label_arr = self::post_arr( 'pewave_map_labels' );
+        $type_arr  = self::post_arr( 'pewave_map_types' );
+        $pages_arr = self::post_arr( 'pewave_map_pages' );
+        $x_arr     = self::post_arr( 'pewave_map_x' );
+        $y_arr     = self::post_arr( 'pewave_map_y' );
+        $w_arr     = self::post_arr( 'pewave_map_w' );
+        $h_arr     = self::post_arr( 'pewave_map_h' );
+        $fonts_arr        = self::post_arr( 'pewave_map_fonts' );
+        $char_spacing_arr = self::post_arr( 'pewave_map_char_spacing' );
+        $date_format_arr  = self::post_arr( 'pewave_map_date_format' );
+        $req_map   = isset( $_POST['pewave_map_required'] )   && is_array( $_POST['pewave_map_required'] )
+            ? array_map( 'absint', $_POST['pewave_map_required'] )   : [];
         $rep_map   = self::repeatable_map_from_premium();
 
         $allowed_types = [ 'text', 'email', 'number', 'date', 'tel', 'textarea', 'select', 'checkbox', 'signature', 'image' ];
@@ -678,14 +678,14 @@ class Template_Editor {
     }
 
     private static function can_use_repeatable_mapping(): bool {
-        return class_exists( Premium_Bridge::class )
-            && method_exists( Premium_Bridge::class, 'can_use_repeatable_mapping' )
-            && Premium_Bridge::can_use_repeatable_mapping();
+        return class_exists( PeWave_Premium_Bridge::class )
+            && method_exists( PeWave_Premium_Bridge::class, 'can_use_repeatable_mapping' )
+            && PeWave_Premium_Bridge::can_use_repeatable_mapping();
     }
 
     private static function repeatable_map_from_premium(): array {
-        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'build_repeatable_map_from_post' ) ) {
-            $map = Premium_Bridge::build_repeatable_map_from_post();
+        if ( class_exists( PeWave_Premium_Bridge::class ) && method_exists( PeWave_Premium_Bridge::class, 'build_repeatable_map_from_post' ) ) {
+            $map = PeWave_Premium_Bridge::build_repeatable_map_from_post();
             return is_array( $map ) ? $map : [];
         }
 
@@ -693,32 +693,32 @@ class Template_Editor {
     }
 
     private function render_per_row_output_mode_option( string $output_mode ): void {
-        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_per_row_output_mode_option' ) ) {
-            Premium_Bridge::render_per_row_output_mode_option( $output_mode );
+        if ( class_exists( PeWave_Premium_Bridge::class ) && method_exists( PeWave_Premium_Bridge::class, 'render_per_row_output_mode_option' ) ) {
+            PeWave_Premium_Bridge::render_per_row_output_mode_option( $output_mode );
         }
     }
 
     private function render_output_group_key_control( string $output_mode, string $group_key ): void {
-        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_output_group_key_control' ) ) {
-            Premium_Bridge::render_output_group_key_control( $output_mode, $group_key );
+        if ( class_exists( PeWave_Premium_Bridge::class ) && method_exists( PeWave_Premium_Bridge::class, 'render_output_group_key_control' ) ) {
+            PeWave_Premium_Bridge::render_output_group_key_control( $output_mode, $group_key );
         }
     }
 
     private function render_premium_settings_rows( ?object $tpl, string $notify, bool $send_admin_email, bool $send_user_email ): void {
-        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_template_editor_premium_rows' ) ) {
-            Premium_Bridge::render_template_editor_premium_rows( $tpl, $notify, $send_admin_email, $send_user_email );
+        if ( class_exists( PeWave_Premium_Bridge::class ) && method_exists( PeWave_Premium_Bridge::class, 'render_template_editor_premium_rows' ) ) {
+            PeWave_Premium_Bridge::render_template_editor_premium_rows( $tpl, $notify, $send_admin_email, $send_user_email );
         }
     }
 
     private function render_repeatable_header_cell(): void {
-        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_repeatable_header_cell' ) ) {
-            Premium_Bridge::render_repeatable_header_cell();
+        if ( class_exists( PeWave_Premium_Bridge::class ) && method_exists( PeWave_Premium_Bridge::class, 'render_repeatable_header_cell' ) ) {
+            PeWave_Premium_Bridge::render_repeatable_header_cell();
         }
     }
 
     private function render_repeatable_row_cell( bool $repeatable ): void {
-        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'render_repeatable_row_cell' ) ) {
-            Premium_Bridge::render_repeatable_row_cell( $repeatable );
+        if ( class_exists( PeWave_Premium_Bridge::class ) && method_exists( PeWave_Premium_Bridge::class, 'render_repeatable_row_cell' ) ) {
+            PeWave_Premium_Bridge::render_repeatable_row_cell( $repeatable );
         }
     }
 }

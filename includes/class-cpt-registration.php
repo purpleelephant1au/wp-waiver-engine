@@ -1,12 +1,12 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Registers all custom post types and their meta fields.
  */
-class CPT_Registration {
+class PeWave_CPT_Registration {
 
     public function register(): void {
         add_action( 'init', [ $this, 'register_cpts' ] );
@@ -18,8 +18,8 @@ class CPT_Registration {
     // -----------------------------------------------------------------------
 
     public function register_cpts(): void {
-        // waiver_template ------------------------------------------------
-        register_post_type( 'waiver_template', [
+        // pewave_template -------------------------------------------------
+        register_post_type( 'pewave_template', [
             'label'               => 'Waiver Templates',
             'labels'              => [
                 'name'               => 'Waiver Templates',
@@ -47,8 +47,8 @@ class CPT_Registration {
             'show_in_rest'        => false,
         ] );
 
-        // waiver_entry ---------------------------------------------------
-        register_post_type( 'waiver_entry', [
+        // pewave_entry ----------------------------------------------------
+        register_post_type( 'pewave_entry', [
             'label'               => 'Waiver Entries',
             'labels'              => [
                 'name'               => 'Waiver Entries',
@@ -61,7 +61,7 @@ class CPT_Registration {
             'public'              => false,
             'publicly_queryable'  => false,
             'show_ui'             => true,
-            'show_in_menu'        => 'edit.php?post_type=waiver_template',
+            'show_in_menu'        => 'edit.php?post_type=pewave_template',
             'supports'            => [ 'title' ],
             'capability_type'     => 'post',
             'capabilities'        => [
@@ -80,7 +80,7 @@ class CPT_Registration {
     // -----------------------------------------------------------------------
 
     public function register_meta(): void {
-        // waiver_template meta
+        // pewave_template meta
         $template_meta = [
             'pdf_attachment_id'  => [ 'type' => 'integer', 'single' => true, 'default' => 0 ],
             'field_schema'       => [ 'type' => 'string',  'single' => true, 'default' => '' ],
@@ -93,13 +93,13 @@ class CPT_Registration {
         ];
 
         foreach ( $template_meta as $key => $args ) {
-            register_post_meta( 'waiver_template', $key, array_merge( $args, [
+            register_post_meta( 'pewave_template', $key, array_merge( $args, [
                 'show_in_rest'      => false,
                 'sanitize_callback' => $this->get_sanitizer( $args['type'] ),
             ] ) );
         }
 
-        // waiver_entry meta
+        // pewave_entry meta
         $entry_meta = [
             'template_id'    => [ 'type' => 'integer', 'single' => true, 'default' => 0 ],
             'submission_data'=> [ 'type' => 'string',  'single' => true, 'default' => '' ], // JSON
@@ -109,7 +109,7 @@ class CPT_Registration {
         ];
 
         foreach ( $entry_meta as $key => $args ) {
-            register_post_meta( 'waiver_entry', $key, array_merge( $args, [
+            register_post_meta( 'pewave_entry', $key, array_merge( $args, [
                 'show_in_rest'      => false,
                 'sanitize_callback' => $this->get_sanitizer( $args['type'] ),
             ] ) );

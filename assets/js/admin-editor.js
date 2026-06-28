@@ -10,7 +10,7 @@
  *       - Table row changes reflected back as coordinate overlays
  *       - Serialise table → hidden JSON input before form save
  */
-/* global wpweAdmin, pdfjsLib, wp */
+/* global pewaveAdmin, pdfjsLib, wp */
 
 ( function ( $ ) {
     'use strict';
@@ -20,19 +20,19 @@
     // =========================================================================
     var mediaFrame;
 
-    $( '#wpwe_select_pdf' ).on( 'click', function ( e ) {
+    $( '#pewave_select_pdf' ).on( 'click', function ( e ) {
         e.preventDefault();
         if ( mediaFrame ) { mediaFrame.open(); return; }
         mediaFrame = wp.media( {
-            title:   wpweAdmin.mediaTitle,
-            button:  { text: wpweAdmin.mediaButton },
+            title:   pewaveAdmin.mediaTitle,
+            button:  { text: pewaveAdmin.mediaButton },
             library: { type: 'application/pdf' },
             multiple: false,
         } );
         mediaFrame.on( 'select', function () {
             var att = mediaFrame.state().get( 'selection' ).first().toJSON();
-            $( '#wpwe_pdf_attachment_id' ).val( att.id );
-            $( '#wpwe_pdf_name' ).html( '<a href="' + att.url + '" target="_blank">' + att.filename + '</a>' );
+            $( '#pewave_pdf_attachment_id' ).val( att.id );
+            $( '#pewave_pdf_name' ).html( '<a href="' + att.url + '" target="_blank">' + att.filename + '</a>' );
             loadPdfIntoMapper( att.url );
         } );
         mediaFrame.open();
@@ -41,15 +41,15 @@
     // =========================================================================
     // 2. Output-mode toggle
     // =========================================================================
-    $( '#wpwe_output_mode' ).on( 'change', function () {
-        $( '#wpwe_group_key_wrap' ).toggle( $( this ).val() === 'per_row' );
+    $( '#pewave_output_mode' ).on( 'change', function () {
+        $( '#pewave_group_key_wrap' ).toggle( $( this ).val() === 'per_row' );
     } );
 
     // =========================================================================
     // 3. Full-screen Mapper Modal
     // =========================================================================
 
-    var modalEl = document.getElementById( 'wpwe-mapper-modal' );
+    var modalEl = document.getElementById( 'pewave-mapper-modal' );
 
     function openMapper() {
         if ( ! modalEl ) return;
@@ -58,8 +58,8 @@
         // Re-render the current page now that the modal pane is visible and sized
         if ( pdfDoc ) {
             renderPage( currentPage );
-        } else if ( wpweAdmin.currentPdfUrl ) {
-            loadPdfIntoMapper( wpweAdmin.currentPdfUrl );
+        } else if ( pewaveAdmin.currentPdfUrl ) {
+            loadPdfIntoMapper( pewaveAdmin.currentPdfUrl );
         }
     }
 
@@ -71,8 +71,8 @@
         updateSummaryText();
     }
 
-    $( '#wpwe-open-mapper' ).on( 'click', openMapper );
-    $( '#wpwe-close-mapper, #wpwe-close-mapper-done' ).on( 'click', closeMapper );
+    $( '#pewave-open-mapper' ).on( 'click', openMapper );
+    $( '#pewave-close-mapper, #pewave-close-mapper-done' ).on( 'click', closeMapper );
 
     // Click backdrop (outside the modal content) also closes
     $( modalEl ).on( 'click', function ( e ) {
@@ -80,15 +80,15 @@
     } );
 
     // Escape key closes
-    $( document ).on( 'keydown.wpweMapper', function ( e ) {
+    $( document ).on( 'keydown.pewaveMapper', function ( e ) {
         if ( e.key === 'Escape' && modalEl && modalEl.style.display !== 'none' ) closeMapper();
     } );
 
     // Update the compact summary text in the meta box
     function updateSummaryText() {
-        var el = document.getElementById( 'wpwe-mapper-summary-text' );
+        var el = document.getElementById( 'pewave-mapper-summary-text' );
         if ( ! el ) return;
-        var count = ( document.getElementById( 'wpwe-mapping-tbody' ) || {} ).querySelectorAll( 'tr.wpwe-mapping-row' ).length || 0;
+        var count = ( document.getElementById( 'pewave-mapping-tbody' ) || {} ).querySelectorAll( 'tr.pewave-mapping-row' ).length || 0;
         var pdf = '';
         if ( pdfUrl ) {
             try {
@@ -124,37 +124,37 @@
     // Drag/resize state for existing overlays
     var dragMode     = 'draw';   // 'draw' | 'move' | 'resize'
     var dragRow      = null;     // DOM <tr> being operated on
-    var dragOverlay  = null;     // .wpwe-field-overlay div being moved/resized
+    var dragOverlay  = null;     // .pewave-field-overlay div being moved/resized
     var dragOffX     = 0;        // mouse offset within overlay on mousedown (move mode)
     var dragOffY     = 0;
     // Cached overlay hit-test data, rebuilt by renderOverlays()
     // Each entry: { div, row, cx, cy, cw, ch }
     var activeOverlays = [];
 
-    var pdfCanvas    = document.getElementById( 'wpwe-pdf-canvas' );
-    var drawCanvas   = document.getElementById( 'wpwe-draw-canvas' );
-    var overlaysEl   = document.getElementById( 'wpwe-overlays' );
-    var viewerEl     = document.getElementById( 'wpwe-pdf-viewer' );
-    var hintEl       = document.getElementById( 'wpwe-mapper-hint' );
-    var pageNumEl    = document.getElementById( 'wpwe-page-num' );
-    var pageTotalEl  = document.getElementById( 'wpwe-page-total' );
-    var tbody        = document.getElementById( 'wpwe-mapping-tbody' );
-    var rowTpl       = document.getElementById( 'wpwe-mapping-row-tpl' );
-    var hiddenInput  = document.getElementById( 'wpwe_pdf_mapping' );
+    var pdfCanvas    = document.getElementById( 'pewave-pdf-canvas' );
+    var drawCanvas   = document.getElementById( 'pewave-draw-canvas' );
+    var overlaysEl   = document.getElementById( 'pewave-overlays' );
+    var viewerEl     = document.getElementById( 'pewave-pdf-viewer' );
+    var hintEl       = document.getElementById( 'pewave-mapper-hint' );
+    var pageNumEl    = document.getElementById( 'pewave-page-num' );
+    var pageTotalEl  = document.getElementById( 'pewave-page-total' );
+    var tbody        = document.getElementById( 'pewave-mapping-tbody' );
+    var rowTpl       = document.getElementById( 'pewave-mapping-row-tpl' );
+    var hiddenInput  = document.getElementById( 'pewave_pdf_mapping' );
 
     // Configure PDF.js worker
     if ( typeof pdfjsLib !== 'undefined' ) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = wpweAdmin.workerSrc;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = pewaveAdmin.workerSrc;
     }
 
     // --- Load PDF on startup if one is already selected ---
-    if ( wpweAdmin.currentPdfUrl ) {
-        loadPdfIntoMapper( wpweAdmin.currentPdfUrl );
+    if ( pewaveAdmin.currentPdfUrl ) {
+        loadPdfIntoMapper( pewaveAdmin.currentPdfUrl );
     }
 
     // --- Page navigation ---
-    $( '#wpwe-prev-page' ).on( 'click', function () { if ( currentPage > 1 ) { currentPage--; renderPage( currentPage ); } } );
-    $( '#wpwe-next-page' ).on( 'click', function () { if ( currentPage < totalPages ) { currentPage++; renderPage( currentPage ); } } );
+    $( '#pewave-prev-page' ).on( 'click', function () { if ( currentPage > 1 ) { currentPage--; renderPage( currentPage ); } } );
+    $( '#pewave-next-page' ).on( 'click', function () { if ( currentPage < totalPages ) { currentPage++; renderPage( currentPage ); } } );
 
     // -------------------------------------------------------------------------
     // loadPdfIntoMapper
@@ -170,11 +170,11 @@
             $( hintEl ).hide();
             if ( pageTotalEl ) pageTotalEl.textContent = totalPages;
             // Auto-sync the page-count input to the actual PDF page count
-            var pcInput = document.getElementById( 'wpwe_map_page_count' );
+            var pcInput = document.getElementById( 'pewave_map_page_count' );
             if ( pcInput ) pcInput.value = totalPages;
             renderPage( currentPage );
         } ).catch( function ( err ) {
-            console.warn( 'WPWE PDF.js load error:', err );
+            console.warn( 'Pewave PDF.js load error:', err );
         } );
     }
 
@@ -187,7 +187,7 @@
             var viewport = page.getViewport( { scale: 1 } );
 
             // Scale to fit the modal PDF pane (90% of its width, capped at 1200px)
-            var paneEl  = document.querySelector( '.wpwe-modal-pdf-pane' );
+            var paneEl  = document.querySelector( '.pewave-modal-pdf-pane' );
             var maxWidth = paneEl ? Math.floor( paneEl.clientWidth * 0.98 ) : 860;
             if ( maxWidth < 200 ) maxWidth = 860; // fallback before modal is visible
             pdfScale     = maxWidth / viewport.width;
@@ -200,7 +200,7 @@
             pdfCanvas.height = scaledVP.height;
             drawCanvas.width  = scaledVP.width;
             drawCanvas.height = scaledVP.height;
-            $( '#wpwe-canvas-wrap' ).css( { width: scaledVP.width, height: scaledVP.height } );
+            $( '#pewave-canvas-wrap' ).css( { width: scaledVP.width, height: scaledVP.height } );
 
             page.render( { canvasContext: pdfCanvas.getContext( '2d' ), viewport: scaledVP } ).promise.then( function () {
                 if ( pageNumEl ) pageNumEl.textContent = pageNum;
@@ -243,7 +243,7 @@
                 dragMode    = hit.mode;
                 dragRow     = hit.row;
                 dragOverlay = hit.div;
-                dragOverlay.classList.add( 'wpwe-overlay-active' );
+                dragOverlay.classList.add( 'pewave-overlay-active' );
                 if ( hit.mode === 'move' ) {
                     dragOffX = pos.x - hit.cx;
                     dragOffY = pos.y - hit.cy;
@@ -308,11 +308,11 @@
                     var ptY = roundPt( parseFloat( dragOverlay.style.top    ) * PT_PER_PX );
                     var ptW = roundPt( parseFloat( dragOverlay.style.width  ) * PT_PER_PX );
                     var ptH = roundPt( parseFloat( dragOverlay.style.height ) * PT_PER_PX );
-                    setVal( dragRow, '.wpwe-map-x', ptX );
-                    setVal( dragRow, '.wpwe-map-y', ptY );
-                    setVal( dragRow, '.wpwe-map-w', ptW );
-                    setVal( dragRow, '.wpwe-map-h', ptH );
-                    dragOverlay.classList.remove( 'wpwe-overlay-active' );
+                    setVal( dragRow, '.pewave-map-x', ptX );
+                    setVal( dragRow, '.pewave-map-y', ptY );
+                    setVal( dragRow, '.pewave-map-w', ptW );
+                    setVal( dragRow, '.pewave-map-h', ptH );
+                    dragOverlay.classList.remove( 'pewave-overlay-active' );
                 }
                 dragMode    = 'draw';
                 dragRow     = null;
@@ -350,11 +350,11 @@
                     var ptY = roundPt( parseFloat( dragOverlay.style.top    ) * PT_PER_PX );
                     var ptW = roundPt( parseFloat( dragOverlay.style.width  ) * PT_PER_PX );
                     var ptH = roundPt( parseFloat( dragOverlay.style.height ) * PT_PER_PX );
-                    setVal( dragRow, '.wpwe-map-x', ptX );
-                    setVal( dragRow, '.wpwe-map-y', ptY );
-                    setVal( dragRow, '.wpwe-map-w', ptW );
-                    setVal( dragRow, '.wpwe-map-h', ptH );
-                    dragOverlay.classList.remove( 'wpwe-overlay-active' );
+                    setVal( dragRow, '.pewave-map-x', ptX );
+                    setVal( dragRow, '.pewave-map-y', ptY );
+                    setVal( dragRow, '.pewave-map-w', ptW );
+                    setVal( dragRow, '.pewave-map-h', ptH );
+                    dragOverlay.classList.remove( 'pewave-overlay-active' );
                 }
                 dragMode    = 'draw';
                 dragRow     = null;
@@ -374,20 +374,20 @@
         var row   = clone.querySelector( 'tr' );
         if ( ! row ) return;
 
-        setVal( row, '.wpwe-map-group-key',    groupKey    || '' );
-        setVal( row, '.wpwe-map-field-key',    fieldKey    || '' );
-        setVal( row, '.wpwe-map-label',        label       || '' );
-        setVal( row, '.wpwe-map-type',         type        || 'text' );
-        setChk( row, '.wpwe-map-required',   '.wpwe-req-hidden', !! required );
-        setChk( row, '.wpwe-map-repeatable', '.wpwe-rep-hidden', !! repeatable );
-        setVal( row, '.wpwe-map-page',         page        || 1 );
-        setVal( row, '.wpwe-map-x',            x           || '' );
-        setVal( row, '.wpwe-map-y',            y           || '' );
-        setVal( row, '.wpwe-map-w',            w           || '' );
-        setVal( row, '.wpwe-map-h',            h           || '' );
-        setVal( row, '.wpwe-map-font',         font        || '' );
-        setVal( row, '.wpwe-map-char-spacing', charSpacing || '' );
-        setVal( row, '.wpwe-map-date-format',  dateFormat  || '' );
+        setVal( row, '.pewave-map-group-key',    groupKey    || '' );
+        setVal( row, '.pewave-map-field-key',    fieldKey    || '' );
+        setVal( row, '.pewave-map-label',        label       || '' );
+        setVal( row, '.pewave-map-type',         type        || 'text' );
+        setChk( row, '.pewave-map-required',   '.pewave-req-hidden', !! required );
+        setChk( row, '.pewave-map-repeatable', '.pewave-rep-hidden', !! repeatable );
+        setVal( row, '.pewave-map-page',         page        || 1 );
+        setVal( row, '.pewave-map-x',            x           || '' );
+        setVal( row, '.pewave-map-y',            y           || '' );
+        setVal( row, '.pewave-map-w',            w           || '' );
+        setVal( row, '.pewave-map-h',            h           || '' );
+        setVal( row, '.pewave-map-font',         font        || '' );
+        setVal( row, '.pewave-map-char-spacing', charSpacing || '' );
+        setVal( row, '.pewave-map-date-format',  dateFormat  || '' );
 
         tbody.appendChild( clone );
 
@@ -396,7 +396,7 @@
         newRow.addEventListener( 'input',  function () { renderOverlays(); serializeTableToHidden(); updateSummaryText(); } );
 
         if ( focusField !== false ) {
-            var el = newRow.querySelector( '.wpwe-map-group-key' );
+            var el = newRow.querySelector( '.pewave-map-group-key' );
             if ( el ) el.focus();
         }
 
@@ -405,20 +405,20 @@
     }
 
     // Manual add row button
-    $( '#wpwe-add-mapping-row' ).on( 'click', function () {
+    $( '#pewave-add-mapping-row' ).on( 'click', function () {
         addMappingRow( '', '', '', 'text', false, false, currentPage, '', '', '', '', 11 );
     } );
 
     // Sync checkbox state to companion hidden input (unchecked checkboxes don't POST)
-    $( '#wpwe-mapping-tbody' ).on( 'change', '.wpwe-map-required', function () {
-        $( this ).siblings( '.wpwe-req-hidden' ).val( this.checked ? '1' : '0' );
+    $( '#pewave-mapping-tbody' ).on( 'change', '.pewave-map-required', function () {
+        $( this ).siblings( '.pewave-req-hidden' ).val( this.checked ? '1' : '0' );
     } );
-    $( '#wpwe-mapping-tbody' ).on( 'change', '.wpwe-map-repeatable', function () {
-        $( this ).siblings( '.wpwe-rep-hidden' ).val( this.checked ? '1' : '0' );
+    $( '#pewave-mapping-tbody' ).on( 'change', '.pewave-map-repeatable', function () {
+        $( this ).siblings( '.pewave-rep-hidden' ).val( this.checked ? '1' : '0' );
     } );
 
     // Delete row (delegated)
-    $( '#wpwe-mapping-tbody' ).on( 'click', '.wpwe-delete-map-row', function () {
+    $( '#pewave-mapping-tbody' ).on( 'click', '.pewave-delete-map-row', function () {
         $( this ).closest( 'tr' ).remove();
         renderOverlays();
         serializeTableToHidden();
@@ -426,7 +426,7 @@
     } );
 
     // Bind change on existing rows (loaded from saved data) and set initial badges
-    $( '#wpwe-mapping-tbody tr' ).each( function () {
+    $( '#pewave-mapping-tbody tr' ).each( function () {
         var row = this;
         row.addEventListener( 'change', function () { renderOverlays(); serializeTableToHidden(); } );
         row.addEventListener( 'input',  function () { renderOverlays(); serializeTableToHidden(); } );
@@ -447,18 +447,18 @@
         if ( ! pdfCanvas.width ) return;
 
         eachRow( function ( row ) {
-            var page  = intVal( row, '.wpwe-map-page' );
+            var page  = intVal( row, '.pewave-map-page' );
             if ( page !== currentPage ) return;
 
-            var x     = floatVal( row, '.wpwe-map-x' );
-            var y     = floatVal( row, '.wpwe-map-y' );
-            var w     = floatVal( row, '.wpwe-map-w' );
-            var h     = floatVal( row, '.wpwe-map-h' );
-            var label     = strVal(  row, '.wpwe-map-label' ) || strVal( row, '.wpwe-map-field-key' ) || '?';
-            var type      = strVal(  row, '.wpwe-map-type' ) || 'text';
-            var font      = floatVal( row, '.wpwe-map-font' ) || 11;
-            var charSpace = floatVal( row, '.wpwe-map-char-spacing' );
-            var fmt       = strVal(  row, '.wpwe-map-date-format' ) || 'd/m/Y';
+            var x     = floatVal( row, '.pewave-map-x' );
+            var y     = floatVal( row, '.pewave-map-y' );
+            var w     = floatVal( row, '.pewave-map-w' );
+            var h     = floatVal( row, '.pewave-map-h' );
+            var label     = strVal(  row, '.pewave-map-label' ) || strVal( row, '.pewave-map-field-key' ) || '?';
+            var type      = strVal(  row, '.pewave-map-type' ) || 'text';
+            var font      = floatVal( row, '.pewave-map-font' ) || 11;
+            var charSpace = floatVal( row, '.pewave-map-char-spacing' );
+            var fmt       = strVal(  row, '.pewave-map-date-format' ) || 'd/m/Y';
             if ( ! x && ! y ) return;
 
             // Convert pt → canvas px
@@ -469,13 +469,13 @@
             var ch = ( h || 16 ) * scale;
 
             var div = document.createElement( 'div' );
-            div.className = 'wpwe-field-overlay';
+            div.className = 'pewave-field-overlay';
             div.style.cssText = 'left:' + cx + 'px;top:' + cy + 'px;width:' + cw + 'px;height:' + ch + 'px;';
             div.title = label;
 
             // Label badge
             var labelSpan = document.createElement( 'span' );
-            labelSpan.className = 'wpwe-overlay-label';
+            labelSpan.className = 'pewave-overlay-label';
             labelSpan.textContent = label;
             div.appendChild( labelSpan );
 
@@ -485,7 +485,7 @@
                 var pxFontSize    = font * scale;
                 var pxLetterSpace = charSpace * scale;
                 var pSpan = document.createElement( 'span' );
-                pSpan.className = 'wpwe-overlay-placeholder';
+                pSpan.className = 'pewave-overlay-placeholder';
                 pSpan.style.fontSize    = pxFontSize + 'px';
                 pSpan.style.letterSpacing = pxLetterSpace + 'px';
                 if ( type === 'signature' ) pSpan.style.fontStyle = 'italic';
@@ -495,7 +495,7 @@
 
             // Resize handle
             var handle = document.createElement( 'div' );
-            handle.className = 'wpwe-overlay-resize-handle';
+            handle.className = 'pewave-overlay-resize-handle';
             div.appendChild( handle );
 
             overlaysEl.appendChild( div );
@@ -560,8 +560,8 @@
         var groupsMeta = {};
         var rowIndex   = 0;
         eachRow( function ( row ) {
-            var gk    = strVal( row, '.wpwe-map-group-key' );
-            var fk    = strVal( row, '.wpwe-map-field-key' );
+            var gk    = strVal( row, '.pewave-map-group-key' );
+            var fk    = strVal( row, '.pewave-map-field-key' );
             if ( ! gk || ! fk ) { rowIndex++; return; }
             var path  = gk + '.' + fk;
             // Allow multiple PDF locations for the same form field:
@@ -572,18 +572,18 @@
                 finalPath = path + '__' + dupCount;
                 dupCount++;
             }
-            var label = strVal( row, '.wpwe-map-label' );
-            var type  = strVal( row, '.wpwe-map-type' )  || 'text';
-            var req   = !! row.querySelector( '.wpwe-map-required:checked' );
-            var rep   = !! row.querySelector( '.wpwe-map-repeatable:checked' );
-            var page  = intVal( row, '.wpwe-map-page' )  || 1;
-            var x     = floatVal( row, '.wpwe-map-x' );
-            var y     = floatVal( row, '.wpwe-map-y' );
-            var w     = floatVal( row, '.wpwe-map-w' );
-            var h     = floatVal( row, '.wpwe-map-h' );
-            var font      = floatVal( row, '.wpwe-map-font' );
-            var charSpace = floatVal( row, '.wpwe-map-char-spacing' );
-            var dateFmt   = strVal(   row, '.wpwe-map-date-format' );
+            var label = strVal( row, '.pewave-map-label' );
+            var type  = strVal( row, '.pewave-map-type' )  || 'text';
+            var req   = !! row.querySelector( '.pewave-map-required:checked' );
+            var rep   = !! row.querySelector( '.pewave-map-repeatable:checked' );
+            var page  = intVal( row, '.pewave-map-page' )  || 1;
+            var x     = floatVal( row, '.pewave-map-x' );
+            var y     = floatVal( row, '.pewave-map-y' );
+            var w     = floatVal( row, '.pewave-map-w' );
+            var h     = floatVal( row, '.pewave-map-h' );
+            var font      = floatVal( row, '.pewave-map-font' );
+            var charSpace = floatVal( row, '.pewave-map-char-spacing' );
+            var dateFmt   = strVal(   row, '.pewave-map-date-format' );
             var entry = { page: page, x: x, y: y, type: type, label: label, required: req };
             if ( w > 0 ) entry.width  = w;
             if ( h > 0 ) entry.height = h;
@@ -598,7 +598,7 @@
             rowIndex++;
         } );
 
-        var pageCount  = parseInt( ( document.getElementById( 'wpwe_map_page_count' ) || {} ).value, 10 ) || totalPages || 1;
+        var pageCount  = parseInt( ( document.getElementById( 'pewave_map_page_count' ) || {} ).value, 10 ) || totalPages || 1;
 
         var mapping = { page_count: pageCount, groups: groupsMeta, fields: fields };
         hiddenInput.value = JSON.stringify( mapping );
@@ -623,7 +623,7 @@
 
     function eachRow( fn ) {
         if ( ! tbody ) return;
-        Array.prototype.forEach.call( tbody.querySelectorAll( 'tr.wpwe-mapping-row' ), fn );
+        Array.prototype.forEach.call( tbody.querySelectorAll( 'tr.pewave-mapping-row' ), fn );
     }
 
     function setVal( row, sel, val ) {
@@ -665,13 +665,13 @@
      * Shows e.g. "pg.1 · 120, 85 · 80×20"
      */
     function updateLocationBadge( row ) {
-        var badge = row.querySelector( '.wpwe-map-location' );
+        var badge = row.querySelector( '.pewave-map-location' );
         if ( ! badge ) return;
-        var page = intVal( row, '.wpwe-map-page' ) || 1;
-        var x    = floatVal( row, '.wpwe-map-x' );
-        var y    = floatVal( row, '.wpwe-map-y' );
-        var w    = floatVal( row, '.wpwe-map-w' );
-        var h    = floatVal( row, '.wpwe-map-h' );
+        var page = intVal( row, '.pewave-map-page' ) || 1;
+        var x    = floatVal( row, '.pewave-map-x' );
+        var y    = floatVal( row, '.pewave-map-y' );
+        var w    = floatVal( row, '.pewave-map-w' );
+        var h    = floatVal( row, '.pewave-map-h' );
         if ( x || y ) {
             badge.textContent = 'pg.' + page + ' \u00b7 ' + x + ', ' + y + ' \u00b7 ' + ( w || '?' ) + '\u00d7' + ( h || '?' );
             badge.style.color = '';

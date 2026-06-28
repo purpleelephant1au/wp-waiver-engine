@@ -1,15 +1,15 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Renders the single-entry detail admin page.
- * Instantiated by Admin_Menu::page_entry_detail().
+ * Instantiated by PeWave_Admin_Menu::page_entry_detail().
  *
  * Also handles the PDF download action (?dl_pdf=N) for serving generated PDFs.
  */
-class Entry_Detail {
+class PeWave_Entry_Detail {
 
     private object $entry;
 
@@ -22,13 +22,13 @@ class Entry_Detail {
         $id        = (int) $entry->id;
         $data      = json_decode( $entry->submission_data, true ) ?: [];
         $pdf_paths = json_decode( $entry->pdf_paths, true ) ?: [];
-        $template  = Database::get_template( (int) $entry->template_id );
+        $template  = PeWave_Database::get_template( (int) $entry->template_id );
         $schema    = $template ? ( json_decode( (string) $template->field_schema, true ) ?: [] ) : [];
 
-        // Note: ?dl_pdf downloads are handled early by Admin_Menu::handle_actions()
+        // Note: ?dl_pdf downloads are handled early by PeWave_Admin_Menu::handle_actions()
         // before any HTML output, so we never reach here for download requests.
 
-        $back_url = admin_url( 'admin.php?page=wpwe-entries' );
+        $back_url = admin_url( 'admin.php?page=pewave-entries' );
         ?>
         <div class="wrap">
             <h1 class="wp-heading-inline">
@@ -42,8 +42,8 @@ class Entry_Detail {
             </a>
             &nbsp;
             <a href="<?php echo esc_url( wp_nonce_url(
-                admin_url( 'admin.php?page=wpwe-entries&wpwe_action=delete_entry&id=' . $id ),
-                'wpwe_delete_entry_' . $id
+                admin_url( 'admin.php?page=pewave-entries&pewave_action=delete_entry&id=' . $id ),
+                'pewave_delete_entry_' . $id
             ) ); ?>"
                onclick="return confirm('<?php esc_attr_e( 'Permanently delete this entry?', 'waiver-engine' ); ?>')"
                class="page-title-action" style="color:#d63638;border-color:#d63638;">
@@ -57,7 +57,7 @@ class Entry_Detail {
                     <th><?php esc_html_e( 'Template', 'waiver-engine' ); ?></th>
                     <td>
                         <?php if ( $template ) : ?>
-                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-edit&id=' . $template->id ) ); ?>">
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=pewave-edit&id=' . $template->id ) ); ?>">
                             <?php echo esc_html( $template->title ?: '#' . $template->id ); ?>
                         </a>
                         <?php else : ?>
@@ -79,11 +79,11 @@ class Entry_Detail {
                         ? esc_html__( 'Yes', 'waiver-engine' )
                         : esc_html__( 'No', 'waiver-engine' ); ?></td>
                 </tr>
-                <?php if ( Settings::is_amelia_enabled() && class_exists( Premium_Bridge::class ) ) : ?>
+                <?php if ( PeWave_Settings::is_amelia_enabled() && class_exists( PeWave_Premium_Bridge::class ) ) : ?>
                 <?php
                 $bk_id = (int) ( $entry->amelia_booking_id ?? 0 );
                 if ( $bk_id ) :
-                    $booking = Premium_Bridge::get_booking( $bk_id );
+                    $booking = PeWave_Premium_Bridge::get_booking( $bk_id );
                 endif;
                 if ( $bk_id && isset( $booking ) && $booking ) : ?>
                 <tr>
@@ -106,7 +106,7 @@ class Entry_Detail {
                     ?></td>
                 </tr>
                 <?php endif; ?>
-                <?php endif; /* Settings::is_amelia_enabled() */ ?>
+                <?php endif; /* PeWave_Settings::is_amelia_enabled() */ ?>
                 <?php if ( $entry->pdf_error ) : ?>
                 <tr>
                     <th><?php esc_html_e( 'PDF Error', 'waiver-engine' ); ?></th>
@@ -120,9 +120,9 @@ class Entry_Detail {
             <h3><?php esc_html_e( 'Generated PDFs', 'waiver-engine' ); ?></h3>
             <ul>
                 <?php foreach ( $pdf_paths as $i => $path ) :
-                    $nonce_base = wp_create_nonce( 'wpwe_dl_pdf_' . $id );
-                    $view_url   = admin_url( 'admin.php?page=wpwe-entry&id=' . $id . '&view_pdf=' . $i . '&_wpnonce=' . $nonce_base );
-                    $dl_url     = admin_url( 'admin.php?page=wpwe-entry&id=' . $id . '&dl_pdf='   . $i . '&_wpnonce=' . $nonce_base );
+                    $nonce_base = wp_create_nonce( 'pewave_dl_pdf_' . $id );
+                    $view_url   = admin_url( 'admin.php?page=pewave-entry&id=' . $id . '&view_pdf=' . $i . '&_wpnonce=' . $nonce_base );
+                    $dl_url     = admin_url( 'admin.php?page=pewave-entry&id=' . $id . '&dl_pdf='   . $i . '&_wpnonce=' . $nonce_base );
                     $fname      = basename( $path );
                     $exists     = file_exists( $path );
                     $is_combined = strpos( $fname, '-combined-' ) !== false;

@@ -1,5 +1,5 @@
 <?php
-namespace WPWE\Vendor;
+namespace Pewave\WaiverEngine\Vendor;
 
 defined( 'ABSPATH' ) || exit;
 

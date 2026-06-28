@@ -1,5 +1,5 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -8,16 +8,16 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Amelia Booking integration for WP Waiver Engine.
  *
- * Loaded only when Integration_Manager::is_amelia_active() returns true.
+ * Loaded only when PeWave_Integration_Manager::is_amelia_active() returns true.
  * All Amelia-specific database queries are contained here; the core plugin
  * has no direct awareness of Amelia tables.
  *
  * wp_amelia_* tables are queried directly because Amelia exposes no public
  * PHP API or WP actions for read-only booking lookups at this time.
  *
- * @see Integration_Manager::is_amelia_active()
+ * @see PeWave_Integration_Manager::is_amelia_active()
  */
-class Integration_Amelia {
+class PeWave_Integration_Amelia {
 
     /**
      * Register any WP hooks this integration needs.
@@ -197,7 +197,7 @@ class Integration_Amelia {
     /**
      * Get entries joined with Amelia booking data for the admin list table.
      *
-     * Returns the same structure as Database::get_entries() but augmented
+     * Returns the same structure as PeWave_Database::get_entries() but augmented
      * with nullable columns: booking_date, booking_status, booking_service,
      * booking_customer.
      *
@@ -225,7 +225,7 @@ class Integration_Amelia {
         int    $amelia_service_id = 0
     ): array {
         global $wpdb;
-        $entries = \WPWE\Database::entries_table();
+        $entries = \Pewave\WaiverEngine\PeWave_Database::entries_table();
         $appt    = $wpdb->prefix . 'amelia_appointments';
         $svc     = $wpdb->prefix . 'amelia_services';
 

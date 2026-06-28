@@ -1,9 +1,9 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
-interface License_Provider_Interface {
+interface PeWave_License_Provider_Interface {
     public function is_available(): bool;
     public function is_premium_active(): bool;
     public function get_upgrade_url(): string;

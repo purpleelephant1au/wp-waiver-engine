@@ -1,22 +1,18 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
-class License_Provider_Freemius implements License_Provider_Interface {
+class PeWave_License_Provider_Freemius implements PeWave_License_Provider_Interface {
 
     /**
-     * Resolve Freemius helper instance with backward compatibility.
+    * Resolve Freemius helper instance.
      *
      * @return mixed|null
      */
     private function get_fs() {
-        if ( function_exists( 'wwe_fs' ) ) {
-            return wwe_fs();
-        }
-
-        if ( function_exists( 'wpwe_fs' ) ) {
-            return wpwe_fs();
+        if ( function_exists( 'pewave_fs' ) ) {
+            return pewave_fs();
         }
 
         return null;
@@ -31,8 +27,8 @@ class License_Provider_Freemius implements License_Provider_Interface {
             return false;
         }
 
-        if ( function_exists( 'wpwe_can_use_premium_features' ) ) {
-            return (bool) wpwe_can_use_premium_features();
+        if ( function_exists( 'pewave_can_use_premium_features' ) ) {
+            return (bool) pewave_can_use_premium_features();
         }
 
         $fs = $this->get_fs();

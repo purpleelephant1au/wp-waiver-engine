@@ -1,19 +1,19 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Plugin uninstall cleanup (invoked via Freemius after_uninstall hook).
  */
-class Uninstall {
+class PeWave_Uninstall {
 
     public static function run(): void {
         global $wpdb;
 
         $tables = [
-            $wpdb->prefix . 'wpwe_entries',
-            $wpdb->prefix . 'wpwe_templates',
+            $wpdb->prefix . 'pewave_entries',
+            $wpdb->prefix . 'pewave_templates',
         ];
 
         foreach ( $tables as $table ) {
@@ -22,17 +22,17 @@ class Uninstall {
         }
 
         $options = [
-            'wpwe_db_version',
-            'wpwe_amelia_enabled',
-            'wpwe_admin_email_enabled',
-            'wpwe_user_email_enabled',
-            'wpwe_rate_limit_enabled',
-            'wpwe_rate_limit_max',
-            'wpwe_rate_limit_window',
-            'wpwe_pdf_retention_days',
-            'wpwe_captcha_provider',
-            'wpwe_captcha_site_key',
-            'wpwe_captcha_secret_key',
+            'pewave_db_version',
+            'pewave_amelia_enabled',
+            'pewave_admin_email_enabled',
+            'pewave_user_email_enabled',
+            'pewave_rate_limit_enabled',
+            'pewave_rate_limit_max',
+            'pewave_rate_limit_window',
+            'pewave_pdf_retention_days',
+            'pewave_captcha_provider',
+            'pewave_captcha_site_key',
+            'pewave_captcha_secret_key',
         ];
 
         foreach ( $options as $option ) {

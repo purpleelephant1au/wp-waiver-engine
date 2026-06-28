@@ -1,32 +1,32 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
-class License {
+class PeWave_License {
 
     /**
-     * @var License_Provider_Interface|null
+     * @var PeWave_License_Provider_Interface|null
      */
-    private static ?License_Provider_Interface $provider = null;
+    private static ?PeWave_License_Provider_Interface $provider = null;
 
-    public static function provider(): License_Provider_Interface {
+    public static function provider(): PeWave_License_Provider_Interface {
         if ( self::$provider ) {
             return self::$provider;
         }
 
-        $provider = new License_Provider_Null();
+        $provider = new PeWave_License_Provider_Null();
 
-        if ( function_exists( 'wwe_fs' ) || function_exists( 'wpwe_fs' ) ) {
-            $provider = new License_Provider_Freemius();
+        if ( function_exists( 'pewave_fs' ) ) {
+            $provider = new PeWave_License_Provider_Freemius();
         }
 
-        $provider = apply_filters( 'wpwe_license_provider', $provider );
+        $provider = apply_filters( 'pewave_license_provider', $provider );
 
-        if ( $provider instanceof License_Provider_Interface ) {
+        if ( $provider instanceof PeWave_License_Provider_Interface ) {
             self::$provider = $provider;
         } else {
-            self::$provider = new License_Provider_Null();
+            self::$provider = new PeWave_License_Provider_Null();
         }
 
         return self::$provider;

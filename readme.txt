@@ -5,7 +5,7 @@ Tags: pdf, forms, contracts, signature, booking
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.1.4
+Stable tag: 1.1.5
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,7 +60,7 @@ when Amelia is not installed.
 2. Activate through the **Plugins** screen in WordPress.
 3. Navigate to **Waivers > Templates** to create your first waiver template.
 4. Upload a PDF template file, map form fields to PDF coordinates, and
-   copy the `[waiver_form id="N"]` shortcode into any page or post.
+   copy the `[pewave_form id="N"]` shortcode into any page or post.
 
 == External services ==
 
@@ -210,7 +210,7 @@ Pro package. The WordPress.org version works fully for standalone waivers.
 
 = Where are submitted PDFs stored? =
 
-Generated PDFs are stored inside the `wp-content/uploads/wpwe-pdfs/`
+Generated PDFs are stored inside the `wp-content/uploads/pewave-pdfs/`
 directory on the server. They are served for download through an
 authenticated admin URL, not directly from disk.
 
@@ -229,6 +229,13 @@ the same booking email they used in Amelia. Optionally include `booking_email`
 as a convenience parameter.
 
 == Changelog ==
+
+= 1.1.5 =
+* Fix admin slug/label regressions introduced by identifier hardening.
+* Restore Visual Mapper selector parity and related admin CSS bindings.
+* Add direct license activation path for unlicensed Pro installs.
+* Harden Freemius SDK bootstrapping when vendor files are incomplete.
+* Fix release packaging exclusion bug that removed Freemius templates.
 
 = 1.1.4 =
 * Remove uninstall.php so Freemius can track uninstall events; cleanup runs via after_uninstall hook.
@@ -273,6 +280,9 @@ as a convenience parameter.
 * Import / export of template field-to-PDF mappings.
 
 == Upgrade Notice ==
+
+= 1.1.5 =
+Admin/runtime/packaging stability fixes. No database migrations required.
 
 = 1.1.4 =
 Freemius deployment fix for uninstall handling. No database migrations required.

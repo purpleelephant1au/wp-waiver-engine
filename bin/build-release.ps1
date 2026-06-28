@@ -90,7 +90,7 @@ $ExcludePatterns = @(
     'Feedback.txt',
     'instructions*',
     'user-guides*',
-    'temp*',
+    'temp\*',
     '*.zip'
 )
 

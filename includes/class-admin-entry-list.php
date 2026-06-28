@@ -1,18 +1,18 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Customises the admin list table for waiver_entry and adds a meta box
+ * Customises the admin list table for pewave_entry and adds a meta box
  * showing submission details and download links.
  */
-class Admin_Entry_List {
+class PeWave_Admin_Entry_List {
 
     public function register(): void {
-        add_filter( 'manage_waiver_entry_posts_columns',       [ $this, 'columns' ] );
-        add_action( 'manage_waiver_entry_posts_custom_column', [ $this, 'column_content' ], 10, 2 );
-        add_filter( 'manage_edit-waiver_entry_sortable_columns', [ $this, 'sortable_columns' ] );
+        add_filter( 'manage_pewave_entry_posts_columns',       [ $this, 'columns' ] );
+        add_action( 'manage_pewave_entry_posts_custom_column', [ $this, 'column_content' ], 10, 2 );
+        add_filter( 'manage_edit-pewave_entry_sortable_columns', [ $this, 'sortable_columns' ] );
         add_action( 'add_meta_boxes', [ $this, 'add_entry_meta_box' ] );
         // Prevent creating new entries from the admin edit screen
         add_action( 'admin_head-post-new.php', [ $this, 'block_new_entry' ] );
@@ -87,10 +87,10 @@ class Admin_Entry_List {
 
     public function add_entry_meta_box(): void {
         add_meta_box(
-            'wpwe_entry_detail',
+            'pewave_entry_detail',
             __( 'Submission Data', 'waiver-engine' ),
             [ $this, 'render_entry_meta_box' ],
-            'waiver_entry',
+            'pewave_entry',
             'normal',
             'high'
         );
@@ -160,7 +160,7 @@ class Admin_Entry_List {
 
     public function block_new_entry(): void {
         global $post_type;
-        if ( $post_type === 'waiver_entry' ) {
+        if ( $post_type === 'pewave_entry' ) {
             wp_die( esc_html__( 'Waiver entries are created by form submissions only.', 'waiver-engine' ) );
         }
     }

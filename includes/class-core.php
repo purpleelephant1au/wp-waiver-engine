@@ -1,5 +1,5 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
  * inline closures in the main plugin file) makes unit testing possible
  * without triggering live WP hooks.
  */
-class Core {
+class PeWave_Core {
 
     /**
      * Initialise all plugin components.
@@ -21,14 +21,14 @@ class Core {
      */
     public static function init(): void {
         // Ensure DB schema is current (no-op when already on latest version).
-        Database::install();
+        PeWave_Database::install();
 
-        // Core feature registration.
-        ( new Admin_Menu() )->register();
-        ( new Form_Renderer() )->register();
-        ( new Entry_Handler() )->register();
+        // PeWave_Core feature registration.
+        ( new PeWave_Admin_Menu() )->register();
+        ( new PeWave_Form_Renderer() )->register();
+        ( new PeWave_Entry_Handler() )->register();
 
         // Third-party integrations – loaded only when the host plugin is detected.
-        Integration_Manager::register();
+        PeWave_Integration_Manager::register();
     }
 }

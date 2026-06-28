@@ -1,18 +1,18 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Registers [waiver_form] shortcode and renders the dynamic form HTML
- * from a waiver_template row in the custom DB table.
+ * Registers [pewave_form] shortcode and renders the dynamic form HTML
+ * from a pewave_template row in the custom DB table.
  *
- * Usage: [waiver_form id="3"]   (template DB row ID)
+ * Usage: [pewave_form id="3"]   (template DB row ID)
  */
-class Form_Renderer {
+class PeWave_Form_Renderer {
 
     public function register(): void {
-        add_shortcode( 'waiver_form', [ $this, 'shortcode' ] );
+        add_shortcode( 'pewave_form', [ $this, 'shortcode' ] );
         add_action( 'wp_enqueue_scripts', [ $this, 'maybe_enqueue' ] );
     }
 
@@ -25,25 +25,25 @@ class Form_Renderer {
         // Scripts use defer so no cost if shortcode is absent.
         wp_enqueue_script(
             'signature-pad',
-            \WPWE_PLUGIN_URL . 'assets/js/signature_pad.umd.min.js',
+            \PEWAVE_PLUGIN_URL . 'assets/js/signature_pad.umd.min.js',
             [],
             '5.0.2',
             true
         );
         wp_enqueue_script(
-            'wpwe-form-engine',
-            \WPWE_PLUGIN_URL . 'assets/js/form-engine.js',
+            'pewave-form-engine',
+            \PEWAVE_PLUGIN_URL . 'assets/js/form-engine.js',
             [ 'signature-pad' ],
-            \WPWE_VERSION,
+            \PEWAVE_VERSION,
             true
         );
-        wp_localize_script( 'wpwe-form-engine', 'wpweForm', [
+        wp_localize_script( 'pewave-form-engine', 'pewaveForm', [
             'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
-            'nonce'           => wp_create_nonce( 'wpwe_submit_waiver' ),
-            'previewNonce'    => wp_create_nonce( 'wpwe_preview_pdf' ),
-            'bookingNonce'    => wp_create_nonce( 'wpwe_search_bookings' ),
-            'captchaProvider' => Settings::captcha_provider(),
-            'captchaSiteKey'  => Settings::captcha_site_key(),
+            'nonce'           => wp_create_nonce( 'pewave_submit_waiver' ),
+            'previewNonce'    => wp_create_nonce( 'pewave_preview_pdf' ),
+            'bookingNonce'    => wp_create_nonce( 'pewave_search_bookings' ),
+            'captchaProvider' => PeWave_Settings::captcha_provider(),
+            'captchaSiteKey'  => PeWave_Settings::captcha_site_key(),
             'i18n'          => [
                 'submitting'          => __( 'Submitting…', 'waiver-engine' ),
                 'success'             => __( 'Thank you! Your waiver has been submitted.', 'waiver-engine' ),
@@ -67,15 +67,15 @@ class Form_Renderer {
             ],
         ] );
         wp_enqueue_style(
-            'wpwe-form',
-            \WPWE_PLUGIN_URL . 'assets/css/waiver-form.css',
+            'pewave-form',
+            \PEWAVE_PLUGIN_URL . 'assets/css/waiver-form.css',
             [],
-            \WPWE_VERSION
+            \PEWAVE_VERSION
         );
 
         // Conditionally enqueue CAPTCHA SDKs (only when a provider is configured)
-        $captcha_provider = Settings::captcha_provider();
-        $captcha_site_key = Settings::captcha_site_key();
+        $captcha_provider = PeWave_Settings::captcha_provider();
+        $captcha_site_key = PeWave_Settings::captcha_site_key();
         if ( $captcha_provider === 'recaptcha_v3' && $captcha_site_key ) {
             wp_enqueue_script(
                 'google-recaptcha',
@@ -100,7 +100,7 @@ class Form_Renderer {
     // -----------------------------------------------------------------------
 
     public function shortcode( array $atts ): string {
-        $atts        = shortcode_atts( [ 'id' => 0, 'template_id' => 0 ], $atts, 'waiver_form' );
+        $atts        = shortcode_atts( [ 'id' => 0, 'template_id' => 0 ], $atts, 'pewave_form' );
         // Support both `id` and legacy `template_id` attribute names
         $template_id = absint( $atts['id'] ) ?: absint( $atts['template_id'] );
 
@@ -109,7 +109,7 @@ class Form_Renderer {
         }
 
         // Load from custom DB table
-        $template = Database::get_template( $template_id );
+        $template = PeWave_Database::get_template( $template_id );
         if ( ! $template ) {
             return $this->error( __( 'Waiver template not found.', 'waiver-engine' ) );
         }
@@ -126,7 +126,7 @@ class Form_Renderer {
         $premium_context  = $this->build_form_premium_context( $template );
         $amelia_services  = array_values( (array) ( $premium_context['amelia_services'] ?? [] ) );
         $allow_copy_email = ! empty( $premium_context['allow_copy_email'] );
-        $captcha_active   = Settings::captcha_provider() !== 'none' && ! empty( $template->captcha_enabled );
+        $captcha_active   = PeWave_Settings::captcha_provider() !== 'none' && ! empty( $template->captcha_enabled );
         $output_mode      = (string) ( $premium_context['output_mode'] ?? 'single' );
         $this->render_form( $template_id, $template->title, $schema, $output_mode, $amelia_services, $allow_copy_email, $captcha_active );
         return ob_get_clean();
@@ -141,65 +141,65 @@ class Form_Renderer {
         $services_json   = wp_json_encode( $amelia_services );
         $has_booking_svc = ! empty( $amelia_services );
         ?>
-        <div class="wpwe-form-wrap" id="wpwe-form-wrap-<?php echo esc_attr( $uid ); ?>">
+        <div class="pewave-form-wrap" id="pewave-form-wrap-<?php echo esc_attr( $uid ); ?>">
             <?php if ( $title ) : ?>
-            <h2 class="wpwe-form-title"><?php echo esc_html( $title ); ?></h2>
+            <h2 class="pewave-form-title"><?php echo esc_html( $title ); ?></h2>
             <?php endif; ?>
 
             <?php if ( $has_booking_svc ) : ?>
             <!-- Booking search widget -->
-            <div class="wpwe-booking-search" data-amelia-services="<?php echo esc_attr( $services_json ); ?>" data-template-id="<?php echo esc_attr( $uid ); ?>">
-                <div class="wpwe-booking-search__header">
-                    <span class="wpwe-booking-search__label"><?php esc_html_e( 'Verify your booking', 'waiver-engine' ); ?></span>
-                    <span class="wpwe-booking-search__hint"><?php esc_html_e( 'Enter your booking ID and the same email used in the booking.', 'waiver-engine' ); ?></span>
+            <div class="pewave-booking-search" data-amelia-services="<?php echo esc_attr( $services_json ); ?>" data-template-id="<?php echo esc_attr( $uid ); ?>">
+                <div class="pewave-booking-search__header">
+                    <span class="pewave-booking-search__label"><?php esc_html_e( 'Verify your booking', 'waiver-engine' ); ?></span>
+                    <span class="pewave-booking-search__hint"><?php esc_html_e( 'Enter your booking ID and the same email used in the booking.', 'waiver-engine' ); ?></span>
                 </div>
-                <div class="wpwe-booking-search__input-row">
+                <div class="pewave-booking-search__input-row">
                     <input type="number"
-                           class="wpwe-booking-id-lookup"
+                           class="pewave-booking-id-lookup"
                            placeholder="<?php esc_attr_e( 'Booking ID (e.g. 123)', 'waiver-engine' ); ?>"
                            min="1"
                            step="1"
                            inputmode="numeric"
                            aria-label="<?php esc_attr_e( 'Booking ID', 'waiver-engine' ); ?>">
                     <input type="email"
-                           class="wpwe-booking-email-lookup"
+                           class="pewave-booking-email-lookup"
                            placeholder="<?php esc_attr_e( 'Booking email', 'waiver-engine' ); ?>"
                            autocomplete="email"
                            aria-label="<?php esc_attr_e( 'Booking email', 'waiver-engine' ); ?>">
-                    <button type="button" class="wpwe-booking-verify-btn"><?php esc_html_e( 'Verify', 'waiver-engine' ); ?></button>
-                    <span class="wpwe-booking-searching" hidden><?php esc_html_e( 'Verifying…', 'waiver-engine' ); ?></span>
+                    <button type="button" class="pewave-booking-verify-btn"><?php esc_html_e( 'Verify', 'waiver-engine' ); ?></button>
+                    <span class="pewave-booking-searching" hidden><?php esc_html_e( 'Verifying…', 'waiver-engine' ); ?></span>
                 </div>
-                <div class="wpwe-booking-search-error" hidden></div>
-                <div class="wpwe-booking-selected" hidden>
-                    <span class="wpwe-booking-selected__badge"></span>
-                    <button type="button" class="wpwe-booking-clear-btn"><?php esc_html_e( 'Change', 'waiver-engine' ); ?></button>
+                <div class="pewave-booking-search-error" hidden></div>
+                <div class="pewave-booking-selected" hidden>
+                    <span class="pewave-booking-selected__badge"></span>
+                    <button type="button" class="pewave-booking-clear-btn"><?php esc_html_e( 'Change', 'waiver-engine' ); ?></button>
                 </div>
             </div>
             <?php endif; ?>
 
-            <form class="wpwe-form" id="wpwe-form-<?php echo esc_attr( $uid ); ?>"
+            <form class="pewave-form" id="pewave-form-<?php echo esc_attr( $uid ); ?>"
                   novalidate
                 data-template-id="<?php echo esc_attr( $uid ); ?>"
                   data-output-mode="<?php echo esc_attr( $output_mode ); ?>">
 
-                <?php wp_nonce_field( 'wpwe_submit_waiver', 'wpwe_nonce', false ); ?>
-                <input type="hidden" name="wpwe_booking_id" class="wpwe-booking-id-input" value="">
+                <?php wp_nonce_field( 'pewave_submit_waiver', 'pewave_nonce', false ); ?>
+                <input type="hidden" name="pewave_booking_id" class="pewave-booking-id-input" value="">
 
                 <?php if ( $captcha_active ) : ?>
-                <input type="hidden" name="wpwe_captcha_token" class="wpwe-captcha-token" value="">
+                <input type="hidden" name="pewave_captcha_token" class="pewave-captcha-token" value="">
                 <?php endif; ?>
 
                 <?php
                 // Anti-bot: timing token (HMAC of timestamp; rejected server-side if < 3 s old)
                 $ts = time();
-                echo '<input type="hidden" name="wpwe_ts" value="' . esc_attr( $ts ) . '">';
-                echo '<input type="hidden" name="wpwe_ts_sig" value="' . esc_attr( hash_hmac( 'sha256', (string) $ts, wp_salt( 'nonce' ) ) ) . '">';
+                echo '<input type="hidden" name="pewave_ts" value="' . esc_attr( $ts ) . '">';
+                echo '<input type="hidden" name="pewave_ts_sig" value="' . esc_attr( hash_hmac( 'sha256', (string) $ts, wp_salt( 'nonce' ) ) ) . '">';
                 ?>
 
                 <?php /* Anti-bot honeypot: hidden with CSS; bots fill it, humans leave it blank */ ?>
-                <div class="wpwe-hp-field" aria-hidden="true" style="position:absolute;left:-9999px;height:0;overflow:hidden;" tabindex="-1">
-                    <label for="wpwe_hp_<?php echo esc_attr( $uid ); ?>"><?php esc_html_e( 'Leave this field empty', 'waiver-engine' ); ?></label>
-                    <input type="text" id="wpwe_hp_<?php echo esc_attr( $uid ); ?>" name="wpwe_hp" value="" autocomplete="off" tabindex="-1" aria-hidden="true">
+                <div class="pewave-hp-field" aria-hidden="true" style="position:absolute;left:-9999px;height:0;overflow:hidden;" tabindex="-1">
+                    <label for="pewave_hp_<?php echo esc_attr( $uid ); ?>"><?php esc_html_e( 'Leave this field empty', 'waiver-engine' ); ?></label>
+                    <input type="text" id="pewave_hp_<?php echo esc_attr( $uid ); ?>" name="pewave_hp" value="" autocomplete="off" tabindex="-1" aria-hidden="true">
                 </div>
 
                 <?php foreach ( $schema['groups'] as $group ) :
@@ -208,38 +208,38 @@ class Form_Renderer {
 
                 <!-- Email-copy opt-in (not saved, just used to send a copy) -->
                 <?php if ( $allow_copy_email ) : ?>
-                <div class="wpwe-email-copy-wrap">
-                    <label class="wpwe-email-copy-toggle">
-                        <input type="checkbox" class="wpwe-email-copy-check" name="wpwe_send_copy" value="1">
+                <div class="pewave-email-copy-wrap">
+                    <label class="pewave-email-copy-toggle">
+                        <input type="checkbox" class="pewave-email-copy-check" name="pewave_send_copy" value="1">
                         <?php esc_html_e( 'Email me a copy of my waiver PDF', 'waiver-engine' ); ?>
                     </label>
-                    <div class="wpwe-email-copy-input" hidden>
-                        <label for="wpwe-copy-email-<?php echo esc_attr( $uid ); ?>" class="wpwe-label">
+                    <div class="pewave-email-copy-input" hidden>
+                        <label for="pewave-copy-email-<?php echo esc_attr( $uid ); ?>" class="pewave-label">
                             <?php esc_html_e( 'Your email address', 'waiver-engine' ); ?>
-                            <span class="wpwe-required" aria-hidden="true">*</span>
+                            <span class="pewave-required" aria-hidden="true">*</span>
                         </label>
                         <input type="email"
-                               id="wpwe-copy-email-<?php echo esc_attr( $uid ); ?>"
-                               name="wpwe_copy_email"
-                               class="wpwe-input wpwe-copy-email-input"
+                               id="pewave-copy-email-<?php echo esc_attr( $uid ); ?>"
+                               name="pewave_copy_email"
+                               class="pewave-input pewave-copy-email-input"
                                autocomplete="email"
                                placeholder="you@example.com">
-                        <span class="wpwe-field-error wpwe-copy-email-error"></span>
+                        <span class="pewave-field-error pewave-copy-email-error"></span>
                     </div>
                 </div>
                 <?php endif; /* $allow_copy_email */ ?>
 
-                <div class="wpwe-submit-wrap">
-                    <button type="button" class="wpwe-preview-btn">
+                <div class="pewave-submit-wrap">
+                    <button type="button" class="pewave-preview-btn">
                         <?php esc_html_e( 'Preview', 'waiver-engine' ); ?>
                     </button>
-                    <button type="submit" class="wpwe-submit-btn">
+                    <button type="submit" class="pewave-submit-btn">
                         <?php esc_html_e( 'Submit Waiver', 'waiver-engine' ); ?>
                     </button>
-                    <span class="wpwe-spinner" style="display:none;" aria-hidden="true"></span>
+                    <span class="pewave-spinner" style="display:none;" aria-hidden="true"></span>
                 </div>
 
-                <div class="wpwe-messages" role="alert" aria-live="polite"></div>
+                <div class="pewave-messages" role="alert" aria-live="polite"></div>
             </form>
         </div>
         <?php
@@ -258,43 +258,43 @@ class Form_Renderer {
         $fields      = $group['fields'] ?? [];
 
         if ( $repeatable ) : ?>
-        <fieldset class="wpwe-group wpwe-group--repeatable wpwe-group--table"
+        <fieldset class="pewave-group pewave-group--repeatable pewave-group--table"
                   data-group-key="<?php echo esc_attr( $group_key ); ?>"
                   data-min-rows="<?php echo esc_attr( $min_rows ); ?>"
                   data-max-rows="<?php echo esc_attr( $max_rows ); ?>">
-            <legend class="wpwe-group-legend">
+            <legend class="pewave-group-legend">
                 <?php echo esc_html( $group_label ); ?>
             </legend>
 
-            <div class="wpwe-table-wrap">
-                <table class="wpwe-table">
+            <div class="pewave-table-wrap">
+                <table class="pewave-table">
                     <thead>
                         <tr>
-                            <th class="wpwe-th wpwe-th-rownum">#</th>
+                            <th class="pewave-th pewave-th-rownum">#</th>
                             <?php foreach ( $fields as $field ) : ?>
-                            <th class="wpwe-th">
+                            <th class="pewave-th">
                                 <?php echo esc_html( $field['label'] ?? ( $field['key'] ?? '' ) ); ?>
                                 <?php if ( ! empty( $field['required'] ) ) : ?>
-                                <span class="wpwe-required" aria-hidden="true">*</span>
+                                <span class="pewave-required" aria-hidden="true">*</span>
                                 <?php endif; ?>
                             </th>
                             <?php endforeach; ?>
-                            <th class="wpwe-th wpwe-th-action"></th>
+                            <th class="pewave-th pewave-th-action"></th>
                         </tr>
                     </thead>
-                    <tbody class="wpwe-rows">
+                    <tbody class="pewave-rows">
                         <?php for ( $i = 0; $i < $min_rows; $i++ ) : ?>
-                        <tr class="wpwe-row" data-row-index="<?php echo esc_attr( $i ); ?>">
-                            <td class="wpwe-cell wpwe-cell--rownum">
-                                <span class="wpwe-row-num"><?php echo esc_html( (string) ( absint( $i ) + 1 ) ); ?></span>
+                        <tr class="pewave-row" data-row-index="<?php echo esc_attr( $i ); ?>">
+                            <td class="pewave-cell pewave-cell--rownum">
+                                <span class="pewave-row-num"><?php echo esc_html( (string) ( absint( $i ) + 1 ) ); ?></span>
                             </td>
                             <?php foreach ( $fields as $field ) :
                                 $this->render_field( $field, $group_key, $i, true );
                             endforeach; ?>
-                            <td class="wpwe-cell wpwe-cell--action">
-                                <button type="button" class="wpwe-row-preview-btn"
+                            <td class="pewave-cell pewave-cell--action">
+                                <button type="button" class="pewave-row-preview-btn"
                                     title="<?php esc_attr_e( 'Preview PDF for this row', 'waiver-engine' ); ?>">&#128065;</button>
-                                <button type="button" class="wpwe-remove-row" style="display:none;">&times;</button>
+                                <button type="button" class="pewave-remove-row" style="display:none;">&times;</button>
                             </td>
                         </tr>
                         <?php endfor; ?>
@@ -302,23 +302,23 @@ class Form_Renderer {
                 </table>
             </div>
 
-            <template class="wpwe-row-template">
-                <tr class="wpwe-row" data-row-index="__IDX__">
-                    <td class="wpwe-cell wpwe-cell--rownum">
-                        <span class="wpwe-row-num"></span>
+            <template class="pewave-row-template">
+                <tr class="pewave-row" data-row-index="__IDX__">
+                    <td class="pewave-cell pewave-cell--rownum">
+                        <span class="pewave-row-num"></span>
                     </td>
                     <?php foreach ( $fields as $field ) :
                         $this->render_field( $field, $group_key, '__IDX__', true );
                     endforeach; ?>
-                    <td class="wpwe-cell wpwe-cell--action">
-                        <button type="button" class="wpwe-row-preview-btn"
+                    <td class="pewave-cell pewave-cell--action">
+                        <button type="button" class="pewave-row-preview-btn"
                             title="<?php esc_attr_e( 'Preview PDF for this row', 'waiver-engine' ); ?>">&#128065;</button>
-                        <button type="button" class="wpwe-remove-row">&times;</button>
+                        <button type="button" class="pewave-remove-row">&times;</button>
                     </td>
                 </tr>
             </template>
 
-            <button type="button" class="wpwe-add-row button">
+            <button type="button" class="pewave-add-row button">
                 <?php
                 /* translators: %s: repeatable group label */
                 printf( esc_html__( '+ Add %s', 'waiver-engine' ), esc_html( $group_label ) );
@@ -326,12 +326,12 @@ class Form_Renderer {
             </button>
         </fieldset>
         <?php else : ?>
-        <fieldset class="wpwe-group"
+        <fieldset class="pewave-group"
                   data-group-key="<?php echo esc_attr( $group_key ); ?>">
-            <legend class="wpwe-group-legend"><?php echo esc_html( $group_label ); ?></legend>
-            <div class="wpwe-rows">
-                <div class="wpwe-row" data-row-index="0">
-                    <div class="wpwe-fields">
+            <legend class="pewave-group-legend"><?php echo esc_html( $group_label ); ?></legend>
+            <div class="pewave-rows">
+                <div class="pewave-row" data-row-index="0">
+                    <div class="pewave-fields">
                         <?php foreach ( $fields as $field ) :
                             $this->render_field( $field, $group_key, 0 );
                         endforeach; ?>
@@ -351,20 +351,20 @@ class Form_Renderer {
         $label    = (string) ( $field['label'] ?? $key );
         $type     = sanitize_key( $field['type'] ?? 'text' );
         $required = ! empty( $field['required'] );
-        $name     = "wpwe_data[{$group_key}][{$row_index}][{$key}]";
-        $id       = "wpwe_{$group_key}_{$row_index}_{$key}";
+            $name     = "pewave_data[{$group_key}][{$row_index}][{$key}]";
+        $id       = "pewave_{$group_key}_{$row_index}_{$key}";
         $options  = $field['options'] ?? [];
 
         if ( $in_table ) : ?>
-        <td class="wpwe-cell wpwe-cell--<?php echo esc_attr( $type ); ?>"
+        <td class="pewave-cell pewave-cell--<?php echo esc_attr( $type ); ?>"
             data-field-key="<?php echo esc_attr( $key ); ?>">
         <?php else : ?>
-        <div class="wpwe-field wpwe-field--<?php echo esc_attr( $type ); ?>"
+        <div class="pewave-field pewave-field--<?php echo esc_attr( $type ); ?>"
              data-field-key="<?php echo esc_attr( $key ); ?>">
-            <label for="<?php echo esc_attr( $id ); ?>" class="wpwe-label">
+            <label for="<?php echo esc_attr( $id ); ?>" class="pewave-label">
                 <?php echo esc_html( $label ); ?>
                 <?php if ( $required ) : ?>
-                <span class="wpwe-required" aria-hidden="true">*</span>
+                <span class="pewave-required" aria-hidden="true">*</span>
                 <?php endif; ?>
             </label>
         <?php endif;
@@ -373,7 +373,7 @@ class Form_Renderer {
             case 'textarea': ?>
                 <textarea id="<?php echo esc_attr( $id ); ?>"
                           name="<?php echo esc_attr( $name ); ?>"
-                          class="wpwe-input wpwe-textarea"
+                          class="pewave-input pewave-textarea"
                           rows="<?php echo $in_table ? '2' : '4'; ?>"
                           <?php if ( $required ) : ?>required aria-required="true"<?php endif; ?>></textarea>
                 <?php break;
@@ -381,7 +381,7 @@ class Form_Renderer {
             case 'select': ?>
                 <select id="<?php echo esc_attr( $id ); ?>"
                         name="<?php echo esc_attr( $name ); ?>"
-                        class="wpwe-input wpwe-select"
+                        class="pewave-input pewave-select"
                     <?php if ( $required ) : ?>required aria-required="true"<?php endif; ?>>
                     <option value=""><?php esc_html_e( '— Select —', 'waiver-engine' ); ?></option>
                     <?php foreach ( $options as $opt ) : ?>
@@ -393,28 +393,28 @@ class Form_Renderer {
                 <?php break;
 
             case 'checkbox': ?>
-                <label class="wpwe-checkbox-label">
+                <label class="pewave-checkbox-label">
                     <input type="checkbox"
                            id="<?php echo esc_attr( $id ); ?>"
                            name="<?php echo esc_attr( $name ); ?>"
                            value="1"
-                           class="wpwe-input wpwe-checkbox"
+                           class="pewave-input pewave-checkbox"
                               <?php if ( $required ) : ?>required aria-required="true"<?php endif; ?>>
                           <?php if ( ! $in_table ) echo esc_html( $label ); ?>
                 </label>
                 <?php break;
 
             case 'signature': ?>
-                <div class="wpwe-signature-wrap">
-                    <canvas class="wpwe-signature-canvas"
+                <div class="pewave-signature-wrap">
+                    <canvas class="pewave-signature-canvas"
                             id="<?php echo esc_attr( $id ); ?>"
                             aria-label="<?php echo esc_attr( $label ); ?>"
                             role="img"></canvas>
                     <input type="hidden"
                            name="<?php echo esc_attr( $name ); ?>"
-                           class="wpwe-signature-data"
+                           class="pewave-signature-data"
                               <?php if ( $required ) : ?>data-required="1"<?php endif; ?>>
-                    <button type="button" class="wpwe-clear-signature">
+                    <button type="button" class="pewave-clear-signature">
                         <?php esc_html_e( 'Clear', 'waiver-engine' ); ?>
                     </button>
                 </div>
@@ -426,11 +426,11 @@ class Form_Renderer {
                 <input type="<?php echo esc_attr( $html_type ); ?>"
                        id="<?php echo esc_attr( $id ); ?>"
                        name="<?php echo esc_attr( $name ); ?>"
-                       class="wpwe-input wpwe-input--<?php echo esc_attr( $html_type ); ?>"
+                       class="pewave-input pewave-input--<?php echo esc_attr( $html_type ); ?>"
                       <?php if ( $required ) : ?>required aria-required="true"<?php endif; ?>>
                 <?php break;
         endswitch; ?>
-        <span class="wpwe-field-error" role="alert"></span>
+        <span class="pewave-field-error" role="alert"></span>
         <?php if ( $in_table ) : ?>
         </td>
         <?php else : ?>
@@ -443,7 +443,7 @@ class Form_Renderer {
     // -----------------------------------------------------------------------
 
     private function error( string $msg ): string {
-        return '<p class="wpwe-error">' . esc_html( $msg ) . '</p>';
+        return '<p class="pewave-error">' . esc_html( $msg ) . '</p>';
     }
 
     private function build_form_premium_context( object $template ): array {
@@ -453,8 +453,8 @@ class Form_Renderer {
             'output_mode'      => 'single',
         ];
 
-        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'build_form_premium_context' ) ) {
-            $premium = Premium_Bridge::build_form_premium_context( $template );
+        if ( class_exists( PeWave_Premium_Bridge::class ) && method_exists( PeWave_Premium_Bridge::class, 'build_form_premium_context' ) ) {
+            $premium = PeWave_Premium_Bridge::build_form_premium_context( $template );
             if ( is_array( $premium ) ) {
                 return array_merge( $defaults, $premium );
             }
@@ -464,8 +464,8 @@ class Form_Renderer {
     }
 
     private function is_repeatable_group( array $group ): bool {
-        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'is_repeatable_group' ) ) {
-            return Premium_Bridge::is_repeatable_group( $group );
+        if ( class_exists( PeWave_Premium_Bridge::class ) && method_exists( PeWave_Premium_Bridge::class, 'is_repeatable_group' ) ) {
+            return PeWave_Premium_Bridge::is_repeatable_group( $group );
         }
 
         return false;

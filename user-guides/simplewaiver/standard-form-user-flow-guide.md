@@ -25,7 +25,7 @@ It walks through:
 2. Open "Example – Standard Form".
 3. Add the shortcode in a paragraph block:
 
-   [waiver_form id="1"]
+   [pewave_form id="1"]
 
 4. Click Save/Update.
 5. Click View Page to open the frontend.
@@ -36,7 +36,7 @@ It walks through:
 
 Notes:
 - If your template ID is different, use the shortcode shown in Waivers -> Templates.
-- Example format: [waiver_form id="X"]
+- Example format: [pewave_form id="X"]
 
 ## 2) Open the Frontend Form as a User
 

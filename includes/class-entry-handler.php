@@ -1,26 +1,26 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Handles the AJAX form submission:
  *  1. Validates nonce + data against schema (from custom DB table)
- *  2. Creates a row in wpwe_entries (no WP posts used)
+ *  2. Creates a row in pewave_entries (no WP posts used)
  *  3. Triggers PDF generation
  *  4. Sends notification email (with PDFs attached)
  *  5. Returns JSON response
  */
-class Entry_Handler {
+class PeWave_Entry_Handler {
 
     public function register(): void {
-        add_action( 'wp_ajax_wpwe_submit_waiver',        [ $this, 'handle' ] );
-        add_action( 'wp_ajax_nopriv_wpwe_submit_waiver', [ $this, 'handle' ] );
-        add_action( 'wp_ajax_wpwe_preview_pdf',          [ $this, 'ajax_preview_pdf' ] );
-        add_action( 'wp_ajax_nopriv_wpwe_preview_pdf',   [ $this, 'ajax_preview_pdf' ] );
-        add_action( 'wp_ajax_wpwe_search_bookings',        [ $this, 'ajax_search_bookings' ] );
-        add_action( 'wp_ajax_wpwe_get_booking',            [ $this, 'ajax_get_booking' ] );
-        add_action( 'wp_ajax_nopriv_wpwe_get_booking',     [ $this, 'ajax_get_booking' ] );
+        add_action( 'wp_ajax_pewave_submit_waiver',        [ $this, 'handle' ] );
+        add_action( 'wp_ajax_nopriv_pewave_submit_waiver', [ $this, 'handle' ] );
+        add_action( 'wp_ajax_pewave_preview_pdf',          [ $this, 'ajax_preview_pdf' ] );
+        add_action( 'wp_ajax_nopriv_pewave_preview_pdf',   [ $this, 'ajax_preview_pdf' ] );
+        add_action( 'wp_ajax_pewave_search_bookings',        [ $this, 'ajax_search_bookings' ] );
+        add_action( 'wp_ajax_pewave_get_booking',            [ $this, 'ajax_get_booking' ] );
+        add_action( 'wp_ajax_nopriv_pewave_get_booking',     [ $this, 'ajax_get_booking' ] );
     }
 
     // -----------------------------------------------------------------------
@@ -29,20 +29,20 @@ class Entry_Handler {
 
     public function handle(): void {
         // ----- Security -----
-        if ( ! isset( $_POST['wpwe_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['wpwe_nonce'] ) ), 'wpwe_submit_waiver' ) ) {
+        if ( ! isset( $_POST['pewave_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['pewave_nonce'] ) ), 'pewave_submit_waiver' ) ) {
             wp_send_json_error( [ 'message' => __( 'Security check failed.', 'waiver-engine' ) ], 403 );
         }
 
         // ----- Anti-bot: honeypot -----
         // The field must exist AND be empty. If a bot fills it, reject silently.
-        if ( ! isset( $_POST['wpwe_hp'] ) || '' !== $_POST['wpwe_hp'] ) {
+        if ( ! isset( $_POST['pewave_hp'] ) || '' !== $_POST['pewave_hp'] ) {
             wp_send_json_error( [ 'message' => __( 'Security check failed.', 'waiver-engine' ) ], 403 );
         }
 
         // ----- Anti-bot: timing check -----
         // Reject if form was submitted in under 3 seconds (bot speed) or token is invalid/expired (>2h).
-        $ts    = isset( $_POST['wpwe_ts'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['wpwe_ts'] ) ) : 0;
-        $ts_sig = isset( $_POST['wpwe_ts_sig'] ) ? sanitize_text_field( wp_unslash( $_POST['wpwe_ts_sig'] ) ) : '';
+        $ts    = isset( $_POST['pewave_ts'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['pewave_ts'] ) ) : 0;
+        $ts_sig = isset( $_POST['pewave_ts_sig'] ) ? sanitize_text_field( wp_unslash( $_POST['pewave_ts_sig'] ) ) : '';
         $expected_sig = hash_hmac( 'sha256', (string) $ts, wp_salt( 'nonce' ) );
         $age   = time() - $ts;
         if ( ! hash_equals( $expected_sig, $ts_sig ) || $age < 3 || $age > 7200 ) {
@@ -50,11 +50,11 @@ class Entry_Handler {
         }
 
         // ----- Anti-bot: IP rate limiting -----
-        if ( Settings::is_rate_limit_enabled() ) {
+        if ( PeWave_Settings::is_rate_limit_enabled() ) {
             $ip  = $this->get_ip();
-            $key = 'wpwe_rl_' . md5( $ip );
-            $max    = Settings::rate_limit_max();
-                $window = Settings::rate_limit_window() * \MINUTE_IN_SECONDS;
+            $key = 'pewave_rl_' . md5( $ip );
+            $max    = PeWave_Settings::rate_limit_max();
+                $window = PeWave_Settings::rate_limit_window() * \MINUTE_IN_SECONDS;
             $hits   = (int) get_transient( $key );
             if ( $hits >= $max ) {
                 wp_send_json_error( [ 'message' => __( 'Too many submissions. Please wait a few minutes and try again.', 'waiver-engine' ) ], 429 );
@@ -74,12 +74,12 @@ class Entry_Handler {
         // We do a lightweight load here and re-use it below.
         $captcha_template_id = isset( $_POST['template_id'] ) ? absint( $_POST['template_id'] ) : 0;
         if ( $captcha_template_id ) {
-            $captcha_tpl = Database::get_template( $captcha_template_id );
+            $captcha_tpl = PeWave_Database::get_template( $captcha_template_id );
             if ( $captcha_tpl ) {
-                $captcha_provider = Settings::captcha_provider();
+                $captcha_provider = PeWave_Settings::captcha_provider();
                 if ( $captcha_provider !== 'none' && ! empty( $captcha_tpl->captcha_enabled ) ) {
-                    $captcha_token = isset( $_POST['wpwe_captcha_token'] )
-                        ? sanitize_text_field( wp_unslash( $_POST['wpwe_captcha_token'] ) )
+                    $captcha_token = isset( $_POST['pewave_captcha_token'] )
+                        ? sanitize_text_field( wp_unslash( $_POST['pewave_captcha_token'] ) )
                         : '';
                     if ( ! $this->verify_captcha( $captcha_token, $captcha_provider ) ) {
                         wp_send_json_error( [ 'message' => __( 'CAPTCHA verification failed. Please reload the page and try again.', 'waiver-engine' ) ], 403 );
@@ -94,7 +94,7 @@ class Entry_Handler {
         }
 
         // Load template from custom table
-        $template = Database::get_template( $template_id );
+        $template = PeWave_Database::get_template( $template_id );
         if ( ! $template || ! $template->active ) {
             wp_send_json_error( [ 'message' => __( 'Template unavailable.', 'waiver-engine' ) ], 400 );
         }
@@ -106,9 +106,9 @@ class Entry_Handler {
         }
 
         // ----- Parse + sanitize submission -----
-        // phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- wpwe_data is unslashed then validated per-field in process_data().
-        $raw_data = isset( $_POST['wpwe_data'] ) && is_array( $_POST['wpwe_data'] )
-            ? wp_unslash( $_POST['wpwe_data'] )
+        // phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- pewave_data is unslashed then validated per-field in process_data().
+        $raw_data = isset( $_POST['pewave_data'] ) && is_array( $_POST['pewave_data'] )
+            ? wp_unslash( $_POST['pewave_data'] )
             : [];
         // phpcs:enable
         [ $data, $errors ] = $this->process_data( $raw_data, $schema );
@@ -120,12 +120,12 @@ class Entry_Handler {
         // ----- Optional Amelia booking linkage (only when integration enabled) -----
         $amelia_booking_id = 0;
         $booking_info      = null;
-        if ( class_exists( Premium_Bridge::class ) ) {
-            [ $amelia_booking_id, $booking_info ] = Premium_Bridge::resolve_booking_submission_from_request();
+        if ( class_exists( PeWave_Premium_Bridge::class ) ) {
+            [ $amelia_booking_id, $booking_info ] = PeWave_Premium_Bridge::resolve_booking_submission_from_request();
         }
 
         // ----- Insert entry into custom table -----
-        $entry_id = Database::insert_entry(
+        $entry_id = PeWave_Database::insert_entry(
             $template_id,
             wp_json_encode( $data ),
             $this->get_ip(),
@@ -140,7 +140,7 @@ class Entry_Handler {
         $pdf_paths = [];
         $pdf_error = '';
         try {
-            $generator = new PDF_Generator( $template );
+            $generator = new PeWave_PDF_Generator( $template );
             $pdf_paths = $generator->generate( $data, $entry_id, $booking_info );
         } catch ( \Throwable $e ) {
             $pdf_error = '[WPWE ' . gmdate( 'Y-m-d H:i:s' ) . '] PDF error entry=' . $entry_id
@@ -151,19 +151,19 @@ class Entry_Handler {
         }
 
         // ----- Send notification email -----
-        $should_notify = class_exists( Premium_Bridge::class )
-            && Premium_Bridge::should_send_admin_notification( $template );
+        $should_notify = class_exists( PeWave_Premium_Bridge::class )
+            && PeWave_Premium_Bridge::should_send_admin_notification( $template );
         $email_sent    = $should_notify
             ? $this->send_notification( $template, $entry_id, $data, $pdf_paths, $booking_info )
             : false;
 
         // ----- Persist PDF paths + email status -----
-        Database::update_entry_after_process( $entry_id, $pdf_paths, $email_sent, $pdf_error );
+        PeWave_Database::update_entry_after_process( $entry_id, $pdf_paths, $email_sent, $pdf_error );
 
         // ----- Optional copy email to submitter (not saved) -----
-        if ( class_exists( Premium_Bridge::class ) && Premium_Bridge::should_offer_submitter_copy( $template ) ) {
-            $copy_to = ! empty( $_POST['wpwe_copy_email'] ) ? sanitize_email( wp_unslash( $_POST['wpwe_copy_email'] ) ) : '';
-            if ( ! empty( $_POST['wpwe_send_copy'] ) && is_email( $copy_to ) ) {
+        if ( class_exists( PeWave_Premium_Bridge::class ) && PeWave_Premium_Bridge::should_offer_submitter_copy( $template ) ) {
+            $copy_to = ! empty( $_POST['pewave_copy_email'] ) ? sanitize_email( wp_unslash( $_POST['pewave_copy_email'] ) ) : '';
+            if ( ! empty( $_POST['pewave_send_copy'] ) && is_email( $copy_to ) ) {
                 $this->send_copy_email( $template, $copy_to, $pdf_paths, $booking_info );
             }
         }
@@ -171,12 +171,12 @@ class Entry_Handler {
         /**
          * Fires after a waiver entry has been fully processed.
          *
-         * @param int    $entry_id    New entry ID in wpwe_entries.
-         * @param object $template    Template row from wpwe_templates.
+         * @param int    $entry_id    New entry ID in pewave_entries.
+         * @param object $template    Template row from pewave_templates.
          * @param array  $data        Sanitised submission data.
          * @param array  $pdf_paths   Filesystem paths of generated PDFs.
          */
-        do_action( 'wpwe_entry_created', $entry_id, $template, $data, $pdf_paths );
+        do_action( 'pewave_entry_created', $entry_id, $template, $data, $pdf_paths );
 
         wp_send_json_success( [
             'message'  => __( 'Thank you! Your waiver has been submitted.', 'waiver-engine' ),
@@ -189,8 +189,8 @@ class Entry_Handler {
     // -----------------------------------------------------------------------
 
     public function ajax_preview_pdf(): void {
-        if ( ! isset( $_POST['nonce'] ) ||
-             ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpwe_preview_pdf' ) ) {
+           if ( ! isset( $_POST['nonce'] ) ||
+               ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'pewave_preview_pdf' ) ) {
             wp_send_json_error( [ 'message' => __( 'Security check failed.', 'waiver-engine' ) ], 403 );
         }
 
@@ -199,7 +199,7 @@ class Entry_Handler {
             wp_send_json_error( [ 'message' => __( 'Invalid template.', 'waiver-engine' ) ], 400 );
         }
 
-        $template = Database::get_template( $template_id );
+        $template = PeWave_Database::get_template( $template_id );
         if ( ! $template ) {
             wp_send_json_error( [ 'message' => __( 'Template not found.', 'waiver-engine' ) ], 404 );
         }
@@ -210,9 +210,9 @@ class Entry_Handler {
         }
 
         // Sanitise form data; ignore validation errors for preview.
-        // phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- wpwe_data is unslashed then validated per-field in process_data().
-        $raw_data  = isset( $_POST['wpwe_data'] ) && is_array( $_POST['wpwe_data'] )
-            ? wp_unslash( $_POST['wpwe_data'] )
+        // phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- pewave_data is unslashed then validated per-field in process_data().
+        $raw_data  = isset( $_POST['pewave_data'] ) && is_array( $_POST['pewave_data'] )
+            ? wp_unslash( $_POST['pewave_data'] )
             : [];
         // phpcs:enable
         $processed = $this->process_data( $raw_data, $schema );
@@ -231,7 +231,7 @@ class Entry_Handler {
         }
 
         try {
-            $generator = new PDF_Generator( $template );
+            $generator = new PeWave_PDF_Generator( $template );
             $bytes     = $generator->preview( $data );
             wp_send_json_success( [ 'pdf' => base64_encode( $bytes ) ] );
         } catch ( \Throwable $e ) {
@@ -248,8 +248,8 @@ class Entry_Handler {
             wp_send_json_error( [ 'message' => __( 'Access denied.', 'waiver-engine' ) ], 403 );
         }
 
-        if ( class_exists( Premium_Bridge::class ) ) {
-            Premium_Bridge::ajax_search_bookings();
+        if ( class_exists( PeWave_Premium_Bridge::class ) ) {
+            PeWave_Premium_Bridge::ajax_search_bookings();
             return;
         }
 
@@ -262,11 +262,11 @@ class Entry_Handler {
      * Used when the waiver form URL contains a `?booking_id=N` parameter so the
      * booking can be pre-selected without the customer having to search for it.
      *
-     * Nonce: reuses `wpwe_search_bookings` so no extra localised nonce is needed.
+    * Nonce: reuses `pewave_search_bookings` so no extra localised nonce is needed.
      */
     public function ajax_get_booking(): void {
-        if ( class_exists( Premium_Bridge::class ) ) {
-            Premium_Bridge::ajax_get_booking();
+        if ( class_exists( PeWave_Premium_Bridge::class ) ) {
+            PeWave_Premium_Bridge::ajax_get_booking();
             return;
         }
 
@@ -288,11 +288,11 @@ class Entry_Handler {
         foreach ( $schema['groups'] as $group ) {
             $gk         = sanitize_key( $group['key'] ?? '' );
             $fields     = $group['fields'] ?? [];
-            $repeatable = class_exists( Premium_Bridge::class ) && Premium_Bridge::is_repeatable_group( $group );
+            $repeatable = class_exists( PeWave_Premium_Bridge::class ) && PeWave_Premium_Bridge::is_repeatable_group( $group );
             $raw_group  = isset( $raw[ $gk ] ) && is_array( $raw[ $gk ] ) ? $raw[ $gk ] : [];
 
             if ( $repeatable ) {
-                [ $data[ $gk ], $group_errors ] = Premium_Bridge::process_repeatable_group(
+                [ $data[ $gk ], $group_errors ] = PeWave_Premium_Bridge::process_repeatable_group(
                     $raw_group,
                     $group,
                     $fields,
@@ -388,20 +388,20 @@ class Entry_Handler {
      * for single mode the only PDF is used.
      */
     private function send_copy_email( object $template, string $to, array $pdf_paths, ?object $booking_info = null ): void {
-        if ( class_exists( Premium_Bridge::class ) ) {
-            Premium_Bridge::send_copy_email( $template, $to, $pdf_paths, $booking_info );
+        if ( class_exists( PeWave_Premium_Bridge::class ) ) {
+            PeWave_Premium_Bridge::send_copy_email( $template, $to, $pdf_paths, $booking_info );
         }
     }
 
     private function send_notification( object $template, int $entry_id, array $data, array $pdf_paths, ?object $booking_info = null ): bool {
-        return class_exists( Premium_Bridge::class )
-            ? Premium_Bridge::send_notification( $template, $entry_id, $data, $pdf_paths, $booking_info )
+        return class_exists( PeWave_Premium_Bridge::class )
+            ? PeWave_Premium_Bridge::send_notification( $template, $entry_id, $data, $pdf_paths, $booking_info )
             : false;
     }
 
     private function build_submission_html_tables( object $template, array $data ): string {
-        if ( class_exists( Premium_Bridge::class ) ) {
-            return Premium_Bridge::build_submission_html_tables( $template, $data );
+        if ( class_exists( PeWave_Premium_Bridge::class ) ) {
+            return PeWave_Premium_Bridge::build_submission_html_tables( $template, $data );
         }
 
         return '<pre style="white-space:pre-wrap;">' . esc_html( $this->flatten_data_text( $data ) ) . '</pre>';
@@ -488,7 +488,7 @@ class Entry_Handler {
             return false;
         }
 
-        $secret = Settings::captcha_secret_key();
+        $secret = PeWave_Settings::captcha_secret_key();
         if ( '' === $secret ) {
             // No secret key configured – can't verify, fail open
             return true;

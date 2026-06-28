@@ -1,6 +1,6 @@
 <?php
-namespace WPWE;
-use WPWE\Vendor\DbProxy;
+namespace Pewave\WaiverEngine;
+use Pewave\WaiverEngine\Vendor\DbProxy;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -11,13 +11,13 @@ require_once dirname( __DIR__ ) . '/vendor_prefixed/WPWE/DbProxy.php';
 /**
  * Manages the two custom database tables:
  *
- *   {prefix}wpwe_templates  – template definitions (replaces waiver_template CPT)
- *   {prefix}wpwe_entries    – submission entries   (replaces waiver_entry CPT)
+ *   {prefix}pewave_templates  – template definitions (replaces waiver_template CPT)
+ *   {prefix}pewave_entries    – submission entries   (replaces waiver_entry CPT)
  *
- * Schema version is stored in option `wpwe_db_version`.
- * Call Database::install() on activation and on plugins_loaded (for upgrades).
+ * Schema version is stored in option `pewave_db_version`.
+ * Call PeWave_Database::install() on activation and on plugins_loaded (for upgrades).
  */
-class Database {
+class PeWave_Database {
 
     const DB_VERSION = '1.3';
 
@@ -27,12 +27,12 @@ class Database {
 
     public static function templates_table(): string {
         global $wpdb;
-        return $wpdb->prefix . 'wpwe_templates';
+        return $wpdb->prefix . 'pewave_templates';
     }
 
     public static function entries_table(): string {
         global $wpdb;
-        return $wpdb->prefix . 'wpwe_entries';
+        return $wpdb->prefix . 'pewave_entries';
     }
 
     // -----------------------------------------------------------------------
@@ -40,7 +40,7 @@ class Database {
     // -----------------------------------------------------------------------
 
     public static function install(): void {
-        $current_version = (string) get_option( 'wpwe_db_version', '0.0' );
+        $current_version = (string) get_option( 'pewave_db_version', '0.0' );
         if ( $current_version === self::DB_VERSION ) {
             return; // Already current – skip expensive dbDelta.
         }
@@ -136,7 +136,7 @@ CREATE TABLE $entries (
             // phpcs:enable
         }
 
-        update_option( 'wpwe_db_version', self::DB_VERSION );
+        update_option( 'pewave_db_version', self::DB_VERSION );
     }
 
     // -----------------------------------------------------------------------
@@ -355,17 +355,17 @@ CREATE TABLE $entries (
         $entries   = DbProxy::get_results( DbProxy::prepare( 'SELECT * FROM %i ORDER BY id ASC', self::entries_table() ), ARRAY_A ) ?: [];
 
         $option_keys = [
-            'wpwe_db_version',
-            'wpwe_amelia_enabled',
-            'wpwe_admin_email_enabled',
-            'wpwe_user_email_enabled',
-            'wpwe_rate_limit_enabled',
-            'wpwe_rate_limit_max',
-            'wpwe_rate_limit_window',
-            'wpwe_pdf_retention_days',
-            'wpwe_captcha_provider',
-            'wpwe_captcha_site_key',
-            'wpwe_captcha_secret_key',
+            'pewave_db_version',
+            'pewave_amelia_enabled',
+            'pewave_admin_email_enabled',
+            'pewave_user_email_enabled',
+            'pewave_rate_limit_enabled',
+            'pewave_rate_limit_max',
+            'pewave_rate_limit_window',
+            'pewave_pdf_retention_days',
+            'pewave_captcha_provider',
+            'pewave_captcha_site_key',
+            'pewave_captcha_secret_key',
         ];
 
         $options = [];
@@ -378,7 +378,7 @@ CREATE TABLE $entries (
             'generated_at'   => gmdate( 'c' ),
             'plugin'         => [
                 'slug'    => 'waiver-engine',
-                'version' => defined( 'WPWE_VERSION' ) ? WPWE_VERSION : '',
+                'version' => defined( 'PEWAVE_VERSION' ) ? PEWAVE_VERSION : '',
             ],
             'tables'         => [
                 'templates' => $templates,
@@ -487,16 +487,16 @@ CREATE TABLE $entries (
 
         $options_imported = 0;
         $allowed_options  = [
-            'wpwe_amelia_enabled',
-            'wpwe_admin_email_enabled',
-            'wpwe_user_email_enabled',
-            'wpwe_rate_limit_enabled',
-            'wpwe_rate_limit_max',
-            'wpwe_rate_limit_window',
-            'wpwe_pdf_retention_days',
-            'wpwe_captcha_provider',
-            'wpwe_captcha_site_key',
-            'wpwe_captcha_secret_key',
+            'pewave_amelia_enabled',
+            'pewave_admin_email_enabled',
+            'pewave_user_email_enabled',
+            'pewave_rate_limit_enabled',
+            'pewave_rate_limit_max',
+            'pewave_rate_limit_window',
+            'pewave_pdf_retention_days',
+            'pewave_captcha_provider',
+            'pewave_captcha_site_key',
+            'pewave_captcha_secret_key',
         ];
         foreach ( $allowed_options as $key ) {
             if ( array_key_exists( $key, $options ) ) {

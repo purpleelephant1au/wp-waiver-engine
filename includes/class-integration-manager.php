@@ -1,5 +1,5 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  * No integration code runs when its host plugin is absent, so there is zero
  * runtime overhead and no fatal errors if a supported plugin is deactivated.
  */
-class Integration_Manager {
+class PeWave_Integration_Manager {
 
     /**
      * Cached Amelia detection result. Null until first call.
@@ -33,9 +33,9 @@ class Integration_Manager {
      * integration whose host plugin is currently active.
      */
     public static function register(): void {
-        if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only() ) {
-            if ( \WPWE\Plan::is_feature_enabled( 'amelia_integration' ) && self::is_amelia_active() ) {
-                ( new Integration_Amelia() )->register();
+        if ( function_exists( 'pewave_fs' ) && pewave_fs() && pewave_fs()->can_use_premium_code__premium_only() ) {
+            if ( \Pewave\WaiverEngine\PeWave_Plan::is_feature_enabled( 'amelia_integration' ) && self::is_amelia_active() ) {
+                ( new PeWave_Integration_Amelia() )->register();
             }
         }
     }
@@ -49,7 +49,7 @@ class Integration_Manager {
      *
      * Detection order (requires no DB query):
      *   1. AMELIA_VERSION constant – defined in the Amelia main plugin file.
-     *   2. Core application class  – covers renamed / white-label builds.
+     *   2. PeWave_Core application class  – covers renamed / white-label builds.
      *
      * The result is cached in a static property so repeated calls are free.
      */

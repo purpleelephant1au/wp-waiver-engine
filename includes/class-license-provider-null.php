@@ -1,9 +1,9 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
-class License_Provider_Null implements License_Provider_Interface {
+class PeWave_License_Provider_Null implements PeWave_License_Provider_Interface {
 
     public function is_available(): bool {
         return false;

@@ -1,18 +1,18 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
 use setasign\Fpdi\Fpdi;
 
-class Premium_Bridge {
+class PeWave_Premium_Bridge {
 
     public static function is_premium_editor_enabled(): bool {
-        return function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only();
+        return function_exists( 'pewave_fs' ) && pewave_fs() && pewave_fs()->is__premium_only();
     }
 
     public static function can_use_repeatable_mapping(): bool {
-        return function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->can_use_premium_code__premium_only();
+        return function_exists( 'pewave_fs' ) && pewave_fs() && pewave_fs()->can_use_premium_code__premium_only();
     }
 
     public static function sanitize_template_output_mode( string $requested_mode ): string {
@@ -20,7 +20,7 @@ class Premium_Bridge {
             return 'single';
         }
 
-        if ( ! Plan::is_feature_enabled( 'repeating_rows' ) ) {
+        if ( ! PeWave_Plan::is_feature_enabled( 'repeating_rows' ) ) {
             return 'single';
         }
 
@@ -33,37 +33,37 @@ class Premium_Bridge {
         }
 
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce checked by the template save handlers before this helper is called.
-        return isset( $_POST['wpwe_map_repeatable'] ) && is_array( $_POST['wpwe_map_repeatable'] )
-            ? array_map( 'absint', wp_unslash( $_POST['wpwe_map_repeatable'] ) )
+        return isset( $_POST['pewave_map_repeatable'] ) && is_array( $_POST['pewave_map_repeatable'] )
+            ? array_map( 'absint', wp_unslash( $_POST['pewave_map_repeatable'] ) )
             : [];
         // phpcs:enable
     }
 
     public static function build_template_premium_data_from_post(): array {
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce checked by the template save handlers before this helper is called.
-        $output_mode = isset( $_POST['wpwe_output_mode'] )
-            ? sanitize_text_field( wp_unslash( $_POST['wpwe_output_mode'] ) )
+        $output_mode = isset( $_POST['pewave_output_mode'] )
+            ? sanitize_text_field( wp_unslash( $_POST['pewave_output_mode'] ) )
             : 'single';
         $output_mode = self::sanitize_template_output_mode( $output_mode );
 
-        $raw_amelia_ids = isset( $_POST['wpwe_amelia_service_ids'] ) && is_array( $_POST['wpwe_amelia_service_ids'] )
-            ? array_map( 'absint', $_POST['wpwe_amelia_service_ids'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+        $raw_amelia_ids = isset( $_POST['pewave_amelia_service_ids'] ) && is_array( $_POST['pewave_amelia_service_ids'] )
+            ? array_map( 'absint', $_POST['pewave_amelia_service_ids'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
             : [];
-        if ( ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
+        if ( ! PeWave_Plan::is_feature_enabled( 'amelia_integration' ) ) {
             $raw_amelia_ids = [];
         }
 
-        $send_admin_email = ! empty( $_POST['wpwe_send_admin_email'] ) ? 1 : 0;
-        $send_user_email = ! empty( $_POST['wpwe_send_user_email'] ) ? 1 : 0;
-        if ( ! Plan::is_feature_enabled( 'email_sending' ) ) {
+        $send_admin_email = ! empty( $_POST['pewave_send_admin_email'] ) ? 1 : 0;
+        $send_user_email = ! empty( $_POST['pewave_send_user_email'] ) ? 1 : 0;
+        if ( ! PeWave_Plan::is_feature_enabled( 'email_sending' ) ) {
             $send_admin_email = 0;
             $send_user_email = 0;
         }
 
         return [
             'output_mode'        => $output_mode,
-            'output_group_key'   => isset( $_POST['wpwe_output_group_key'] ) ? sanitize_key( wp_unslash( $_POST['wpwe_output_group_key'] ) ) : '',
-            'notification_email' => isset( $_POST['wpwe_notification_email'] ) ? sanitize_email( wp_unslash( $_POST['wpwe_notification_email'] ) ) : '',
+            'output_group_key'   => isset( $_POST['pewave_output_group_key'] ) ? sanitize_key( wp_unslash( $_POST['pewave_output_group_key'] ) ) : '',
+            'notification_email' => isset( $_POST['pewave_notification_email'] ) ? sanitize_email( wp_unslash( $_POST['pewave_notification_email'] ) ) : '',
             'send_admin_email'   => $send_admin_email,
             'send_user_email'    => $send_user_email,
             'amelia_service_ids' => array_values( $raw_amelia_ids ),
@@ -73,7 +73,7 @@ class Premium_Bridge {
 
     public static function build_form_premium_context( object $template ): array {
         $amelia_services = [];
-        if ( Settings::is_amelia_enabled() && Plan::is_feature_enabled( 'amelia_integration' ) ) {
+        if ( PeWave_Settings::is_amelia_enabled() && PeWave_Plan::is_feature_enabled( 'amelia_integration' ) ) {
             $amelia_services = json_decode( $template->amelia_service_ids ?? '', true ) ?: [];
             $amelia_services = array_map( 'intval', $amelia_services );
         }
@@ -95,9 +95,9 @@ class Premium_Bridge {
 
     public static function render_output_group_key_control( string $output_mode, string $group_key ): void {
         ?>
-        <div id="wpwe_group_key_wrap" style="margin-top:8px;<?php echo $output_mode !== 'per_row' ? 'display:none;' : ''; ?>">
-            <label for="wpwe_output_group_key"><?php esc_html_e( 'Repeatable Group Key:', 'waiver-engine' ); ?></label>
-            <input type="text" id="wpwe_output_group_key" name="wpwe_output_group_key"
+        <div id="pewave_group_key_wrap" style="margin-top:8px;<?php echo $output_mode !== 'per_row' ? 'display:none;' : ''; ?>">
+            <label for="pewave_output_group_key"><?php esc_html_e( 'Repeatable Group Key:', 'waiver-engine' ); ?></label>
+            <input type="text" id="pewave_output_group_key" name="pewave_output_group_key"
                    value="<?php echo esc_attr( $group_key ); ?>" class="regular-text"
                    placeholder="e.g. participants">
         </div>
@@ -107,48 +107,48 @@ class Premium_Bridge {
     public static function render_template_editor_premium_rows( ?object $tpl, string $notify, bool $send_admin_email, bool $send_user_email ): void {
         ?>
         <tr>
-            <th><label for="wpwe_notification_email"><?php esc_html_e( 'Notification Email', 'waiver-engine' ); ?></label></th>
+            <th><label for="pewave_notification_email"><?php esc_html_e( 'Notification Email', 'waiver-engine' ); ?></label></th>
             <td>
-                <input type="email" id="wpwe_notification_email" name="wpwe_notification_email"
+                <input type="email" id="pewave_notification_email" name="pewave_notification_email"
                        value="<?php echo esc_attr( $notify ); ?>" class="regular-text"
                        placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
                 <p class="description"><?php esc_html_e( 'Leave blank to use the site admin email.', 'waiver-engine' ); ?></p>
             </td>
         </tr>
-        <?php if ( Settings::is_admin_email_enabled() ) : ?>
+        <?php if ( PeWave_Settings::is_admin_email_enabled() ) : ?>
         <tr>
-            <th><label for="wpwe_send_admin_email"><?php esc_html_e( 'Admin Notification', 'waiver-engine' ); ?></label></th>
+            <th><label for="pewave_send_admin_email"><?php esc_html_e( 'Admin Notification', 'waiver-engine' ); ?></label></th>
             <td>
-                <input type="checkbox" id="wpwe_send_admin_email" name="wpwe_send_admin_email" value="1"
+                <input type="checkbox" id="pewave_send_admin_email" name="pewave_send_admin_email" value="1"
                        <?php checked( $send_admin_email ); ?>>
-                <label for="wpwe_send_admin_email">
+                <label for="pewave_send_admin_email">
                     <?php esc_html_e( 'Send admin notification email on submission', 'waiver-engine' ); ?>
                 </label>
                 <p class="description"><?php esc_html_e( 'If unchecked, no email is sent to the notification address when this template is submitted.', 'waiver-engine' ); ?></p>
             </td>
         </tr>
         <?php endif; ?>
-        <?php if ( Settings::is_user_email_enabled() ) : ?>
+        <?php if ( PeWave_Settings::is_user_email_enabled() ) : ?>
         <tr>
-            <th><label for="wpwe_send_user_email"><?php esc_html_e( 'Submitter Copy', 'waiver-engine' ); ?></label></th>
+            <th><label for="pewave_send_user_email"><?php esc_html_e( 'Submitter Copy', 'waiver-engine' ); ?></label></th>
             <td>
-                <input type="checkbox" id="wpwe_send_user_email" name="wpwe_send_user_email" value="1"
+                <input type="checkbox" id="pewave_send_user_email" name="pewave_send_user_email" value="1"
                        <?php checked( $send_user_email ); ?>>
-                <label for="wpwe_send_user_email">
+                <label for="pewave_send_user_email">
                     <?php esc_html_e( 'Allow submitters to request an email copy of their PDF', 'waiver-engine' ); ?>
                 </label>
                 <p class="description"><?php esc_html_e( 'If unchecked, the email copy opt-in is hidden for this template.', 'waiver-engine' ); ?></p>
             </td>
         </tr>
         <?php endif; ?>
-        <?php if ( Settings::is_amelia_enabled() ) : ?>
+        <?php if ( PeWave_Settings::is_amelia_enabled() ) : ?>
         <tr>
             <th><?php esc_html_e( 'Linked Amelia Services', 'waiver-engine' ); ?></th>
             <td>
                 <?php
                 $saved_amelia_ids = json_decode( (string) ( $tpl->amelia_service_ids ?? '' ), true ) ?: [];
                 $saved_amelia_ids = array_map( 'intval', $saved_amelia_ids );
-                $amelia_svc = Integration_Amelia::get_services();
+                $amelia_svc = PeWave_Integration_Amelia::get_services();
                 if ( empty( $amelia_svc ) ) : ?>
                     <p class="description"><?php esc_html_e( 'No Amelia services found. Activate the Amelia plugin and create services first.', 'waiver-engine' ); ?></p>
                 <?php else : ?>
@@ -159,7 +159,7 @@ class Premium_Bridge {
                             ?>
                             <label style="display:block;margin-bottom:4px;">
                                 <input type="checkbox"
-                                       name="wpwe_amelia_service_ids[]"
+                                       name="pewave_amelia_service_ids[]"
                                        value="<?php echo esc_attr( $svc_id ); ?>"
                                        <?php checked( $checked ); ?>>
                                 <?php echo esc_html( $svc['name'] ); ?>
@@ -181,9 +181,9 @@ class Premium_Bridge {
 
         ?>
         <tr>
-            <th><label for="wpwe_notification_email"><?php esc_html_e( 'Notification Email', 'waiver-engine' ); ?></label></th>
+            <th><label for="pewave_notification_email"><?php esc_html_e( 'Notification Email', 'waiver-engine' ); ?></label></th>
             <td>
-                <input type="email" id="wpwe_notification_email" name="wpwe_notification_email"
+                <input type="email" id="pewave_notification_email" name="pewave_notification_email"
                        value="<?php echo esc_attr( $notify_email ); ?>" class="regular-text"
                        placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
                 <p class="description"><?php esc_html_e( 'Leave blank to use the site admin email. PDF(s) will be attached to the notification.', 'waiver-engine' ); ?></p>
@@ -195,7 +195,7 @@ class Premium_Bridge {
                 <?php
                 $saved_ids = json_decode( (string) get_post_meta( $post->ID, 'amelia_service_ids', true ), true ) ?: [];
                 $saved_ids = array_map( 'intval', $saved_ids );
-                $amelia_svc = Integration_Amelia::get_services();
+                $amelia_svc = PeWave_Integration_Amelia::get_services();
                 if ( empty( $amelia_svc ) ) : ?>
                     <p class="description"><?php esc_html_e( 'No Amelia services found. Activate the Amelia plugin and create services first.', 'waiver-engine' ); ?></p>
                 <?php else : ?>
@@ -206,7 +206,7 @@ class Premium_Bridge {
                             ?>
                             <label style="display:block;margin-bottom:4px;">
                                 <input type="checkbox"
-                                       name="wpwe_amelia_service_ids[]"
+                                       name="pewave_amelia_service_ids[]"
                                        value="<?php echo esc_attr( $svc_id ); ?>"
                                        <?php checked( $checked ); ?>>
                                 <?php echo esc_html( $svc['name'] ); ?>
@@ -217,26 +217,26 @@ class Premium_Bridge {
                 <?php endif; ?>
             </td>
         </tr>
-        <?php if ( Settings::is_admin_email_enabled() ) : ?>
+        <?php if ( PeWave_Settings::is_admin_email_enabled() ) : ?>
         <tr>
-            <th><label for="wpwe_send_admin_email"><?php esc_html_e( 'Admin Notification', 'waiver-engine' ); ?></label></th>
+            <th><label for="pewave_send_admin_email"><?php esc_html_e( 'Admin Notification', 'waiver-engine' ); ?></label></th>
             <td>
-                <input type="checkbox" id="wpwe_send_admin_email" name="wpwe_send_admin_email" value="1"
+                <input type="checkbox" id="pewave_send_admin_email" name="pewave_send_admin_email" value="1"
                        <?php checked( $send_admin_email ); ?>>
-                <label for="wpwe_send_admin_email">
+                <label for="pewave_send_admin_email">
                     <?php esc_html_e( 'Send completed waiver PDF to admin email', 'waiver-engine' ); ?>
                 </label>
             </td>
         </tr>
         <?php endif; ?>
 
-        <?php if ( Settings::is_user_email_enabled() ) : ?>
+        <?php if ( PeWave_Settings::is_user_email_enabled() ) : ?>
         <tr>
-            <th><label for="wpwe_send_user_email"><?php esc_html_e( 'Submitter Copy', 'waiver-engine' ); ?></label></th>
+            <th><label for="pewave_send_user_email"><?php esc_html_e( 'Submitter Copy', 'waiver-engine' ); ?></label></th>
             <td>
-                <input type="checkbox" id="wpwe_send_user_email" name="wpwe_send_user_email" value="1"
+                <input type="checkbox" id="pewave_send_user_email" name="pewave_send_user_email" value="1"
                        <?php checked( $send_user_email ); ?>>
-                <label for="wpwe_send_user_email">
+                <label for="pewave_send_user_email">
                     <?php esc_html_e( 'Allow submitter to request an emailed copy', 'waiver-engine' ); ?>
                 </label>
             </td>
@@ -254,23 +254,23 @@ class Premium_Bridge {
     public static function render_repeatable_row_cell( bool $repeatable ): void {
         ?>
         <td style="text-align:center">
-            <input type="hidden" class="wpwe-rep-hidden" name="wpwe_map_repeatable[]" value="<?php echo $repeatable ? '1' : '0'; ?>">
-            <input type="checkbox" class="wpwe-map-repeatable" <?php checked( $repeatable ); ?>>
+            <input type="hidden" class="pewave-rep-hidden" name="pewave_map_repeatable[]" value="<?php echo $repeatable ? '1' : '0'; ?>">
+            <input type="checkbox" class="pewave-map-repeatable" <?php checked( $repeatable ); ?>>
         </td>
         <?php
     }
 
     public static function resolve_booking_submission_from_request(): array {
-        if ( ! Settings::is_amelia_enabled() || ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
+        if ( ! PeWave_Settings::is_amelia_enabled() || ! PeWave_Plan::is_feature_enabled( 'amelia_integration' ) ) {
             return [ 0, null ];
         }
 
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce is verified in the calling AJAX handler before this helper runs.
-        $amelia_booking_id = isset( $_POST['wpwe_booking_id'] ) ? absint( $_POST['wpwe_booking_id'] ) : 0;
+        $amelia_booking_id = isset( $_POST['pewave_booking_id'] ) ? absint( $_POST['pewave_booking_id'] ) : 0;
         $booking_info = null;
 
         if ( $amelia_booking_id ) {
-            $booking_info = Integration_Amelia::get_booking( $amelia_booking_id );
+            $booking_info = PeWave_Integration_Amelia::get_booking( $amelia_booking_id );
             if ( ! $booking_info ) {
                 $amelia_booking_id = 0;
             }
@@ -281,8 +281,8 @@ class Premium_Bridge {
     }
 
     public static function should_send_admin_notification( object $template ): bool {
-        return Plan::is_feature_enabled( 'email_sending' )
-            && Settings::is_admin_email_enabled()
+        return PeWave_Plan::is_feature_enabled( 'email_sending' )
+            && PeWave_Settings::is_admin_email_enabled()
             && ! empty( $template->send_admin_email );
     }
 
@@ -291,17 +291,17 @@ class Premium_Bridge {
             ? ! empty( $template->send_user_email )
             : true;
 
-        return Plan::is_feature_enabled( 'email_sending' )
-            && Settings::is_user_email_enabled()
+        return PeWave_Plan::is_feature_enabled( 'email_sending' )
+            && PeWave_Settings::is_user_email_enabled()
             && $template_allows_copy;
     }
 
     public static function ajax_search_bookings(): void {
-        if ( ! Settings::is_amelia_enabled() || ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
+        if ( ! PeWave_Settings::is_amelia_enabled() || ! PeWave_Plan::is_feature_enabled( 'amelia_integration' ) ) {
             wp_send_json_success( [] );
         }
 
-        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpwe_search_bookings' ) ) {
+        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'pewave_search_bookings' ) ) {
             wp_send_json_error( [ 'message' => __( 'Security check failed.', 'waiver-engine' ) ], 403 );
         }
 
@@ -312,14 +312,14 @@ class Premium_Bridge {
             wp_send_json_success( [] );
         }
 
-        $template = Database::get_template( $template_id );
+        $template = PeWave_Database::get_template( $template_id );
         if ( ! $template ) {
             wp_send_json_success( [] );
         }
 
         $service_ids = json_decode( $template->amelia_service_ids ?? '', true ) ?: [];
         $service_ids = array_map( 'intval', $service_ids );
-        $results = Integration_Amelia::search_bookings( $service_ids, $query );
+        $results = PeWave_Integration_Amelia::search_bookings( $service_ids, $query );
 
         wp_send_json_success( array_map( static function ( $row ) {
             return [
@@ -333,11 +333,11 @@ class Premium_Bridge {
     }
 
     public static function ajax_get_booking(): void {
-        if ( ! Settings::is_amelia_enabled() || ! Plan::is_feature_enabled( 'amelia_integration' ) ) {
+        if ( ! PeWave_Settings::is_amelia_enabled() || ! PeWave_Plan::is_feature_enabled( 'amelia_integration' ) ) {
             wp_send_json_error( [ 'message' => __( 'Amelia integration not enabled.', 'waiver-engine' ) ], 400 );
         }
 
-        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'wpwe_search_bookings' ) ) {
+        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'pewave_search_bookings' ) ) {
             wp_send_json_error( [ 'message' => __( 'Security check failed.', 'waiver-engine' ) ], 403 );
         }
 
@@ -349,12 +349,12 @@ class Premium_Bridge {
             wp_send_json_error( [ 'message' => __( 'Invalid request.', 'waiver-engine' ) ], 400 );
         }
 
-        $template = Database::get_template( $template_id );
+        $template = PeWave_Database::get_template( $template_id );
         if ( ! $template ) {
             wp_send_json_error( [ 'message' => __( 'Template not found.', 'waiver-engine' ) ], 404 );
         }
 
-        $row = Integration_Amelia::get_booking( $booking_id );
+        $row = PeWave_Integration_Amelia::get_booking( $booking_id );
         if ( ! $row ) {
             wp_send_json_error( [ 'message' => __( 'Booking not found.', 'waiver-engine' ) ], 404 );
         }
@@ -451,7 +451,7 @@ class Premium_Bridge {
 
         /* translators: %s: template title */
         $subject = sprintf( __( 'New Waiver Submission: %s', 'waiver-engine' ), $template->title );
-        $entry_url = admin_url( 'admin.php?page=wpwe-entry&id=' . $entry_id );
+        $entry_url = admin_url( 'admin.php?page=pewave-entry&id=' . $entry_id );
 
         $body  = '<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.45;color:#1d2327;">';
         /* translators: %s: template title */
@@ -485,7 +485,7 @@ class Premium_Bridge {
         return wp_mail( $to, $subject, $body, [ 'Content-Type: text/html; charset=UTF-8' ], $attachments );
     }
 
-    public static function generate_per_row_pdfs( PDF_Generator $generator, array $data, int $entry_id, ?object $booking = null ): array {
+    public static function generate_per_row_pdfs( PeWave_PDF_Generator $generator, array $data, int $entry_id, ?object $booking = null ): array {
         $group_key = $generator->get_output_group_key();
         $rows = $data[ $group_key ] ?? [];
         $paths = [];
@@ -506,11 +506,11 @@ class Premium_Bridge {
         return $paths;
     }
 
-    public static function preview_per_row_pdf( PDF_Generator $generator, array $data ): string {
+    public static function preview_per_row_pdf( PeWave_PDF_Generator $generator, array $data ): string {
         return self::build_combined_pdf_from_rows( $generator, $data )->Output( 'S' );
     }
 
-    private static function build_combined_pdf_from_rows( PDF_Generator $generator, array $data ): Fpdi {
+    private static function build_combined_pdf_from_rows( PeWave_PDF_Generator $generator, array $data ): Fpdi {
         $group_key = $generator->get_output_group_key();
         $rows = $data[ $group_key ] ?? [];
 
@@ -683,30 +683,38 @@ class Premium_Bridge {
     }
 
     public static function get_entries_with_booking_data( int $per_page, int $paged, int $template_id, string $orderby, string $order, string $booking_search, int $amelia_service_id ): array {
-        return Integration_Amelia::get_entries_with_booking_data( $per_page, $paged, $template_id, $orderby, $order, 0, $booking_search, $amelia_service_id );
+        return PeWave_Integration_Amelia::get_entries_with_booking_data( $per_page, $paged, $template_id, $orderby, $order, 0, $booking_search, $amelia_service_id );
     }
 
     public static function get_amelia_services(): array {
-        return Integration_Amelia::get_services();
+        return PeWave_Integration_Amelia::get_services();
     }
 
     public static function get_booking( int $booking_id ): ?object {
-        return Integration_Amelia::get_booking( $booking_id );
+        return PeWave_Integration_Amelia::get_booking( $booking_id );
     }
 
     /**
      * Pro upgrade notice on the settings screen (unlicensed premium package only).
      */
     public static function render_settings_upgrade_notice(): void {
-        if ( Plan::is_pro() ) {
+        if ( PeWave_Plan::is_pro() ) {
             return;
         }
+
+        $account_url = PeWave_Plan::get_account_url();
+        $upgrade_url = PeWave_Plan::get_upgrade_url();
         ?>
         <div class="notice notice-info">
             <p>
-                <?php esc_html_e( 'You are on the Free plan. Email sending, repeating rows, and Amelia integration require Pro.', 'waiver-engine' ); ?>
-                <?php if ( Plan::get_upgrade_url() !== '#' ) : ?>
-                    <a class="button button-secondary" href="<?php echo esc_url( Plan::get_upgrade_url() ); ?>" target="_blank" rel="noopener noreferrer" style="margin-left:8px;">
+                <?php esc_html_e( 'Pro package is installed but not activated yet. Enter your license key to unlock Pro features.', 'waiver-engine' ); ?>
+                <?php if ( $account_url !== '#' ) : ?>
+                    <a class="button button-primary" href="<?php echo esc_url( $account_url ); ?>" target="_blank" rel="noopener noreferrer" style="margin-left:8px;">
+                        <?php esc_html_e( 'Activate License', 'waiver-engine' ); ?>
+                    </a>
+                <?php endif; ?>
+                <?php if ( $upgrade_url !== '#' ) : ?>
+                    <a class="button button-secondary" href="<?php echo esc_url( $upgrade_url ); ?>" target="_blank" rel="noopener noreferrer" style="margin-left:8px;">
                         <?php esc_html_e( 'Upgrade to Pro', 'waiver-engine' ); ?>
                     </a>
                 <?php endif; ?>
@@ -727,15 +735,15 @@ class Premium_Bridge {
                       title="<?php esc_attr_e( 'Connect Waiver Engine with the Amelia Booking plugin. When active, a booking-search widget appears on waiver forms so customers can link their submission to an existing appointment.', 'waiver-engine' ); ?>"></span>
             </th>
             <td>
-            <?php if ( ! Plan::is_feature_enabled( 'amelia_integration' ) ) : ?>
+            <?php if ( ! PeWave_Plan::is_feature_enabled( 'amelia_integration' ) ) : ?>
                 <p class="description">
                     <?php esc_html_e( 'Available on Pro plans.', 'waiver-engine' ); ?>
                 </p>
-            <?php elseif ( Integration_Manager::is_amelia_active() ) : ?>
+            <?php elseif ( PeWave_Integration_Manager::is_amelia_active() ) : ?>
                 <fieldset>
                     <label>
-                        <input type="checkbox" name="wpwe_amelia_enabled" value="1"
-                               <?php checked( (bool) get_option( Settings::OPTION_AMELIA_ENABLED, false ) ); ?>>
+                        <input type="checkbox" name="pewave_amelia_enabled" value="1"
+                               <?php checked( (bool) get_option( PeWave_Settings::OPTION_AMELIA_ENABLED, false ) ); ?>>
                         <?php esc_html_e( 'Enable Amelia booking integration', 'waiver-engine' ); ?>
                     </label>
                     <p class="description">
@@ -756,11 +764,11 @@ class Premium_Bridge {
                       title="<?php esc_attr_e( 'When enabled, the notification address receives an email with the PDF attached each time a waiver is submitted. Can also be toggled per-template in the template editor.', 'waiver-engine' ); ?>"></span>
             </th>
             <td>
-                <?php if ( Plan::is_feature_enabled( 'email_sending' ) ) : ?>
+                <?php if ( PeWave_Plan::is_feature_enabled( 'email_sending' ) ) : ?>
                 <fieldset>
                     <label>
-                        <input type="checkbox" name="wpwe_admin_email_enabled" value="1"
-                               <?php checked( Settings::is_admin_email_enabled() ); ?>>
+                        <input type="checkbox" name="pewave_admin_email_enabled" value="1"
+                               <?php checked( PeWave_Settings::is_admin_email_enabled() ); ?>>
                         <?php esc_html_e( 'Enable admin notification emails', 'waiver-engine' ); ?>
                     </label>
                     <p class="description">
@@ -779,11 +787,11 @@ class Premium_Bridge {
                       title="<?php esc_attr_e( 'When enabled, an opt-in checkbox appears on waiver forms so submitters can request a PDF copy by email. Can also be toggled per-template.', 'waiver-engine' ); ?>"></span>
             </th>
             <td>
-                <?php if ( Plan::is_feature_enabled( 'email_sending' ) ) : ?>
+                <?php if ( PeWave_Plan::is_feature_enabled( 'email_sending' ) ) : ?>
                 <fieldset>
                     <label>
-                        <input type="checkbox" name="wpwe_user_email_enabled" value="1"
-                               <?php checked( Settings::is_user_email_enabled() ); ?>>
+                        <input type="checkbox" name="pewave_user_email_enabled" value="1"
+                               <?php checked( PeWave_Settings::is_user_email_enabled() ); ?>>
                         <?php esc_html_e( 'Enable submitter copy emails', 'waiver-engine' ); ?>
                     </label>
                     <p class="description">

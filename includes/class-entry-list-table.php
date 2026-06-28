@@ -1,17 +1,17 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Renders the paginated entry list admin page.
- * Instantiated by Admin_Menu::page_entry_list().
+ * Instantiated by PeWave_Admin_Menu::page_entry_list().
  */
-class Entry_List_Table {
+class PeWave_Entry_List_Table {
 
     public function render(): void {
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only list filters.
-        $amelia_enabled    = Settings::is_amelia_enabled();
+        $amelia_enabled    = PeWave_Settings::is_amelia_enabled();
         $per_page          = 20;
         $paged             = isset( $_GET['paged'] )       ? max( 1, absint( $_GET['paged'] ) )       : 1;
         $template_id       = isset( $_GET['template_id'] ) ? absint( $_GET['template_id'] )            : 0;
@@ -25,30 +25,30 @@ class Entry_List_Table {
         $amelia_service_id = $amelia_enabled && isset( $_GET['amelia_service_id'] ) ? absint( $_GET['amelia_service_id'] )                         : 0;
         // phpcs:enable
 
-        if ( $amelia_enabled && class_exists( Premium_Bridge::class ) ) {
-            $result = Premium_Bridge::get_entries_with_booking_data( $per_page, $paged, $template_id, $orderby, $order, $booking_search, $amelia_service_id );
+        if ( $amelia_enabled && class_exists( PeWave_Premium_Bridge::class ) ) {
+            $result = PeWave_Premium_Bridge::get_entries_with_booking_data( $per_page, $paged, $template_id, $orderby, $order, $booking_search, $amelia_service_id );
         } else {
-            $result = Database::get_entries( $per_page, $paged, $template_id, $orderby, $order );
+            $result = PeWave_Database::get_entries( $per_page, $paged, $template_id, $orderby, $order );
         }
         $rows        = $result['rows'];
         $total       = $result['total'];
         $total_pages = (int) ceil( $total / $per_page );
 
         // Pre-fetch all templates for the filter dropdown and column display
-        $templates_raw = Database::get_templates();
+        $templates_raw = PeWave_Database::get_templates();
         $templates     = [];
         foreach ( $templates_raw as $t ) {
             $templates[ (int) $t->id ] = $t->title;
         }
 
         // Amelia services for filter dropdown (only fetched when Amelia is enabled)
-        $amelia_services = ( $amelia_enabled && class_exists( Premium_Bridge::class ) )
-            ? Premium_Bridge::get_amelia_services()
+        $amelia_services = ( $amelia_enabled && class_exists( PeWave_Premium_Bridge::class ) )
+            ? PeWave_Premium_Bridge::get_amelia_services()
             : [];
 
         // Build base URL carrying all active filters (orderby/order/paged are added per link)
         $active_filters = array_filter( [
-            'page'              => 'wpwe-entries',
+            'page'              => 'pewave-entries',
             'template_id'       => $template_id       ?: null,
             'booking_search'    => $booking_search    ?: null,
             'amelia_service_id' => $amelia_service_id ?: null,
@@ -62,14 +62,14 @@ class Entry_List_Table {
             <hr class="wp-header-end">
 
             <?php // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only admin notice query var. ?>
-            <?php if ( isset( $_GET['wpwe_deleted'] ) ) : ?>
+            <?php if ( isset( $_GET['pewave_deleted'] ) ) : ?>
             <div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Entry deleted.', 'waiver-engine' ); ?></p></div>
             <?php endif; ?>
             <?php // phpcs:enable ?>
 
             <!-- Filters -->
             <form method="get" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0;">
-                <input type="hidden" name="page" value="wpwe-entries">
+                <input type="hidden" name="page" value="pewave-entries">
 
                 <label for="wpwe-filter-template"><?php esc_html_e( 'Template:', 'waiver-engine' ); ?></label>
                 <select id="wpwe-filter-template" name="template_id">
@@ -106,7 +106,7 @@ class Entry_List_Table {
                 <button type="submit" class="button"><?php esc_html_e( 'Filter', 'waiver-engine' ); ?></button>
 
                 <?php if ( $template_id || $has_booking_filter ) : ?>
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-entries' ) ); ?>" class="button">
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=pewave-entries' ) ); ?>" class="button">
                     <?php esc_html_e( 'Clear', 'waiver-engine' ); ?>
                 </a>
                 <?php endif; ?>
@@ -187,8 +187,8 @@ class Entry_List_Table {
                             <?php if ( $pdf_paths ) : ?>
                                 <?php foreach ( $pdf_paths as $i => $path ) :
                                     $dl_url = wp_nonce_url(
-                                        admin_url( 'admin.php?page=wpwe-entry&id=' . $entry_id . '&dl_pdf=' . $i ),
-                                        'wpwe_dl_pdf_' . $entry_id
+                                        admin_url( 'admin.php?page=pewave-entry&id=' . $entry_id . '&dl_pdf=' . $i ),
+                                        'pewave_dl_pdf_' . $entry_id
                                     );
                                 ?>
                                 <a href="<?php echo esc_url( $dl_url ); ?>">PDF <?php echo esc_html( $i + 1 ); ?></a>
@@ -204,7 +204,7 @@ class Entry_List_Table {
                         </td>
                         <td><?php echo esc_html( $entry->created_at ); ?></td>
                         <td>
-                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=wpwe-entry&id=' . $entry_id ) ); ?>">
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=pewave-entry&id=' . $entry_id ) ); ?>">
                                 <?php esc_html_e( 'View', 'waiver-engine' ); ?>
                             </a>
                         </td>

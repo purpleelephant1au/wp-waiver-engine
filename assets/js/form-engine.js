@@ -7,13 +7,13 @@
  *  - Client-side validation
  *  - AJAX submission
  */
-/* global wpweForm, SignaturePad */
+/* global pewaveForm, SignaturePad */
 
 ( function () {
     'use strict';
 
     // -------------------------------------------------------------------------
-    // Init: called for every .wpwe-form on the page
+    // Init: called for every .pewave-form on the page
     // -------------------------------------------------------------------------
     function initForm( form ) {
         initRepeatableGroups( form );
@@ -29,22 +29,22 @@
     // -------------------------------------------------------------------------
     function initBookingSearch( form ) {
         // The booking-search widget is a sibling element ABOVE the form,
-        // inside the same .wpwe-form-wrap.
-        var wrap = form.closest( '.wpwe-form-wrap' );
+        // inside the same .pewave-form-wrap.
+        var wrap = form.closest( '.pewave-form-wrap' );
         if ( ! wrap ) return;
 
-        var widget = wrap.querySelector( '.wpwe-booking-search' );
+        var widget = wrap.querySelector( '.pewave-booking-search' );
         if ( ! widget ) return;  // template has no linked services
 
-        var bookingIdInput = widget.querySelector( '.wpwe-booking-id-lookup' );
-        var bookingEmailInput = widget.querySelector( '.wpwe-booking-email-lookup' );
-        var verifyBtn    = widget.querySelector( '.wpwe-booking-verify-btn' );
-        var searchingEl   = widget.querySelector( '.wpwe-booking-searching' );
-        var errorEl       = widget.querySelector( '.wpwe-booking-search-error' );
-        var selectedEl    = widget.querySelector( '.wpwe-booking-selected' );
-        var selectedBadge = widget.querySelector( '.wpwe-booking-selected__badge' );
-        var clearBtn      = widget.querySelector( '.wpwe-booking-clear-btn' );
-        var bookingInput  = form.querySelector( '.wpwe-booking-id-input' );
+        var bookingIdInput = widget.querySelector( '.pewave-booking-id-lookup' );
+        var bookingEmailInput = widget.querySelector( '.pewave-booking-email-lookup' );
+        var verifyBtn    = widget.querySelector( '.pewave-booking-verify-btn' );
+        var searchingEl   = widget.querySelector( '.pewave-booking-searching' );
+        var errorEl       = widget.querySelector( '.pewave-booking-search-error' );
+        var selectedEl    = widget.querySelector( '.pewave-booking-selected' );
+        var selectedBadge = widget.querySelector( '.pewave-booking-selected__badge' );
+        var clearBtn      = widget.querySelector( '.pewave-booking-clear-btn' );
+        var bookingInput  = form.querySelector( '.pewave-booking-id-input' );
 
         if ( ! bookingIdInput || ! bookingEmailInput || ! verifyBtn || ! bookingInput ) return;
 
@@ -69,7 +69,7 @@
             var customerEmail = bookingEmailInput.value.trim();
 
             if ( ! bookingId || bookingId <= 0 || ! customerEmail ) {
-                showError( ( wpweForm.i18n && wpweForm.i18n.bookingNoResults ) || 'Booking not found or details do not match.' );
+                showError( ( pewaveForm.i18n && pewaveForm.i18n.bookingNoResults ) || 'Booking not found or details do not match.' );
                 return;
             }
 
@@ -78,13 +78,13 @@
 
             var templateId = widget.dataset.templateId || form.dataset.templateId || '';
             var body = new FormData();
-            body.append( 'action',      'wpwe_get_booking' );
-            body.append( 'nonce',       wpweForm.bookingNonce );
+            body.append( 'action',      'pewave_get_booking' );
+                body.append( 'nonce',       pewaveForm.bookingNonce );
             body.append( 'template_id', templateId );
             body.append( 'booking_id',  bookingId );
             body.append( 'customer_email', customerEmail );
 
-            fetch( wpweForm.ajaxUrl, {
+            fetch( pewaveForm.ajaxUrl, {
                 method:      'POST',
                 credentials: 'same-origin',
                 body:        body,
@@ -95,12 +95,12 @@
                 if ( resp.success && resp.data ) {
                     selectBooking( resp.data );
                 } else {
-                    showError( ( wpweForm.i18n && wpweForm.i18n.bookingNoResults ) || 'Booking not found or details do not match.' );
+                    showError( ( pewaveForm.i18n && pewaveForm.i18n.bookingNoResults ) || 'Booking not found or details do not match.' );
                 }
             } )
             .catch( function () {
                 if ( searchingEl ) searchingEl.hidden = true;
-                showError( ( wpweForm.i18n && wpweForm.i18n.bookingNoResults ) || 'Booking not found or details do not match.' );
+                showError( ( pewaveForm.i18n && pewaveForm.i18n.bookingNoResults ) || 'Booking not found or details do not match.' );
             } );
         }
 
@@ -124,7 +124,7 @@
                     b.service + ' — ' + b.customer + ' — ' + b.bookingDate;
             }
             if ( selectedEl ) selectedEl.hidden = false;
-            widget.classList.add( 'wpwe-booking-search--has-selection' );
+            widget.classList.add( 'pewave-booking-search--has-selection' );
         }
 
         function clearSelection() {
@@ -133,7 +133,7 @@
             bookingEmailInput.value = '';
             if ( selectedEl ) selectedEl.hidden = true;
             clearError();
-            widget.classList.remove( 'wpwe-booking-search--has-selection' );
+            widget.classList.remove( 'pewave-booking-search--has-selection' );
         }
 
         // Auto-select a booking when the page URL contains ?booking_id=N.
@@ -163,18 +163,18 @@
     // Email-copy opt-in toggle
     // -------------------------------------------------------------------------
     function initEmailCopy( form ) {
-        var check    = form.querySelector( '.wpwe-email-copy-check' );
-        var inputWrap = form.querySelector( '.wpwe-email-copy-input' );
+        var check    = form.querySelector( '.pewave-email-copy-check' );
+        var inputWrap = form.querySelector( '.pewave-email-copy-input' );
         if ( ! check || ! inputWrap ) return;
 
         check.addEventListener( 'change', function () {
             if ( this.checked ) {
                 inputWrap.hidden = false;
-                inputWrap.querySelector( '.wpwe-copy-email-input' ).focus();
+                inputWrap.querySelector( '.pewave-copy-email-input' ).focus();
             } else {
                 inputWrap.hidden = true;
                 // clear any previous error
-                var errEl = inputWrap.querySelector( '.wpwe-copy-email-error' );
+                var errEl = inputWrap.querySelector( '.pewave-copy-email-error' );
                 if ( errEl ) errEl.textContent = '';
             }
         } );
@@ -184,14 +184,14 @@
     // Repeatable groups
     // -------------------------------------------------------------------------
     function initRepeatableGroups( form ) {
-        form.querySelectorAll( '.wpwe-group--repeatable' ).forEach( function ( group ) {
-            var addBtn = group.querySelector( '.wpwe-add-row' );
+        form.querySelectorAll( '.pewave-group--repeatable' ).forEach( function ( group ) {
+            var addBtn = group.querySelector( '.pewave-add-row' );
             var maxRows = parseInt( group.dataset.maxRows, 10 ) || 20;
             var minRows = parseInt( group.dataset.minRows, 10 ) || 1;
 
             if ( addBtn ) {
                 addBtn.addEventListener( 'click', function () {
-                    var rows = group.querySelectorAll( '.wpwe-row' );
+                    var rows = group.querySelectorAll( '.pewave-row' );
                     if ( rows.length >= maxRows ) {
                         return;
                     }
@@ -201,9 +201,9 @@
 
             // Delegate remove-row clicks
             group.addEventListener( 'click', function ( e ) {
-                if ( e.target.classList.contains( 'wpwe-remove-row' ) ) {
-                    var row = e.target.closest( '.wpwe-row' );
-                    var currentRows = group.querySelectorAll( '.wpwe-row' );
+                if ( e.target.classList.contains( 'pewave-remove-row' ) ) {
+                    var row = e.target.closest( '.pewave-row' );
+                    var currentRows = group.querySelectorAll( '.pewave-row' );
                     if ( currentRows.length > minRows ) {
                         row.remove();
                         reindexRows( group );
@@ -213,9 +213,9 @@
 
             // Delegate per-row PDF preview button clicks
             group.addEventListener( 'click', function ( e ) {
-                var btn = e.target.closest( '.wpwe-row-preview-btn' );
+                var btn = e.target.closest( '.pewave-row-preview-btn' );
                 if ( btn ) {
-                    var row = btn.closest( '.wpwe-row' );
+                    var row = btn.closest( '.pewave-row' );
                     if ( row ) {
                         requestPdfPreview(
                             form,
@@ -231,18 +231,18 @@
     }
 
     function addRow( group ) {
-        var template = group.querySelector( '.wpwe-row-template' );
+        var template = group.querySelector( '.pewave-row-template' );
         if ( ! template ) return;
 
-        var rows    = group.querySelectorAll( '.wpwe-row' );
+        var rows    = group.querySelectorAll( '.pewave-row' );
         var newIdx  = rows.length;
         var maxRows = parseInt( group.dataset.maxRows, 10 ) || 20;
-        var groupLabel = group.querySelector( '.wpwe-group-legend' )
-            ? group.querySelector( '.wpwe-group-legend' ).textContent.trim()
+        var groupLabel = group.querySelector( '.pewave-group-legend' )
+            ? group.querySelector( '.pewave-group-legend' ).textContent.trim()
             : '';
 
         var clone = template.content.cloneNode( true );
-        var rowEl = clone.querySelector( '.wpwe-row' );
+        var rowEl = clone.querySelector( '.pewave-row' );
 
         // Replace __IDX__ placeholder in names/ids with actual index
         rowEl.querySelectorAll( '[name]' ).forEach( function ( el ) {
@@ -256,21 +256,21 @@
         } );
         rowEl.dataset.rowIndex = newIdx;
 
-        var rowLabel = rowEl.querySelector( '.wpwe-row-label' );
+        var rowLabel = rowEl.querySelector( '.pewave-row-label' );
         if ( rowLabel ) {
             rowLabel.textContent = groupLabel + ' ' + ( newIdx + 1 );
         }
-        var rowNum = rowEl.querySelector( '.wpwe-row-num' );
+        var rowNum = rowEl.querySelector( '.pewave-row-num' );
         if ( rowNum ) {
             rowNum.textContent = newIdx + 1;
         }
 
-        group.querySelector( '.wpwe-rows' ).appendChild( clone );
+        group.querySelector( '.pewave-rows' ).appendChild( clone );
 
         reindexRows( group ); // update remove-button visibility for all rows
 
         // Init any signature pads in the new row
-        var newRow = group.querySelector( '.wpwe-rows .wpwe-row:last-child' );
+        var newRow = group.querySelector( '.pewave-rows .pewave-row:last-child' );
         if ( newRow ) {
             initSignaturePads( newRow );
         }
@@ -279,21 +279,21 @@
     }
 
     function reindexRows( group ) {
-        var rows       = group.querySelectorAll( '.wpwe-row' );
+        var rows       = group.querySelectorAll( '.pewave-row' );
         var maxRows    = parseInt( group.dataset.maxRows, 10 ) || 20;
-        var groupLabel = group.querySelector( '.wpwe-group-legend' )
-            ? group.querySelector( '.wpwe-group-legend' ).textContent.trim()
+        var groupLabel = group.querySelector( '.pewave-group-legend' )
+            ? group.querySelector( '.pewave-group-legend' ).textContent.trim()
             : '';
         var groupKey   = group.dataset.groupKey || '';
 
         rows.forEach( function ( row, i ) {
             row.dataset.rowIndex = i;
-            var rowLabel = row.querySelector( '.wpwe-row-label' );
+            var rowLabel = row.querySelector( '.pewave-row-label' );
             if ( rowLabel ) rowLabel.textContent = groupLabel + ' ' + ( i + 1 );
-            var rowNum = row.querySelector( '.wpwe-row-num' );
+            var rowNum = row.querySelector( '.pewave-row-num' );
             if ( rowNum ) rowNum.textContent = i + 1;
 
-            // Re-index names: wpwe_data[group][OLD][field] -> wpwe_data[group][NEW][field]
+            // Re-index names: pewave_data[group][OLD][field] -> pewave_data[group][NEW][field]
             row.querySelectorAll( '[name]' ).forEach( function ( el ) {
                 el.name = el.name.replace(
                     new RegExp( '\\[' + groupKey + '\\]\\[\\d+\\]' ),
@@ -308,7 +308,7 @@
             } );
 
             // Show/hide remove button based on min_rows
-            var removeBtn = row.querySelector( '.wpwe-remove-row' );
+            var removeBtn = row.querySelector( '.pewave-remove-row' );
             if ( removeBtn ) {
                 var minRows = parseInt( group.dataset.minRows, 10 ) || 1;
                 removeBtn.style.display = ( rows.length <= minRows ) ? 'none' : '';
@@ -319,8 +319,8 @@
     }
 
     function updateAddButtonVisibility( group, maxRows ) {
-        var addBtn  = group.querySelector( '.wpwe-add-row' );
-        var rowCount = group.querySelectorAll( '.wpwe-row' ).length;
+        var addBtn  = group.querySelector( '.pewave-add-row' );
+        var rowCount = group.querySelectorAll( '.pewave-row' ).length;
         if ( addBtn ) {
             addBtn.style.display = rowCount >= maxRows ? 'none' : '';
         }
@@ -330,10 +330,10 @@
     // Signature pads
     // -------------------------------------------------------------------------
     function initSignaturePads( container ) {
-        container.querySelectorAll( '.wpwe-signature-wrap' ).forEach( function ( wrap ) {
-            var canvas    = wrap.querySelector( '.wpwe-signature-canvas' );
-            var input     = wrap.querySelector( '.wpwe-signature-data' );
-            var clearBtn  = wrap.querySelector( '.wpwe-clear-signature' );
+        container.querySelectorAll( '.pewave-signature-wrap' ).forEach( function ( wrap ) {
+            var canvas    = wrap.querySelector( '.pewave-signature-canvas' );
+            var input     = wrap.querySelector( '.pewave-signature-data' );
+            var clearBtn  = wrap.querySelector( '.pewave-clear-signature' );
 
             if ( ! canvas || ! input ) return;
 
@@ -384,46 +384,46 @@
         var valid = true;
 
         // Clear previous errors
-        form.querySelectorAll( '.wpwe-field-error' ).forEach( function ( el ) {
+        form.querySelectorAll( '.pewave-field-error' ).forEach( function ( el ) {
             el.textContent = '';
         } );
-        form.querySelectorAll( '.wpwe-field--invalid, .wpwe-cell--invalid' ).forEach( function ( el ) {
-            el.classList.remove( 'wpwe-field--invalid', 'wpwe-cell--invalid' );
+        form.querySelectorAll( '.pewave-field--invalid, .pewave-cell--invalid' ).forEach( function ( el ) {
+            el.classList.remove( 'pewave-field--invalid', 'pewave-cell--invalid' );
         } );
 
         // Standard HTML5 required inputs
         form.querySelectorAll( '[required]' ).forEach( function ( input ) {
             if ( input.disabled ) return;
             if ( ! input.value.trim() ) {
-                markFieldError( input, wpweForm.i18n.required || 'This field is required.' );
+                markFieldError( input, pewaveForm.i18n.required || 'This field is required.' );
                 valid = false;
             }
         } );
 
         // Signature fields (data-required="1", value stored in hidden input)
-        form.querySelectorAll( '.wpwe-signature-data[data-required]' ).forEach( function ( input ) {
+        form.querySelectorAll( '.pewave-signature-data[data-required]' ).forEach( function ( input ) {
             if ( input.disabled ) return;
             if ( ! input.value ) {
-                var wrap = input.closest( '.wpwe-field' ) || input.closest( '.wpwe-cell' );
+                var wrap = input.closest( '.pewave-field' ) || input.closest( '.pewave-cell' );
                 if ( wrap ) {
-                    wrap.classList.add( wrap.classList.contains( 'wpwe-cell' ) ? 'wpwe-cell--invalid' : 'wpwe-field--invalid' );
-                    var errEl = wrap.querySelector( '.wpwe-field-error' );
-                    if ( errEl ) errEl.textContent = wpweForm.i18n.required || 'Signature is required.';
+                    wrap.classList.add( wrap.classList.contains( 'pewave-cell' ) ? 'pewave-cell--invalid' : 'pewave-field--invalid' );
+                    var errEl = wrap.querySelector( '.pewave-field-error' );
+                    if ( errEl ) errEl.textContent = pewaveForm.i18n.required || 'Signature is required.';
                 }
                 valid = false;
             }
         } );
 
         // Validate the optional copy-email field if checkbox is ticked
-        var copyCheck = form.querySelector( '.wpwe-email-copy-check' );
-        var copyInput = form.querySelector( '.wpwe-copy-email-input' );
-        var copyErrEl = form.querySelector( '.wpwe-copy-email-error' );
+        var copyCheck = form.querySelector( '.pewave-email-copy-check' );
+        var copyInput = form.querySelector( '.pewave-copy-email-input' );
+        var copyErrEl = form.querySelector( '.pewave-copy-email-error' );
         if ( copyCheck && copyCheck.checked && copyInput ) {
             var emailVal = copyInput.value.trim();
             var emailOk  = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( emailVal );
             if ( ! emailOk ) {
                 if ( copyErrEl ) copyErrEl.textContent = 'Please enter a valid email address.';
-                copyInput.closest( '.wpwe-email-copy-input' ).scrollIntoView( { behavior: 'smooth', block: 'center' } );
+                copyInput.closest( '.pewave-email-copy-input' ).scrollIntoView( { behavior: 'smooth', block: 'center' } );
                 valid = false;
             } else {
                 if ( copyErrEl ) copyErrEl.textContent = '';
@@ -434,10 +434,10 @@
     }
 
     function markFieldError( input, msg ) {
-        var wrap = input.closest( '.wpwe-field' ) || input.closest( '.wpwe-cell' );
+        var wrap = input.closest( '.pewave-field' ) || input.closest( '.pewave-cell' );
         if ( ! wrap ) return;
-        wrap.classList.add( wrap.classList.contains( 'wpwe-cell' ) ? 'wpwe-cell--invalid' : 'wpwe-field--invalid' );
-        var errEl = wrap.querySelector( '.wpwe-field-error' );
+        wrap.classList.add( wrap.classList.contains( 'pewave-cell' ) ? 'pewave-cell--invalid' : 'pewave-field--invalid' );
+        var errEl = wrap.querySelector( '.pewave-field-error' );
         if ( errEl ) errEl.textContent = msg;
     }
 
@@ -449,13 +449,13 @@
         var form = e.currentTarget;
 
         if ( ! validateForm( form ) ) {
-            var firstErr = form.querySelector( '.wpwe-field--invalid, .wpwe-cell--invalid' );
+            var firstErr = form.querySelector( '.pewave-field--invalid, .pewave-cell--invalid' );
             if ( firstErr ) firstErr.scrollIntoView( { behavior: 'smooth', block: 'center' } );
             return;
         }
 
-        var tokenInput = form.querySelector( '.wpwe-captcha-token' );
-        var provider   = ( wpweForm.captchaProvider ) || 'none';
+        var tokenInput = form.querySelector( '.pewave-captcha-token' );
+        var provider   = ( pewaveForm.captchaProvider ) || 'none';
 
         if ( ! tokenInput || provider === 'none' ) {
             submitForm( form );
@@ -463,7 +463,7 @@
         }
 
         // Obtain CAPTCHA token before submitting
-        var siteKey = wpweForm.captchaSiteKey || '';
+        var siteKey = pewaveForm.captchaSiteKey || '';
 
         if ( provider === 'recaptcha_v3' ) {
             if ( typeof grecaptcha === 'undefined' ) {
@@ -499,24 +499,24 @@
     }
 
     function submitForm( form ) {
-        var submitBtn = form.querySelector( '.wpwe-submit-btn' );
-        var spinner   = form.querySelector( '.wpwe-spinner' );
-        var messages  = form.querySelector( '.wpwe-messages' );
+        var submitBtn = form.querySelector( '.pewave-submit-btn' );
+        var spinner   = form.querySelector( '.pewave-spinner' );
+        var messages  = form.querySelector( '.pewave-messages' );
 
         submitBtn.disabled = true;
-        submitBtn.textContent = wpweForm.i18n.submitting;
+        submitBtn.textContent = pewaveForm.i18n.submitting;
         if ( spinner ) spinner.style.display = '';
         if ( messages ) {
             messages.textContent = '';
-            messages.className   = 'wpwe-messages';
+            messages.className   = 'pewave-messages';
         }
 
         var formData = new FormData( form );
-        formData.append( 'action', 'wpwe_submit_waiver' );
-        formData.append( 'nonce',  wpweForm.nonce );
+        formData.append( 'action', 'pewave_submit_waiver' );
+        formData.append( 'nonce',  pewaveForm.nonce );
         formData.append( 'template_id', form.dataset.templateId || '' );
 
-        fetch( wpweForm.ajaxUrl, {
+        fetch( pewaveForm.ajaxUrl, {
             method:      'POST',
             credentials: 'same-origin',
             body:        formData,
@@ -525,30 +525,30 @@
         .then( function ( response ) {
             if ( response.success ) {
                 if ( messages ) {
-                    messages.textContent = response.data.message || wpweForm.i18n.success;
-                    messages.classList.add( 'wpwe-messages--success' );
+                    messages.textContent = response.data.message || pewaveForm.i18n.success;
+                    messages.classList.add( 'pewave-messages--success' );
                 }
                 form.reset();
                 // Clear signature pads
-                form.querySelectorAll( '.wpwe-signature-canvas' ).forEach( function ( canvas ) {
+                form.querySelectorAll( '.pewave-signature-canvas' ).forEach( function ( canvas ) {
                     if ( canvas._sigPad ) canvas._sigPad.clear();
                 } );
-                form.querySelectorAll( '.wpwe-signature-data' ).forEach( function ( inp ) {
+                form.querySelectorAll( '.pewave-signature-data' ).forEach( function ( inp ) {
                     inp.value = '';
                 } );
                 // Scroll to message
                 if ( messages ) messages.scrollIntoView( { behavior: 'smooth', block: 'center' } );
             } else {
-                var errMsg = ( response.data && response.data.message ) || wpweForm.i18n.error;
+                var errMsg = ( response.data && response.data.message ) || pewaveForm.i18n.error;
                 if ( messages ) {
                     messages.textContent = errMsg;
-                    messages.classList.add( 'wpwe-messages--error' );
+                    messages.classList.add( 'pewave-messages--error' );
                 }
                 // Mark server-returned field errors
                 if ( response.data && response.data.errors ) {
                     Object.keys( response.data.errors ).forEach( function ( fieldKey ) {
                         // fieldKey format: "group[idx][field]"
-                        var input = form.querySelector( '[name="wpwe_data[' + fieldKey.replace( /[\[\]]/g, function ( m ) { return '\\' + m; } ) + ']"]' );
+                        var input = form.querySelector( '[name="pewave_data[' + fieldKey.replace( /[\[\]]/g, function ( m ) { return '\\' + m; } ) + ']"]' );
                         if ( input ) markFieldError( input, response.data.errors[ fieldKey ] );
                     } );
                 }
@@ -556,8 +556,8 @@
         } )
         .catch( function () {
             if ( messages ) {
-                messages.textContent = wpweForm.i18n.error;
-                messages.classList.add( 'wpwe-messages--error' );
+                messages.textContent = pewaveForm.i18n.error;
+                messages.classList.add( 'pewave-messages--error' );
             }
         } )
         .finally( function () {
@@ -571,7 +571,7 @@
     // Preview – PDF via AJAX
     // -------------------------------------------------------------------------
     function initPreview( form ) {
-        var previewBtn = form.querySelector( '.wpwe-preview-btn' );
+        var previewBtn = form.querySelector( '.pewave-preview-btn' );
         if ( ! previewBtn ) return;
         previewBtn.addEventListener( 'click', function () {
             requestPdfPreview( form );
@@ -591,7 +591,7 @@
         // For full preview, validate first
         if ( ! isRowPreview ) {
             if ( ! validateForm( form ) ) {
-                var firstErr = form.querySelector( '.wpwe-field--invalid, .wpwe-cell--invalid' );
+                var firstErr = form.querySelector( '.pewave-field--invalid, .pewave-cell--invalid' );
                 if ( firstErr ) firstErr.scrollIntoView( { behavior: 'smooth', block: 'center' } );
                 return;
             }
@@ -599,12 +599,12 @@
 
         var modal = buildPdfPreviewModal( form, isRowPreview );
         document.body.appendChild( modal );
-        document.body.classList.add( 'wpwe-preview-open' );
-        modal.querySelector( '.wpwe-preview-close' ).focus();
+        document.body.classList.add( 'pewave-preview-open' );
+        modal.querySelector( '.pewave-preview-close' ).focus();
 
         var formData = new FormData( form );
-        formData.append( 'action',      'wpwe_preview_pdf' );
-        formData.append( 'nonce',       wpweForm.previewNonce );
+        formData.append( 'action',      'pewave_preview_pdf' );
+        formData.append( 'nonce',       pewaveForm.previewNonce );
         formData.append( 'template_id', form.dataset.templateId || '' );
 
         if ( isRowPreview ) {
@@ -613,47 +613,47 @@
             formData.append( 'row_index',    String( rowIndex ) );
         }
 
-        fetch( wpweForm.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: formData } )
+        fetch( pewaveForm.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: formData } )
             .then( function ( res ) { return res.json(); } )
             .then( function ( resp ) {
                 if ( resp.success && resp.data && resp.data.pdf ) {
                     showPdfInModal( modal, resp.data.pdf );
                 } else {
-                    showPdfModalError( modal, ( resp.data && resp.data.message ) || wpweForm.i18n.error );
+                    showPdfModalError( modal, ( resp.data && resp.data.message ) || pewaveForm.i18n.error );
                 }
             } )
             .catch( function () {
-                showPdfModalError( modal, wpweForm.i18n.error );
+                showPdfModalError( modal, pewaveForm.i18n.error );
             } );
     }
 
     function buildPdfPreviewModal( form, isRowPreview ) {
         var overlay = document.createElement( 'div' );
-        overlay.className = 'wpwe-preview-overlay';
+        overlay.className = 'pewave-preview-overlay';
         overlay.setAttribute( 'role', 'dialog' );
         overlay.setAttribute( 'aria-modal', 'true' );
-        overlay.setAttribute( 'aria-label', wpweForm.i18n.previewHeading );
+        overlay.setAttribute( 'aria-label', pewaveForm.i18n.previewHeading );
 
         var footerBtns =
-            '<button type="button" class="wpwe-preview-edit-btn">' + escHtml( wpweForm.i18n.editForm ) + '</button>';
+            '<button type="button" class="pewave-preview-edit-btn">' + escHtml( pewaveForm.i18n.editForm ) + '</button>';
         if ( ! isRowPreview ) {
             footerBtns +=
-                '<button type="button" class="wpwe-preview-confirm-btn">' + escHtml( wpweForm.i18n.confirmSubmit ) + '</button>';
+                '<button type="button" class="pewave-preview-confirm-btn">' + escHtml( pewaveForm.i18n.confirmSubmit ) + '</button>';
         }
 
         overlay.innerHTML =
-            '<div class="wpwe-preview-modal wpwe-pdf-preview-modal">' +
-                '<div class="wpwe-preview-header">' +
-                    '<h2 class="wpwe-preview-title">' + escHtml( wpweForm.i18n.previewHeading ) + '</h2>' +
-                    '<button type="button" class="wpwe-preview-close" aria-label="Close">&times;</button>' +
+            '<div class="pewave-preview-modal pewave-pdf-preview-modal">' +
+                '<div class="pewave-preview-header">' +
+                    '<h2 class="pewave-preview-title">' + escHtml( pewaveForm.i18n.previewHeading ) + '</h2>' +
+                    '<button type="button" class="pewave-preview-close" aria-label="Close">&times;</button>' +
                 '</div>' +
-                '<div class="wpwe-preview-body wpwe-pdf-preview-body">' +
-                    '<div class="wpwe-pdf-loading">' +
-                        escHtml( wpweForm.i18n.pdfLoading || 'Generating PDF preview\u2026' ) +
+                '<div class="pewave-preview-body pewave-pdf-preview-body">' +
+                    '<div class="pewave-pdf-loading">' +
+                        escHtml( pewaveForm.i18n.pdfLoading || 'Generating PDF preview\u2026' ) +
                     '</div>' +
-                    '<iframe class="wpwe-pdf-iframe" title="PDF Preview" style="display:none;"></iframe>' +
+                    '<iframe class="pewave-pdf-iframe" title="PDF Preview" style="display:none;"></iframe>' +
                 '</div>' +
-                '<div class="wpwe-preview-footer">' +
+                '<div class="pewave-preview-footer">' +
                     footerBtns +
                 '</div>' +
             '</div>';
@@ -662,13 +662,13 @@
         overlay.addEventListener( 'click', function ( e ) {
             if ( e.target === overlay ) closePdfPreviewModal( overlay );
         } );
-        overlay.querySelector( '.wpwe-preview-close' ).addEventListener( 'click', function () {
+        overlay.querySelector( '.pewave-preview-close' ).addEventListener( 'click', function () {
             closePdfPreviewModal( overlay );
         } );
-        overlay.querySelector( '.wpwe-preview-edit-btn' ).addEventListener( 'click', function () {
+        overlay.querySelector( '.pewave-preview-edit-btn' ).addEventListener( 'click', function () {
             closePdfPreviewModal( overlay );
         } );
-        var confirmBtn = overlay.querySelector( '.wpwe-preview-confirm-btn' );
+        var confirmBtn = overlay.querySelector( '.pewave-preview-confirm-btn' );
         if ( confirmBtn ) {
             confirmBtn.addEventListener( 'click', function () {
                 closePdfPreviewModal( overlay );
@@ -688,8 +688,8 @@
     }
 
     function showPdfInModal( modal, base64 ) {
-        var loading = modal.querySelector( '.wpwe-pdf-loading' );
-        var iframe  = modal.querySelector( '.wpwe-pdf-iframe' );
+        var loading = modal.querySelector( '.pewave-pdf-loading' );
+        var iframe  = modal.querySelector( '.pewave-pdf-iframe' );
         if ( ! iframe ) return;
 
         try {
@@ -718,7 +718,7 @@
     }
 
     function showPdfModalError( modal, msg ) {
-        var loading = modal.querySelector( '.wpwe-pdf-loading' );
+        var loading = modal.querySelector( '.pewave-pdf-loading' );
         if ( loading ) {
             loading.textContent  = msg;
             loading.style.color  = '#d63638';
@@ -727,13 +727,13 @@
 
     function closePdfPreviewModal( modal ) {
         if ( modal && modal.parentNode ) {
-            var iframe = modal.querySelector( '.wpwe-pdf-iframe' );
+            var iframe = modal.querySelector( '.pewave-pdf-iframe' );
             if ( iframe && iframe.src && iframe.src.startsWith( 'blob:' ) ) {
                 URL.revokeObjectURL( iframe.src );
             }
             modal.parentNode.removeChild( modal );
         }
-        document.body.classList.remove( 'wpwe-preview-open' );
+        document.body.classList.remove( 'pewave-preview-open' );
     }
 
     function escHtml( str ) {
@@ -757,7 +757,7 @@
     // Bootstrap
     // -------------------------------------------------------------------------
     document.addEventListener( 'DOMContentLoaded', function () {
-        document.querySelectorAll( '.wpwe-form' ).forEach( initForm );
+        document.querySelectorAll( '.pewave-form' ).forEach( initForm );
     } );
 
 } )();

@@ -26,7 +26,7 @@ It walks through:
 2. Open "Example - Group Form".
 3. Confirm the shortcode block contains:
 
-   [waiver_form id="6"]
+   [pewave_form id="6"]
 
 4. Click Save/Update if any changes were made.
 5. Click View Page to open the frontend.
@@ -37,7 +37,7 @@ It walks through:
 
 Notes:
 - If your template ID is different, use the ID shown in Waivers -> Templates.
-- Example format: [waiver_form id="X"]
+- Example format: [pewave_form id="X"]
 
 ## 2) Open the Frontend Repeatable Form
 

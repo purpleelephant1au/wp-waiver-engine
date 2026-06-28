@@ -1,5 +1,5 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -10,13 +10,13 @@ defined( 'ABSPATH' ) || exit;
  * features (templates, PDF mapping/generation, entries, security).
  * Premium capabilities live in the separate premium package only.
  */
-class Plan {
+class PeWave_Plan {
 
     /**
      * Whether this running package is the premium distribution.
      */
     public static function is_pro_package(): bool {
-        return function_exists( 'wpwe_is_premium_package' ) && wpwe_is_premium_package();
+        return function_exists( 'pewave_is_premium_package' ) && pewave_is_premium_package();
     }
 
     /**
@@ -29,8 +29,8 @@ class Plan {
             return false;
         }
 
-        if ( License::is_available() ) {
-            return License::is_premium_active();
+        if ( PeWave_License::is_available() ) {
+            return PeWave_License::is_premium_active();
         }
 
         return false;
@@ -42,7 +42,7 @@ class Plan {
     public static function is_pro(): bool {
         $is_pro = self::has_active_license();
 
-        return (bool) apply_filters( 'wpwe_is_pro', $is_pro );
+        return (bool) apply_filters( 'pewave_is_pro', $is_pro );
     }
 
     /**
@@ -59,14 +59,14 @@ class Plan {
 
         $enabled = self::is_pro();
 
-        return (bool) apply_filters( 'wpwe_feature_enabled', $enabled, $feature );
+        return (bool) apply_filters( 'pewave_feature_enabled', $enabled, $feature );
     }
 
     /**
      * Template limit (0 means unlimited).
      */
     public static function template_limit(): int {
-        return (int) apply_filters( 'wpwe_template_limit', 0 );
+        return (int) apply_filters( 'pewave_template_limit', 0 );
     }
 
     /**
@@ -84,6 +84,17 @@ class Plan {
             return '#';
         }
 
-        return License::get_upgrade_url();
+        return PeWave_License::get_upgrade_url();
+    }
+
+    /**
+     * Account / license-management URL for the premium package admin UI.
+     */
+    public static function get_account_url(): string {
+        if ( ! self::is_pro_package() ) {
+            return '#';
+        }
+
+        return PeWave_License::get_account_url();
     }
 }

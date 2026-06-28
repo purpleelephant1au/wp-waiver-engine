@@ -1,5 +1,5 @@
 <?php
-namespace WPWE;
+namespace Pewave\WaiverEngine;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -9,7 +9,7 @@ use setasign\Fpdi\Fpdi;
  * Minimal FPDI subclass that exposes the PDF character-spacing operator (Tc).
  * This allows individual fields to have configurable letter spacing.
  */
-class Wpwe_Fpdi extends Fpdi {
+class PeWave_Fpdi extends Fpdi {
     // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid
     public function SetCharSpacing( float $cs ): void {
         $this->_out( sprintf( '%.4F Tc', $cs ) );
@@ -20,8 +20,8 @@ class Wpwe_Fpdi extends Fpdi {
  * Generates PDF files by overlaying submission data onto the base PDF
  * using FPDI + FPDF.
  *
- * Accepts a template stdClass row from Database::get_template().
- * Generated PDFs are stored in the uploads/wpwe-pdfs/ directory and
+ * Accepts a template stdClass row from PeWave_Database::get_template().
+ * Generated PDFs are stored in the uploads/pewave-pdfs/ directory and
  * their filesystem paths returned (no WP attachment posts created).
  *
  * Supported mapping field configs:
@@ -31,7 +31,7 @@ class Wpwe_Fpdi extends Fpdi {
  * Coordinate system: x/y are from the TOP-LEFT corner in points (pt).
  * 72 pt = 1 inch.
  */
-class PDF_Generator {
+class PeWave_PDF_Generator {
 
     private int    $template_id;
     private array  $mapping;
@@ -116,35 +116,35 @@ class PDF_Generator {
     }
 
     private function can_use_repeatable_mapping(): bool {
-        return class_exists( Premium_Bridge::class )
-            && method_exists( Premium_Bridge::class, 'can_use_repeatable_mapping' )
-            && Premium_Bridge::can_use_repeatable_mapping();
+        return class_exists( PeWave_Premium_Bridge::class )
+            && method_exists( PeWave_Premium_Bridge::class, 'can_use_repeatable_mapping' )
+            && PeWave_Premium_Bridge::can_use_repeatable_mapping();
     }
 
     private function generate_per_row_via_bridge( array $data, int $entry_id, ?object $booking = null ): array {
-        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'generate_per_row_pdfs' ) ) {
-            return Premium_Bridge::generate_per_row_pdfs( $this, $data, $entry_id, $booking );
+        if ( class_exists( PeWave_Premium_Bridge::class ) && method_exists( PeWave_Premium_Bridge::class, 'generate_per_row_pdfs' ) ) {
+            return PeWave_Premium_Bridge::generate_per_row_pdfs( $this, $data, $entry_id, $booking );
         }
 
         return [ $this->generate_single( $data, $entry_id, 0, $booking ) ];
     }
 
     private function preview_per_row_via_bridge( array $data ): string {
-        if ( class_exists( Premium_Bridge::class ) && method_exists( Premium_Bridge::class, 'preview_per_row_pdf' ) ) {
-            return Premium_Bridge::preview_per_row_pdf( $this, $data );
+        if ( class_exists( PeWave_Premium_Bridge::class ) && method_exists( PeWave_Premium_Bridge::class, 'preview_per_row_pdf' ) ) {
+            return PeWave_Premium_Bridge::preview_per_row_pdf( $this, $data );
         }
 
         return $this->build_pdf( $data )->Output( 'S' );
     }
 
     // -----------------------------------------------------------------------
-    // Core FPDI/FPDF logic
+    // PeWave_Core FPDI/FPDF logic
     // -----------------------------------------------------------------------
 
     private function build_pdf( array $data ): Fpdi {
         // Use 'pt' unit so that stored x/y/width/height (in PDF points from the
         // admin mapper) are passed directly to SetXY/Image without conversion.
-        $pdf = new Wpwe_Fpdi( 'P', 'pt' );
+        $pdf = new PeWave_Fpdi( 'P', 'pt' );
         $pdf->SetAutoPageBreak( false );
         $pdf->SetMargins( 0, 0, 0 );
 
@@ -213,12 +213,12 @@ class PDF_Generator {
         $pdf->SetFont( $font, '', $font_size );
         $pdf->SetTextColor( ...$color );
         $pdf->SetXY( $x_pos, $y_pos );
-        if ( $char_spacing > 0 && $pdf instanceof Wpwe_Fpdi ) {
+        if ( $char_spacing > 0 && $pdf instanceof PeWave_Fpdi ) {
             $pdf->SetCharSpacing( $char_spacing );
         }
         // Line height must be >= font size (both in pt since we use the 'pt' unit).
         $pdf->Write( $font_size * 1.2, $text );
-        if ( $char_spacing > 0 && $pdf instanceof Wpwe_Fpdi ) {
+        if ( $char_spacing > 0 && $pdf instanceof PeWave_Fpdi ) {
             $pdf->SetCharSpacing( 0.0 ); // reset so adjacent fields are unaffected
         }
     }
@@ -238,7 +238,7 @@ class PDF_Generator {
         if ( ! $raw ) {
             return;
         }
-        $tmp_path = $this->temp_dir() . '/wpwe_sig_' . wp_generate_password( 12, false ) . '.' . $ext;
+        $tmp_path = $this->temp_dir() . '/pewave_sig_' . wp_generate_password( 12, false ) . '.' . $ext;
         // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
         file_put_contents( $tmp_path, $raw );
 
@@ -256,19 +256,19 @@ class PDF_Generator {
     // -----------------------------------------------------------------------
 
     /**
-     * Write the PDF to the wpwe-pdfs upload directory and return the path.
+    * Write the PDF to the pewave-pdfs upload directory and return the path.
      */
     private function save_pdf( Fpdi $pdf, string $filename ): string {
         $upload_dir = wp_upload_dir();
-        $wpwe_dir   = $upload_dir['basedir'] . '/wpwe-pdfs';
+        $pewave_dir = $upload_dir['basedir'] . '/pewave-pdfs';
 
-        if ( ! file_exists( $wpwe_dir ) ) {
-            wp_mkdir_p( $wpwe_dir );
+        if ( ! file_exists( $pewave_dir ) ) {
+            wp_mkdir_p( $pewave_dir );
             // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-            file_put_contents( $wpwe_dir . '/.htaccess', "Options -Indexes\nDeny from all\n" );
+            file_put_contents( $pewave_dir . '/.htaccess', "Options -Indexes\nDeny from all\n" );
         }
 
-        $filepath = $wpwe_dir . '/' . $filename;
+        $filepath = $pewave_dir . '/' . $filename;
         $pdf->Output( 'F', $filepath );
 
         if ( ! file_exists( $filepath ) ) {
@@ -386,8 +386,8 @@ class PDF_Generator {
         $this->place_image( $pdf, $data_uri, $cfg );
     }
 
-    public function new_pdf_document_for_premium(): Wpwe_Fpdi {
-        $pdf = new Wpwe_Fpdi( 'P', 'pt' );
+    public function new_pdf_document_for_premium(): PeWave_Fpdi {
+        $pdf = new PeWave_Fpdi( 'P', 'pt' );
         $pdf->SetAutoPageBreak( false );
         $pdf->SetMargins( 0, 0, 0 );
         return $pdf;

@@ -3,13 +3,13 @@
  * Plugin Name:       Waiver Engine
  * Plugin URI:        https://github.com/purpleelephant1au/wp-waiver-engine
  * Description:       Template-driven waiver and contract system with PDF overlay generation and optional third-party booking integrations.
- * Version:           1.1.4
+ * Version:           1.1.5
  * Requires at least: 6.2
  * Requires PHP:      8.0
  * Author:            Nathaniel Smith
  * Author URI:        https://github.com/nsmithau
- * License:           GPL-2.0-or-later
- * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * PeWave_License:           GPL-2.0-or-later
+ * PeWave_License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       waiver-engine
  * Domain Path:       /languages
  * @fs_premium_only /includes/integrations/class-integration-amelia.php
@@ -19,31 +19,31 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-if ( ! defined( 'WPWE_VERSION' ) ) {
-    define( 'WPWE_VERSION', '1.1.4' );
+if ( ! defined( 'PEWAVE_VERSION' ) ) {
+    define( 'PEWAVE_VERSION', '1.1.5' );
 }
-if ( ! defined( 'WPWE_PLUGIN_DIR' ) ) {
-    define( 'WPWE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+if ( ! defined( 'PEWAVE_PLUGIN_DIR' ) ) {
+    define( 'PEWAVE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 }
-if ( ! defined( 'WPWE_PLUGIN_URL' ) ) {
-    define( 'WPWE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+if ( ! defined( 'PEWAVE_PLUGIN_URL' ) ) {
+    define( 'PEWAVE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 }
-if ( ! defined( 'WPWE_PLUGIN_BASENAME' ) ) {
-    define( 'WPWE_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+if ( ! defined( 'PEWAVE_PLUGIN_BASENAME' ) ) {
+    define( 'PEWAVE_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 }
 
 // -----------------------------------------------------------------------
 // Composer autoload (Freemius SDK / FPDI / FPDF)
 // -----------------------------------------------------------------------
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound,WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound,WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
-if ( file_exists( WPWE_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
-    require_once WPWE_PLUGIN_DIR . 'vendor/autoload.php';
+if ( file_exists( PEWAVE_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
+    require_once PEWAVE_PLUGIN_DIR . 'vendor/autoload.php';
 }
 
-if ( function_exists( 'wwe_fs' ) ) {
-    $wwe_fs_instance = wwe_fs();
-    if ( $wwe_fs_instance && method_exists( $wwe_fs_instance, 'set_basename' ) ) {
-        $wwe_fs_instance->set_basename( true, __FILE__ );
+if ( function_exists( 'pewave_fs' ) ) {
+    $pewave_fs_instance = pewave_fs();
+    if ( $pewave_fs_instance && method_exists( $pewave_fs_instance, 'set_basename' ) ) {
+        $pewave_fs_instance->set_basename( true, __FILE__ );
     }
 }
 
@@ -51,19 +51,53 @@ if ( function_exists( 'wwe_fs' ) ) {
  * DO NOT REMOVE THIS IF, IT IS ESSENTIAL FOR THE
  * `function_exists` CALL ABOVE TO PROPERLY WORK.
  */
-if ( ! function_exists( 'wwe_fs' ) ) {
-    // Create a helper function for easy SDK access.
-    function wwe_fs() {
-        global $wwe_fs;
+if ( ! function_exists( 'pewave_fs' ) ) {
+    if ( ! function_exists( 'pewave_freemius_sdk_is_complete' ) ) {
+        function pewave_freemius_sdk_is_complete(): bool {
+            $required = [
+                PEWAVE_PLUGIN_DIR . 'vendor/freemius/wordpress-sdk/start.php',
+                PEWAVE_PLUGIN_DIR . 'vendor/freemius/wordpress-sdk/templates/forms/optout.php',
+            ];
 
-        if ( ! isset( $wwe_fs ) ) {
+            foreach ( $required as $file ) {
+                if ( ! file_exists( $file ) ) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
+    if ( ! function_exists( 'pewave_admin_notice_incomplete_sdk' ) ) {
+        function pewave_admin_notice_incomplete_sdk(): void {
+            if ( ! current_user_can( 'manage_options' ) ) {
+                return;
+            }
+
+            echo '<div class="notice notice-error"><p>'
+                . esc_html__( 'Waiver Engine: Freemius SDK files are incomplete. Licensing and upgrade UI are temporarily disabled. Reinstall the plugin package to restore vendor/freemius files.', 'waiver-engine' )
+                . '</p></div>';
+        }
+    }
+
+    // Create a helper function for easy SDK access.
+    function pewave_fs() {
+        global $pewave_fs;
+
+        if ( ! isset( $pewave_fs ) ) {
+            if ( ! pewave_freemius_sdk_is_complete() ) {
+                add_action( 'admin_notices', 'pewave_admin_notice_incomplete_sdk' );
+                return null;
+            }
+
             // Include Freemius SDK.
             // SDK is auto-loaded through Composer
             if ( ! function_exists( 'fs_dynamic_init' ) ) {
                 return null;
             }
 
-            $wwe_fs = fs_dynamic_init( array(
+            $pewave_fs = fs_dynamic_init( array(
                 'id'                  => '28928',
                 'slug'                => 'waiver-engine',
                 'premium_slug'        => 'waiver-engine-premium',
@@ -77,19 +111,19 @@ if ( ! function_exists( 'wwe_fs' ) ) {
                 'is_org_compliant'    => true,
                 'wp_org_gatekeeper'   => 'OA7#BoRiBNqdf52FvzEf!!074aRLPs8fspif$7K1#4u4Csys1fQlCecVcUTOs2mcpeVHi#C2j9d09fOTvbC0HloPT7fFee5WdS3G',
                 'menu'                => array(
-                    'slug'           => 'wpwe',
+                    'slug'           => 'pewave',
                     'support'        => false,
                 ),
             ) );
         }
 
-        return $wwe_fs;
+        return $pewave_fs;
     }
 
     // Init Freemius.
-    wwe_fs();
+    pewave_fs();
     // Signal that SDK was initiated.
-    do_action( 'wwe_fs_loaded' );
+    do_action( 'pewave_fs_loaded' );
 }
 
 /**
@@ -98,13 +132,13 @@ if ( ! function_exists( 'wwe_fs' ) ) {
  * Guideline 11 allows contextual upsells on the plugin settings page only;
  * site-wide trial/pricing notices are disabled here.
  */
-if ( ! function_exists( 'wpwe_configure_freemius_org_package' ) ) {
-    function wpwe_configure_freemius_org_package(): void {
-        if ( ! function_exists( 'wwe_fs' ) || ! wwe_fs() ) {
+if ( ! function_exists( 'pewave_configure_freemius_org_package' ) ) {
+    function pewave_configure_freemius_org_package(): void {
+        if ( ! function_exists( 'pewave_fs' ) || ! pewave_fs() ) {
             return;
         }
 
-        $fs = wwe_fs();
+        $fs = pewave_fs();
 
         if ( method_exists( $fs, 'is__premium_only' ) && $fs->is__premium_only() ) {
             return;
@@ -157,23 +191,16 @@ if ( ! function_exists( 'wpwe_configure_freemius_org_package' ) ) {
         );
     }
 
-    add_action( 'wwe_fs_loaded', 'wpwe_configure_freemius_org_package' );
+    add_action( 'pewave_fs_loaded', 'pewave_configure_freemius_org_package' );
 }
 
-if ( function_exists( 'wwe_fs' ) && wwe_fs() ) {
-    wpwe_configure_freemius_org_package();
+if ( function_exists( 'pewave_fs' ) && pewave_fs() ) {
+    pewave_configure_freemius_org_package();
 }
 // phpcs:enable
 
-// Backward compatibility for existing internal references.
-if ( ! function_exists( 'wpwe_fs' ) ) {
-    function wpwe_fs() {
-        return function_exists( 'wwe_fs' ) ? wwe_fs() : null;
-    }
-}
-
-if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only() ) {
-    require_once WPWE_PLUGIN_DIR . 'includes/class-premium-bridge__premium_only.php';
+if ( function_exists( 'pewave_fs' ) && pewave_fs() && pewave_fs()->is__premium_only() ) {
+    require_once PEWAVE_PLUGIN_DIR . 'includes/class-premium-bridge__premium_only.php';
 }
 
 /**
@@ -182,9 +209,9 @@ if ( function_exists( 'wwe_fs' ) && wwe_fs() && wwe_fs()->is__premium_only() ) {
  * Freemius sets this in premium builds so we can safely branch behavior
  * between free and pro ZIPs produced from the same codebase.
  */
-if ( ! function_exists( 'wpwe_is_premium_package' ) ) {
-    function wpwe_is_premium_package(): bool {
-        $fs = function_exists( 'wwe_fs' ) ? wwe_fs() : null;
+if ( ! function_exists( 'pewave_is_premium_package' ) ) {
+    function pewave_is_premium_package(): bool {
+        $fs = function_exists( 'pewave_fs' ) ? pewave_fs() : null;
 
         return $fs && method_exists( $fs, 'is__premium_only' )
             ? (bool) $fs->is__premium_only()
@@ -199,13 +226,13 @@ if ( ! function_exists( 'wpwe_is_premium_package' ) ) {
  * Premium package fallback keeps behavior deterministic in environments where
  * entitlement checks are temporarily unavailable.
  */
-if ( ! function_exists( 'wpwe_can_use_premium_features' ) ) {
-    function wpwe_can_use_premium_features(): bool {
-        if ( ! wpwe_is_premium_package() ) {
+if ( ! function_exists( 'pewave_can_use_premium_features' ) ) {
+    function pewave_can_use_premium_features(): bool {
+        if ( ! pewave_is_premium_package() ) {
             return false;
         }
 
-        $fs = function_exists( 'wwe_fs' ) ? wwe_fs() : null;
+        $fs = function_exists( 'pewave_fs' ) ? pewave_fs() : null;
 
         if ( $fs && method_exists( $fs, 'can_use_premium_code' ) ) {
             return (bool) $fs->can_use_premium_code();
@@ -219,22 +246,29 @@ if ( ! function_exists( 'wpwe_can_use_premium_features' ) ) {
 // Autoloader
 // -----------------------------------------------------------------------
 spl_autoload_register( function ( string $class ): void {
-    $prefix = 'WPWE\\';
+    $prefix = 'Pewave\WaiverEngine\\';
     if ( strncmp( $prefix, $class, strlen( $prefix ) ) !== 0 ) {
         return;
     }
     $relative  = substr( $class, strlen( $prefix ) );
-    $file_name = 'class-' . strtolower( str_replace( '_', '-', $relative ) ) . '.php';
+    if ( $relative === 'PeWave_Fpdi' ) {
+        $file_name = 'class-pdf-generator.php';
+    } else {
+        if ( str_starts_with( $relative, 'PeWave_' ) ) {
+            $relative = substr( $relative, strlen( 'PeWave_' ) );
+        }
+        $file_name = 'class-' . strtolower( str_replace( '_', '-', $relative ) ) . '.php';
+    }
 
     // 1. includes/ (core classes and integration manager)
-    $file = WPWE_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . $file_name;
+    $file = PEWAVE_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . $file_name;
     if ( file_exists( $file ) ) {
         require $file;
         return;
     }
 
     // 2. includes/integrations/ (one file per optional third-party integration)
-    $file = WPWE_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'integrations' . DIRECTORY_SEPARATOR . $file_name;
+    $file = PEWAVE_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'integrations' . DIRECTORY_SEPARATOR . $file_name;
     if ( file_exists( $file ) ) {
         require $file;
     }
@@ -243,13 +277,13 @@ spl_autoload_register( function ( string $class ): void {
 // -----------------------------------------------------------------------
 // Bootstrap
 // -----------------------------------------------------------------------
-add_action( 'plugins_loaded', [ 'WPWE\Core', 'init' ] );
+add_action( 'plugins_loaded', [ 'Pewave\WaiverEngine\PeWave_Core', 'init' ] );
 
 // -----------------------------------------------------------------------
 // Activation - create tables immediately
 // -----------------------------------------------------------------------
 register_activation_hook( __FILE__, function (): void {
-    \WPWE\Database::install();
+    \Pewave\WaiverEngine\PeWave_Database::install();
 } );
 
 // -----------------------------------------------------------------------
@@ -260,12 +294,12 @@ register_deactivation_hook( __FILE__, function (): void {
 } );
 
 // -----------------------------------------------------------------------
-// Uninstall - drop tables and remove options (Freemius after_uninstall hook)
+// PeWave_Uninstall - drop tables and remove options (Freemius after_uninstall hook)
 // -----------------------------------------------------------------------
-if ( function_exists( 'wwe_fs' ) && wwe_fs() ) {
-    wwe_fs()->add_action( 'after_uninstall', function (): void {
-        require_once WPWE_PLUGIN_DIR . 'includes/class-uninstall.php';
-        \WPWE\Uninstall::run();
+if ( function_exists( 'pewave_fs' ) && pewave_fs() ) {
+    pewave_fs()->add_action( 'after_uninstall', function (): void {
+        require_once PEWAVE_PLUGIN_DIR . 'includes/class-uninstall.php';
+        \Pewave\WaiverEngine\PeWave_Uninstall::run();
     } );
 }
 
