@@ -8,8 +8,8 @@
  * Requires PHP:      8.0
  * Author:            Nathaniel Smith
  * Author URI:        https://github.com/nsmithau
- * PeWave_License:           GPL-2.0-or-later
- * PeWave_License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * License:           GPL-2.0-or-later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       waiver-engine
  * Domain Path:       /languages
  * @fs_premium_only /includes/integrations/class-integration-amelia.php
