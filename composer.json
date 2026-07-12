@@ -4,8 +4,8 @@
     "type": "wordpress-plugin",
     "require": {
         "php": ">=8.0",
-        "freemius/wordpress-sdk": "^2.12",
-        "setasign/fpdi": "^2.5",
+        "freemius/wordpress-sdk": "^2.13.4",
+        "setasign/fpdi": "^2.6.8",
         "setasign/fpdf": "^1.9"
     },
     "autoload": {
@@ -40,4 +40,3 @@
         }
     }
 }
-

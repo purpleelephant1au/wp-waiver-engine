@@ -5,7 +5,7 @@ Tags: pdf, forms, contracts, signature, booking
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.1.5
+Stable tag: 1.1.6
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -230,6 +230,11 @@ as a convenience parameter.
 
 == Changelog ==
 
+= 1.1.6 =
+* Update third-party libraries: Freemius WordPress SDK 2.13.4 and FPDI 2.6.8.
+* Standardize remaining internal admin identifiers to the `pewave` prefix.
+* Align script/style handles in template editor screens to `pewave` naming.
+
 = 1.1.5 =
 * Fix admin slug/label regressions introduced by identifier hardening.
 * Restore Visual Mapper selector parity and related admin CSS bindings.
@@ -280,6 +285,9 @@ as a convenience parameter.
 * Import / export of template field-to-PDF mappings.
 
 == Upgrade Notice ==
+
+= 1.1.6 =
+Dependency refresh and prefix consistency updates for WordPress.org review compliance. No database migrations required.
 
 = 1.1.5 =
 Admin/runtime/packaging stability fixes. No database migrations required.

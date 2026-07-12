@@ -38,14 +38,14 @@ class PeWave_Template_Meta_Box {
         );
 
         wp_enqueue_script(
-            'wpwe-admin-editor',
+            'pewave-admin-editor',
             \PEWAVE_PLUGIN_URL . 'assets/js/admin-editor.js',
             [ 'jquery', 'pdfjs' ],
             \PEWAVE_VERSION,
             true
         );
         wp_enqueue_style(
-            'wpwe-admin',
+            'pewave-admin',
             \PEWAVE_PLUGIN_URL . 'assets/css/admin.css',
             [],
             \PEWAVE_VERSION
@@ -65,7 +65,7 @@ class PeWave_Template_Meta_Box {
             }
         }
 
-        wp_localize_script( 'wpwe-admin-editor', 'pewaveAdmin', [
+        wp_localize_script( 'pewave-admin-editor', 'pewaveAdmin', [
             'mediaTitle'   => __( 'Select Base PDF', 'waiver-engine' ),
             'mediaButton'  => __( 'Use this PDF', 'waiver-engine' ),
             'workerSrc'    => \PEWAVE_PLUGIN_URL . 'assets/js/pdfjs/pdf.worker.min.js',
@@ -120,7 +120,7 @@ class PeWave_Template_Meta_Box {
         $notify_email = (string) get_post_meta( $post->ID, 'notification_email', true );
         $pdf_url      = $pdf_id ? wp_get_attachment_url( $pdf_id ) : '';
         ?>
-        <table class="form-table wpwe-settings-table">
+        <table class="form-table pewave-settings-table">
             <tr>
                 <th><label for="pewave_pdf_attachment_id"><?php esc_html_e( 'Base PDF', 'waiver-engine' ); ?></label></th>
                 <td>
@@ -293,7 +293,7 @@ class PeWave_Template_Meta_Box {
                     </div>
                 </div>
 
-            </div><!-- /.wpwe-modal-body -->
+            </div><!-- /.pewave-modal-body -->
 
             <div class="pewave-modal-footer">
                 <button type="button" class="button button-primary button-hero" id="pewave-close-mapper-done">

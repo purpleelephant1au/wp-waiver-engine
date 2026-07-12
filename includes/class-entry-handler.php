@@ -143,7 +143,7 @@ class PeWave_Entry_Handler {
             $generator = new PeWave_PDF_Generator( $template );
             $pdf_paths = $generator->generate( $data, $entry_id, $booking_info );
         } catch ( \Throwable $e ) {
-            $pdf_error = '[WPWE ' . gmdate( 'Y-m-d H:i:s' ) . '] PDF error entry=' . $entry_id
+            $pdf_error = '[PEWAVE ' . gmdate( 'Y-m-d H:i:s' ) . '] PDF error entry=' . $entry_id
                 . ' | ' . get_class( $e ) . ': ' . $e->getMessage()
                 . ' | ' . $e->getFile() . ':' . $e->getLine();
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log

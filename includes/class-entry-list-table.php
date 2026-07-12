@@ -71,8 +71,8 @@ class PeWave_Entry_List_Table {
             <form method="get" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0;">
                 <input type="hidden" name="page" value="pewave-entries">
 
-                <label for="wpwe-filter-template"><?php esc_html_e( 'Template:', 'waiver-engine' ); ?></label>
-                <select id="wpwe-filter-template" name="template_id">
+                <label for="pewave-filter-template"><?php esc_html_e( 'Template:', 'waiver-engine' ); ?></label>
+                <select id="pewave-filter-template" name="template_id">
                     <option value="0"><?php esc_html_e( '&mdash; All &mdash;', 'waiver-engine' ); ?></option>
                     <?php foreach ( $templates as $tid => $ttitle ) : ?>
                     <option value="<?php echo esc_attr( $tid ); ?>" <?php selected( $template_id, $tid ); ?>>
@@ -82,8 +82,8 @@ class PeWave_Entry_List_Table {
                 </select>
 
                 <?php if ( $amelia_enabled && ! empty( $amelia_services ) ) : ?>
-                <label for="wpwe-filter-service"><?php esc_html_e( 'Service:', 'waiver-engine' ); ?></label>
-                <select id="wpwe-filter-service" name="amelia_service_id">
+                <label for="pewave-filter-service"><?php esc_html_e( 'Service:', 'waiver-engine' ); ?></label>
+                <select id="pewave-filter-service" name="amelia_service_id">
                     <option value="0"><?php esc_html_e( '&mdash; All &mdash;', 'waiver-engine' ); ?></option>
                     <?php foreach ( $amelia_services as $svc ) : ?>
                     <option value="<?php echo esc_attr( $svc['id'] ); ?>" <?php selected( $amelia_service_id, (int) $svc['id'] ); ?>>
@@ -94,9 +94,9 @@ class PeWave_Entry_List_Table {
                 <?php endif; ?>
 
                 <?php if ( $amelia_enabled ) : ?>
-                <label for="wpwe-filter-booking"><?php esc_html_e( 'Booking:', 'waiver-engine' ); ?></label>
+                  <label for="pewave-filter-booking"><?php esc_html_e( 'Booking:', 'waiver-engine' ); ?></label>
                 <input type="text"
-                       id="wpwe-filter-booking"
+                      id="pewave-filter-booking"
                        name="booking_search"
                        value="<?php echo esc_attr( $booking_search ); ?>"
                        placeholder="<?php esc_attr_e( 'Customer name or date (YYYY-MM-DD)', 'waiver-engine' ); ?>"

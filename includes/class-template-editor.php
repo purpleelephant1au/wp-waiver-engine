@@ -35,14 +35,14 @@ class PeWave_Template_Editor {
             true
         );
         wp_enqueue_script(
-            'wpwe-admin-editor',
+            'pewave-admin-editor',
             \PEWAVE_PLUGIN_URL . 'assets/js/admin-editor.js',
             [ 'jquery', 'pdfjs' ],
             \PEWAVE_VERSION,
             true
         );
         wp_enqueue_style(
-            'wpwe-admin',
+            'pewave-admin',
             \PEWAVE_PLUGIN_URL . 'assets/css/admin.css',
             [],
             \PEWAVE_VERSION
@@ -60,7 +60,7 @@ class PeWave_Template_Editor {
             }
         }
 
-        wp_localize_script( 'wpwe-admin-editor', 'pewaveAdmin', [
+        wp_localize_script( 'pewave-admin-editor', 'pewaveAdmin', [
             'mediaTitle'    => __( 'Select Base PDF', 'waiver-engine' ),
             'mediaButton'   => __( 'Use this PDF', 'waiver-engine' ),
             'workerSrc'     => \PEWAVE_PLUGIN_URL . 'assets/js/pdfjs/pdf.worker.min.js',
@@ -382,7 +382,7 @@ class PeWave_Template_Editor {
                     <?php esc_html_e( 'Click Done, then Save/Update Template to persist changes.', 'waiver-engine' ); ?>
                 </span>
             </div>
-        </div><!-- /#wpwe-mapper-modal -->
+        </div><!-- /#pewave-mapper-modal -->
 
             </form>
 

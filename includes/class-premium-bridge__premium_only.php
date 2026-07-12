@@ -439,7 +439,7 @@ class PeWave_Premium_Bridge {
         $sent = wp_mail( $to, $subject, $body, [ 'Content-Type: text/plain; charset=UTF-8' ], [ $attachment_path ] );
         if ( ! $sent ) {
             $last_mail_error = isset( $GLOBALS['phpmailer']->ErrorInfo ) ? (string) $GLOBALS['phpmailer']->ErrorInfo : '';
-            error_log( '[WPWE] send_copy_email failed for: ' . $to . ' | last WP mail error: ' . $last_mail_error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log( '[PEWAVE] send_copy_email failed for: ' . $to . ' | last WP mail error: ' . $last_mail_error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
         }
     }
 
@@ -731,7 +731,7 @@ class PeWave_Premium_Bridge {
         <tr>
             <th scope="row">
                 <?php esc_html_e( 'Amelia Integration', 'waiver-engine' ); ?>
-                <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                    <span class="pewave-tooltip dashicons dashicons-editor-help"
                       title="<?php esc_attr_e( 'Connect Waiver Engine with the Amelia Booking plugin. When active, a booking-search widget appears on waiver forms so customers can link their submission to an existing appointment.', 'waiver-engine' ); ?>"></span>
             </th>
             <td>
@@ -760,7 +760,7 @@ class PeWave_Premium_Bridge {
         <tr>
             <th scope="row">
                 <?php esc_html_e( 'Admin Notification Emails', 'waiver-engine' ); ?>
-                <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                    <span class="pewave-tooltip dashicons dashicons-editor-help"
                       title="<?php esc_attr_e( 'When enabled, the notification address receives an email with the PDF attached each time a waiver is submitted. Can also be toggled per-template in the template editor.', 'waiver-engine' ); ?>"></span>
             </th>
             <td>
@@ -783,7 +783,7 @@ class PeWave_Premium_Bridge {
         <tr>
             <th scope="row">
                 <?php esc_html_e( 'Submitter Copy Emails', 'waiver-engine' ); ?>
-                <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                    <span class="pewave-tooltip dashicons dashicons-editor-help"
                       title="<?php esc_attr_e( 'When enabled, an opt-in checkbox appears on waiver forms so submitters can request a PDF copy by email. Can also be toggled per-template.', 'waiver-engine' ); ?>"></span>
             </th>
             <td>

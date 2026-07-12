@@ -195,7 +195,7 @@ class PeWave_Settings {
 
             <?php if ( isset( $_GET['pewave_data_import_error'] ) ) : ?>
             <div class="notice notice-error is-dismissible">
-                <p><?php esc_html_e( 'Data import failed. Please verify you uploaded a valid WPWE data export JSON file and try again.', 'waiver-engine' ); ?></p>
+                <p><?php esc_html_e( 'Data import failed. Please verify you uploaded a valid PeWave data export JSON file and try again.', 'waiver-engine' ); ?></p>
             </div>
             <?php endif; ?>
             <?php // phpcs:enable ?>
@@ -242,7 +242,7 @@ class PeWave_Settings {
                     <tr>
                         <th scope="row">
                             <?php esc_html_e( 'Submission Rate Limiting', 'waiver-engine' ); ?>
-                            <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                                <span class="pewave-tooltip dashicons dashicons-editor-help"
                                   title="<?php esc_attr_e( 'Limits how many waivers a single IP address can submit within a rolling time window. Protects against bots flooding PDFs to disk. Uses WordPress transients — no extra database tables needed.', 'waiver-engine' ); ?>"></span>
                         </th>
                         <td>
@@ -281,7 +281,7 @@ class PeWave_Settings {
                     <tr>
                         <th scope="row">
                             <?php esc_html_e( 'CAPTCHA', 'waiver-engine' ); ?>
-                            <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                                <span class="pewave-tooltip dashicons dashicons-editor-help"
                                   title="<?php esc_attr_e( 'Add an invisible CAPTCHA challenge to waiver forms to block automated bots. Choose a provider, enter your API keys, then enable CAPTCHA per-template in the template editor. Defaults to OFF.', 'waiver-engine' ); ?>"></span>
                         </th>
                         <td>
@@ -306,7 +306,7 @@ class PeWave_Settings {
                                     <br>
                                     <label for="pewave_captcha_site_key">
                                         <?php esc_html_e( 'Site Key (public):', 'waiver-engine' ); ?>
-                                        <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                                            <span class="pewave-tooltip dashicons dashicons-editor-help"
                                               title="<?php esc_attr_e( 'The public key embedded in the page HTML. Obtained from your CAPTCHA provider\'s dashboard.', 'waiver-engine' ); ?>"></span>
                                     </label><br>
                                     <input type="text" id="pewave_captcha_site_key" name="pewave_captcha_site_key"
@@ -315,7 +315,7 @@ class PeWave_Settings {
                                     <br><br>
                                     <label for="pewave_captcha_secret_key">
                                         <?php esc_html_e( 'Secret Key (private):', 'waiver-engine' ); ?>
-                                        <span class="wpwe-tooltip dashicons dashicons-editor-help"
+                                            <span class="pewave-tooltip dashicons dashicons-editor-help"
                                               title="<?php esc_attr_e( 'The private key used server-side to verify tokens. Never exposed to the browser. Keep this confidential.', 'waiver-engine' ); ?>"></span>
                                     </label><br>
                                     <input type="password" id="pewave_captcha_secret_key" name="pewave_captcha_secret_key"
@@ -472,7 +472,7 @@ class PeWave_Settings {
     }
 
     /**
-     * Detect when a premium package is active alongside another WPWE plugin entry.
+    * Detect when a premium package is active alongside another PeWave plugin entry.
      */
     public static function is_free_to_pro_handoff_detected(): bool {
         if ( ! function_exists( 'pewave_is_premium_package' ) || ! pewave_is_premium_package() ) {
